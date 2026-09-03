@@ -2,24 +2,85 @@
 node_modules/
 frontend/node_modules/
 backend/node_modules/
+.pnp
+.pnp.js
 
-# Next.js build
+# Environment and Secret Files
+.env
+.env.*
+*.env
+*.env.*
+*.local
+*.env.local
+*.env.development.local
+*.env.test.local
+*.env.production.local
+frontend/.env*
+backend/.env*
+!**/.env.example
+
+# Service Account Keys & Secrets
+*.pem
+*.key
+*.cert
+*.crt
+*.pfx
+*.p12
+*.id_rsa
+*.id_dsa
+*.pub
+*service-account*.json
+*google-credentials*.json
+*firebase-adminsdk*.json
+*gcp-key*.json
+secrets/
+credentials.json
+
+# Local Databases & Dumps
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+dump/
+data/
+mongodata/
+
+# Next.js & Build Outputs
 frontend/.next/
 frontend/out/
+frontend/build/
+.next/
+out/
+build/
+dist/
+.turbo/
+.cache/
 
-# Environment variables
-frontend/.env.local
-frontend/.env.development.local
-frontend/.env.test.local
-frontend/.env.production.local
-backend/.env
+# Testing & Coverage
+coverage/
+.nyc_output/
 
 # Logs
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# OS Files
+# IDE & Editor Files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 .DS_Store
 Thumbs.db
+desktop.ini
+.vercel
+
+# Local Agent & Workspace Cache
+.gemini/
+.agents/

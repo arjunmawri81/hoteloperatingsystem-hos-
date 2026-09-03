@@ -2,6 +2,9 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
+const connectDB = require("./db");
+const User = require("./models/User");
+const seedDatabase = require("./data/seed");
 
 // Route handlers
 const authRoutes = require("./routes/auth.routes");
@@ -11,6 +14,13 @@ const reservationsRoutes = require("./routes/reservations.routes");
 const housekeepingRoutes = require("./routes/housekeeping.routes");
 const posRoutes = require("./routes/pos.routes");
 const aiRoutes = require("./routes/ai.routes");
+const invoicesRoutes = require("./routes/invoices.routes");
+const areasRoutes = require("./routes/areas.routes");
+const staffRoutes = require("./routes/staff.routes");
+const guestsRoutes = require("./routes/guests.routes");
+const inventoryRoutes = require("./routes/inventory.routes");
+const leadsRoutes = require("./routes/leads.routes");
+const roomsRoutes = require("./routes/rooms.routes");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -48,6 +58,13 @@ app.use("/api/reservations", reservationsRoutes);
 app.use("/api/housekeeping", housekeepingRoutes);
 app.use("/api/pos", posRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/invoices", invoicesRoutes);
+app.use("/api/areas", areasRoutes);
+app.use("/api/staff", staffRoutes);
+app.use("/api/guests", guestsRoutes);
+app.use("/api/inventory", inventoryRoutes);
+app.use("/api/leads", leadsRoutes);
+app.use("/api/rooms", roomsRoutes);
 
 // 404 Route Catch-all
 app.use((req, res) => {
@@ -67,9 +84,21 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start Server
-app.listen(PORT, () => {
-  console.log(`
+// Connect Database & Start Server
+const startServer = async () => {
+  try {
+    await connectDB();
+
+    const userCount = await User.countDocuments();
+    if (userCount === 0) {
+      console.log("ℹ️ No users found in database. Seeding initial mock data...");
+      await seedDatabase();
+    } else {
+      console.log("ℹ️ Database contains existing data. Skipping auto-seed.");
+    }
+
+    app.listen(PORT, () => {
+      console.log(`
 =====================================================
   🏨 HOS (Hotel Operating System) Backend API
 =====================================================
@@ -78,9 +107,16 @@ app.listen(PORT, () => {
   🩺 Health check:      http://localhost:${PORT}/api/health
   🌐 Allowed Client:    ${CLIENT_URL}
 =====================================================
-  Ready for Database & Controller customization!
+  Connected to MongoDB & Ready for Operations!
 =====================================================
-  `);
-});
+      `);
+    });
+  } catch (error) {
+    console.error("❌ Failed to start HOS server:", error.message);
+    process.exit(1);
+  }
+};
+
+startServer();
 
 module.exports = app;

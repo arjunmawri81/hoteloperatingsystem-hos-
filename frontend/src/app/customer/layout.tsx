@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search, Bell } from "lucide-react";
 import { UserMenu } from "@/components/layout/UserMenu";
+import { AppRail } from "@/components/layout/AppRail";
+import { GlobalSearchModal } from "@/components/layout/GlobalSearchModal";
+import { NotificationPopover } from "@/components/layout/NotificationPopover";
 
 export default function CustomerLayout({
   children,
@@ -26,18 +28,21 @@ export default function CustomerLayout({
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] text-[#111827] flex font-sans antialiased selection:bg-red-500 selection:text-white">
-      {/* Left Sidebar */}
-      <aside className="w-64 bg-white border-r border-[#E5E7EB] flex flex-col justify-between shrink-0 min-h-screen">
+      {/* 1. Global App Rail */}
+      <AppRail />
+
+      {/* 2. Left Sidebar */}
+      <aside className="w-60 bg-white border-r border-[#E5E7EB] flex flex-col justify-between shrink-0 min-h-screen">
         <div>
           {/* Sidebar Top Title */}
-          <div className="px-7 pt-7 pb-6">
-            <h2 className="text-[13px] font-bold tracking-wider text-[#111827] uppercase">
+          <div className="px-6 pt-6 pb-4">
+            <h2 className="text-[11px] font-bold tracking-wider text-[#6B7280] uppercase">
               Customer Portal
             </h2>
           </div>
 
           {/* Navigation Menu */}
-          <nav className="px-4 space-y-1">
+          <nav className="px-3 space-y-1">
             {navItems.map((item) => {
               const isActive =
                 item.href === "/customer"
@@ -48,10 +53,10 @@ export default function CustomerLayout({
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`block px-3 py-2 text-[14px] font-medium rounded-md transition-colors ${
+                  className={`block px-3 py-2 text-[13px] font-semibold rounded transition-colors ${
                     isActive
-                      ? "text-[#111827] font-semibold"
-                      : "text-[#4B5563] hover:text-[#111827] hover:bg-[#F3F4F6]"
+                      ? "text-[#111827] bg-[#F3F4F6] border-l-2 border-[#EC3013]"
+                      : "text-[#4B5563] hover:text-[#111827] hover:bg-[#F9FAFB]"
                   }`}
                 >
                   {item.name}
@@ -62,20 +67,20 @@ export default function CustomerLayout({
         </div>
 
         {/* Sidebar Footer */}
-        <div className="px-7 py-6 border-t border-[#E5E7EB]">
-          <div className="text-[13px] font-medium text-[#111827]">
+        <div className="px-6 py-5 border-t border-[#E5E7EB]">
+          <div className="text-[12px] font-bold text-[#111827]">
             Meridian Hotels & Resorts
           </div>
-          <div className="text-[12px] text-[#9CA3AF] mt-0.5">
+          <div className="text-[11px] text-[#9CA3AF] mt-0.5">
             Hotel Operating System
           </div>
         </div>
       </aside>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      {/* 3. Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         {/* Top Header Bar */}
-        <header className="h-16 bg-white border-b border-[#E5E7EB] px-8 flex items-center justify-between shrink-0">
+        <header className="h-14 bg-white border-b border-[#E5E7EB] px-6 flex items-center justify-between shrink-0 sticky top-0 z-20">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-[13px] text-[#4B5563]">
             <span>Customer Portal</span>
@@ -84,22 +89,16 @@ export default function CustomerLayout({
           </div>
 
           {/* Header Right Actions */}
-          <div className="flex items-center gap-6">
-            <button className="flex items-center gap-1.5 text-[13px] text-[#6B7280] hover:text-[#111827] transition-colors">
-              <Search className="w-4 h-4 text-[#6B7280]" />
-              <span>Search</span>
-            </button>
-
-            <button className="text-[#6B7280] hover:text-[#111827] transition-colors relative">
-              <Bell className="w-4 h-4" />
-            </button>
-
+          <div className="flex items-center gap-3">
+            <GlobalSearchModal />
+            <NotificationPopover />
+            <div className="h-4 w-[1px] bg-[#E5E7EB]" />
             <UserMenu />
           </div>
         </header>
 
         {/* Page Content Body */}
-        <main className="flex-1 p-8 lg:p-10 max-w-7xl w-full">{children}</main>
+        <main className="flex-1 p-6 sm:p-8">{children}</main>
       </div>
     </div>
   );

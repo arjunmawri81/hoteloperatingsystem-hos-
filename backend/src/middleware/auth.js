@@ -1,12 +1,12 @@
 const jwt = require("jsonwebtoken");
-const { mockUsers } = require("../data/mockData");
+const User = require("../models/User");
 
 const JWT_SECRET = process.env.JWT_SECRET || "hos_super_secret_jwt_key_development_2026";
 
 /**
  * Middleware: Verify JWT Bearer Token
  */
-function verifyToken(req, res, next) {
+async function verifyToken(req, res, next) {
   const authHeader = req.headers["authorization"];
   if (!authHeader) {
     return res.status(401).json({
@@ -28,14 +28,34 @@ function verifyToken(req, res, next) {
   // Dev bypass for simulated tokens
   if (token.startsWith("mock_jwt_token_") || token === "dev_session_token") {
     const rolePart = token.replace("mock_jwt_token_", "").split("_")[0] || "super_admin";
-    const foundUser = mockUsers.find((u) => u.role === rolePart) || mockUsers[0];
-    req.user = foundUser;
-    return next();
+    try {
+      const foundUser = await User.findOne({ role: rolePart });
+      if (foundUser) {
+        req.user = foundUser.toObject();
+      } else {
+        req.user = {
+          id: "usr-sa-01",
+          name: "Alexander Whitfield",
+          email: "admin@meridianhotels.com",
+          role: rolePart,
+          orgId: "org-1",
+          orgName: "Meridian Hospitality Group",
+        };
+      }
+      return next();
+    } catch (err) {
+      return next(err);
+    }
   }
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded;
+    const dbUser = await User.findOne({ id: decoded.id });
+    if (!dbUser) {
+      req.user = decoded;
+    } else {
+      req.user = dbUser.toObject();
+    }
     next();
   } catch (err) {
     return res.status(403).json({
@@ -74,3 +94,4 @@ module.exports = {
   verifyToken,
   requireRole,
 };
+

@@ -1,6 +1,7 @@
 /**
- * Initial In-Memory Seed Data for HOS Backend
- * Ready to be replaced by PostgreSQL / MongoDB models.
+ * Initial Seed Data for HOS Backend
+ * Only Users, Organizations, Hotels, and Room Inventory are retained.
+ * All transactional demo data (Reservations, Housekeeping tasks, POS orders, AI chats) is removed.
  */
 
 const mockUsers = [
@@ -106,8 +107,8 @@ const mockHotels = [
     city: "Mumbai",
     region: "West Zone",
     totalRooms: 120,
-    occupiedRooms: 104,
-    occupancyRate: 86.6,
+    occupiedRooms: 0,
+    occupancyRate: 0.0,
     rating: 4.8,
     managerName: "Vikram Malhotra",
     phone: "+91 98201 12345",
@@ -120,8 +121,8 @@ const mockHotels = [
     city: "Goa",
     region: "West Zone",
     totalRooms: 80,
-    occupiedRooms: 76,
-    occupancyRate: 95.0,
+    occupiedRooms: 0,
+    occupancyRate: 0.0,
     rating: 4.9,
     managerName: "Anita Desai",
     phone: "+91 98202 54321",
@@ -134,8 +135,8 @@ const mockHotels = [
     city: "Bengaluru",
     region: "South Zone",
     totalRooms: 100,
-    occupiedRooms: 72,
-    occupancyRate: 72.0,
+    occupiedRooms: 0,
+    occupancyRate: 0.0,
     rating: 4.6,
     managerName: "Ramesh Nair",
     phone: "+91 98203 99887",
@@ -148,8 +149,8 @@ const mockHotels = [
     city: "Jaipur",
     region: "North Zone",
     totalRooms: 90,
-    occupiedRooms: 81,
-    occupancyRate: 90.0,
+    occupiedRooms: 0,
+    occupancyRate: 0.0,
     rating: 4.7,
     managerName: "Sunil Rathore",
     phone: "+91 98204 44556",
@@ -157,176 +158,11 @@ const mockHotels = [
   },
 ];
 
-const mockReservations = [
-  {
-    id: "RES-8821",
-    guestName: "Arjun Verma",
-    guestEmail: "arjun.verma@example.com",
-    guestPhone: "+91 98111 22334",
-    hotelName: "Meridian Grand Palace",
-    roomNumber: "402",
-    roomType: "Executive Suite",
-    checkIn: "2026-08-24",
-    checkOut: "2026-08-27",
-    status: "checked_in",
-    totalAmount: 38500,
-    paidAmount: 38500,
-    source: "Web Direct",
-  },
-  {
-    id: "RES-8822",
-    guestName: "Sophia Martinez",
-    guestEmail: "sophia.m@globaltravel.com",
-    guestPhone: "+1 415 555 9021",
-    hotelName: "Meridian Grand Palace",
-    roomNumber: "305",
-    roomType: "Deluxe King",
-    checkIn: "2026-08-24",
-    checkOut: "2026-08-26",
-    status: "confirmed",
-    totalAmount: 22000,
-    paidAmount: 5000,
-    source: "OTA (Booking.com)",
-  },
-  {
-    id: "RES-8823",
-    guestName: "Dr. K. S. Mehra",
-    guestEmail: "dr.mehra@medgroup.org",
-    guestPhone: "+91 98765 43210",
-    hotelName: "Meridian Grand Palace",
-    roomNumber: "501",
-    roomType: "Presidential Suite",
-    checkIn: "2026-08-22",
-    checkOut: "2026-08-25",
-    status: "checked_in",
-    totalAmount: 115000,
-    paidAmount: 115000,
-    source: "AI Assistant",
-  },
-  {
-    id: "RES-8824",
-    guestName: "Priya Sharma",
-    guestEmail: "priya.sharma@techcorp.in",
-    guestPhone: "+91 99887 76655",
-    hotelName: "Meridian Grand Palace",
-    roomNumber: "214",
-    roomType: "Standard Twin",
-    checkIn: "2026-08-25",
-    checkOut: "2026-08-29",
-    status: "confirmed",
-    totalAmount: 18000,
-    paidAmount: 18000,
-    source: "Web Direct",
-  },
-];
-
-const mockHousekeepingTasks = [
-  {
-    id: "HK-101",
-    roomNumber: "104",
-    roomType: "Standard Twin",
-    floor: 1,
-    status: "dirty",
-    assignedTo: "Kavita Devi",
-    priority: "high",
-    lastCleaned: "Yesterday 11:30 AM",
-  },
-  {
-    id: "HK-102",
-    roomNumber: "208",
-    roomType: "Deluxe King",
-    floor: 2,
-    status: "cleaning",
-    assignedTo: "Manoj Kumar",
-    priority: "medium",
-    lastCleaned: "In progress",
-  },
-  {
-    id: "HK-103",
-    roomNumber: "305",
-    roomType: "Deluxe King",
-    floor: 3,
-    status: "inspected",
-    assignedTo: "Supervisor John",
-    priority: "high",
-    lastCleaned: "Today 10:15 AM",
-  },
-  {
-    id: "HK-104",
-    roomNumber: "402",
-    roomType: "Executive Suite",
-    floor: 4,
-    status: "clean",
-    assignedTo: "Kavita Devi",
-    priority: "low",
-    lastCleaned: "Today 09:00 AM",
-  },
-];
-
-const mockRestaurantOrders = [
-  {
-    id: "POS-409",
-    tableNumber: "T-04 (Poolside)",
-    roomNumber: "402",
-    items: ["Grilled Salmon with Asparagus", "Virgin Mojito x2", "Tiramisu"],
-    total: 3450,
-    status: "cooking",
-    time: "12:10 PM",
-  },
-  {
-    id: "POS-410",
-    tableNumber: "T-12 (Main Dining)",
-    items: ["Butter Chicken", "Garlic Naan x4", "Dal Makhani", "Gulab Jamun"],
-    total: 2890,
-    status: "served",
-    time: "11:50 AM",
-  },
-  {
-    id: "POS-411",
-    tableNumber: "In-Room Dining",
-    roomNumber: "501",
-    items: ["Club Sandwich", "Espresso Double Shot x2", "Fresh Fruit Platter"],
-    total: 1950,
-    status: "charged_to_room",
-    time: "11:30 AM",
-  },
-];
-
-const mockAIConversations = [
-  {
-    id: "AI-901",
-    guestName: "Arjun Verma (Room 402)",
-    guestPhone: "+91 98111 22334",
-    channel: "WhatsApp",
-    lastMessage: "Can you send 2 extra bath towels and a dental kit to room 402?",
-    intent: "Room Service",
-    status: "ai_handling",
-    sentiment: "positive",
-    timestamp: "12:12 PM",
-  },
-  {
-    id: "AI-902",
-    guestName: "Rohan Kapoor",
-    guestPhone: "+91 99220 11990",
-    channel: "Web Widget",
-    lastMessage: "Do you have banquet halls available for a 200-guest wedding on Nov 15th?",
-    intent: "Booking Inquiry",
-    status: "escalated_to_staff",
-    sentiment: "positive",
-    timestamp: "12:05 PM",
-  },
-  {
-    id: "AI-903",
-    guestName: "David Miller",
-    guestPhone: "+44 7700 900123",
-    channel: "Voice Bot",
-    lastMessage: "Requested 2:00 PM late checkout confirmation for tomorrow.",
-    intent: "Late Checkout",
-    status: "resolved",
-    sentiment: "positive",
-    timestamp: "11:42 AM",
-  },
-];
+// Operational demo collections cleared
+const mockReservations = [];
+const mockHousekeepingTasks = [];
+const mockRestaurantOrders = [];
+const mockAIConversations = [];
 
 module.exports = {
   mockUsers,
