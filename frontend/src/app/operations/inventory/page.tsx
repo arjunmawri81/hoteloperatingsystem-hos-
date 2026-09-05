@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { inventoryApi } from "@/lib/api";
 import { Plus, X, Search, Package, AlertTriangle, CheckCircle2, RefreshCw } from "lucide-react";
+import { RoleGuard } from "@/components/layout/RoleGuard";
 
 interface InventoryItem {
   _id?: string;
@@ -33,7 +34,7 @@ export default function InventoryManagementPage() {
     quantity: 100,
     minStock: 30,
     unit: "Units",
-    unitPrice: 12.0,
+    unitPrice: 150.0,
     supplier: "Direct Supplies",
   });
 
@@ -119,7 +120,11 @@ export default function InventoryManagementPage() {
   const categories = ["all", "Linen & Bedding", "Guest Amenities", "Cleaning Supplies", "Food & Beverage", "Maintenance"];
 
   return (
-    <div className="space-y-6">
+    <RoleGuard
+      allowedRoles={["super_admin", "hotel_admin", "hotel_manager", "housekeeping", "restaurant_staff"]}
+      moduleName="Inventory & Stock Management"
+    >
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -165,7 +170,7 @@ export default function InventoryManagementPage() {
         </div>
         <div className="bg-white p-5 rounded-lg border border-[#E5E7EB] shadow-xs">
           <div className="text-[11px] font-bold text-[#6B7280] uppercase">Total Inventory Value</div>
-          <div className="text-[24px] font-bold text-[#111827] mt-1.5">${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+          <div className="text-[24px] font-bold text-[#111827] mt-1.5">₹{totalValue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</div>
         </div>
         <div className="bg-white p-5 rounded-lg border border-[#E5E7EB] shadow-xs">
           <div className="text-[11px] font-bold text-rose-600 uppercase">Low Stock Alerts</div>
@@ -242,7 +247,7 @@ export default function InventoryManagementPage() {
                     </td>
                     <td className="py-3.5 px-4 font-semibold text-[#111827]">
                       <div>{it.name}</div>
-                      <div className="text-[11px] text-[#9CA3AF]">{it.supplier} · ${(it.unitPrice || 0).toFixed(2)} / {it.unit}</div>
+                      <div className="text-[11px] text-[#9CA3AF]">{it.supplier} · ₹{(it.unitPrice || 0).toFixed(2)} / {it.unit}</div>
                     </td>
                     <td className="py-3.5 px-4">
                       <span className="bg-[#F3F4F6] text-[#374151] px-2 py-0.5 rounded text-[11px] font-medium">
@@ -382,7 +387,7 @@ export default function InventoryManagementPage() {
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
-                    Unit Price ($)
+                    Unit Price (₹)
                   </label>
                   <input
                     type="number"
@@ -426,6 +431,7 @@ export default function InventoryManagementPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </RoleGuard>
   );
 }

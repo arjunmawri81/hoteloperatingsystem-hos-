@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserMenu } from "@/components/layout/UserMenu";
-import { AppRail } from "@/components/layout/AppRail";
 import { GlobalSearchModal } from "@/components/layout/GlobalSearchModal";
 import { NotificationPopover } from "@/components/layout/NotificationPopover";
+
+import { RoleGuard } from "@/components/layout/RoleGuard";
 
 export default function AIReceptionistLayout({
   children,
@@ -27,22 +28,33 @@ export default function AIReceptionistLayout({
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] text-[#111827] flex font-sans antialiased selection:bg-red-500 selection:text-white">
-      {/* 1. Global App Rail */}
-      <AppRail />
-
-      {/* 2. Left Sidebar */}
+    <RoleGuard
+      allowedRoles={["super_admin", "hotel_admin", "ai_receptionist", "hotel_manager", "receptionist"]}
+      moduleName="AI Receptionist Autonomous Console"
+    >
+      <div className="min-h-screen bg-[#FAFAFA] text-[#111827] flex font-sans antialiased selection:bg-red-500 selection:text-white">
+      {/* Left Sidebar */}
       <aside className="w-60 bg-white border-r border-[#E5E7EB] flex flex-col justify-between shrink-0 min-h-screen">
         <div>
           {/* Sidebar Top Title */}
-          <div className="px-6 pt-6 pb-4">
-            <h2 className="text-[11px] font-bold tracking-wider text-[#6B7280] uppercase">
-              AI Receptionist
-            </h2>
+          <div className="px-5 py-4 border-b border-[#F3F4F6] flex items-center gap-3">
+            <Link
+              href="/"
+              title="HOS Home"
+              className="w-8 h-8 bg-[#EC3013] text-white flex items-center justify-center font-black text-xs rounded tracking-tighter shadow-xs hover:bg-[#D62839] transition-colors"
+            >
+              HOS
+            </Link>
+            <div>
+              <h2 className="text-[12px] font-bold text-[#111827] uppercase tracking-wider">
+                AI Receptionist
+              </h2>
+              <p className="text-[10px] text-[#9CA3AF]">Autonomous Agent</p>
+            </div>
           </div>
 
           {/* Navigation Menu */}
-          <nav className="px-3 space-y-1">
+          <nav className="p-3 space-y-1">
             {navItems.map((item) => {
               const isActive =
                 item.href === "/ai-receptionist"
@@ -77,7 +89,7 @@ export default function AIReceptionistLayout({
         </div>
       </aside>
 
-      {/* 3. Main Content Area */}
+      {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         {/* Top Header Bar */}
         <header className="h-14 bg-white border-b border-[#E5E7EB] px-6 flex items-center justify-between shrink-0 sticky top-0 z-20">
@@ -97,9 +109,10 @@ export default function AIReceptionistLayout({
           </div>
         </header>
 
-        {/* Page Content Body */}
-        <main className="flex-1 p-6 sm:p-8">{children}</main>
+          {/* Page Content Body */}
+          <main className="flex-1 p-6 sm:p-8">{children}</main>
+        </div>
       </div>
-    </div>
+    </RoleGuard>
   );
 }

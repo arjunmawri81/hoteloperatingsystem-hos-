@@ -1,71 +1,103 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 import { hotelsApi } from "@/lib/api";
 import { Hotel } from "@/types";
-import { Plus, X, Search, RefreshCw, CheckCircle2, Building2, MapPin } from "lucide-react";
+import { Plus, X, Search, RefreshCw, CheckCircle2, Building2, MapPin, Trash2 } from "lucide-react";
 
 export default function HotelsManagementPage() {
+  const { user, isLoading: isAuthLoading } = useAuth();
   const [hotels, setHotels] = useState<Hotel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
-  const [newHotel, setNewHotel] = useState({
+  const [newHotel, setNewHotel] = useState<{
+    name: string;
+    city: string;
+    region: string;
+    totalRooms: string | number;
+    managerName: string;
+    phone: string;
+  }>({
     name: "",
-    city: "Mumbai",
-    region: "West Zone",
-    totalRooms: 80,
-    managerName: "General Manager",
-    phone: "+91 99999 12345",
+    city: "",
+    region: "",
+    totalRooms: "",
+    managerName: "",
+    phone: "",
   });
 
   const loadHotels = async () => {
+    if (isAuthLoading) return;
     setIsLoading(true);
     try {
-      const data = await hotelsApi.getAll();
+      const effectiveOrgId = user?.orgId || "org-1";
+      const data = await hotelsApi.getAll({ orgId: effectiveOrgId });
       setHotels(data);
     } catch (e) {
-      console.error(e);
+      console.error("Failed to load hotels:", e);
+      setHotels([]);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    loadHotels();
-  }, []);
+    if (!isAuthLoading) {
+      loadHotels();
+    }
+  }, [user?.orgId, isAuthLoading]);
+
+  const handleDeleteHotel = async (hotelId: string, hotelName: string) => {
+    if (!window.confirm(`Are you sure you want to delete property "${hotelName}"?`)) {
+      return;
+    }
+    try {
+      await hotelsApi.delete(hotelId);
+      setHotels((prev) => prev.filter((h) => h.id !== hotelId));
+      setToastMsg(`🗑️ Property "${hotelName}" deleted successfully`);
+      setTimeout(() => setToastMsg(null), 4000);
+    } catch (err: any) {
+      console.error("Failed to delete hotel:", err);
+      setToastMsg(`❌ Failed to delete property: ${err?.message || "Server error"}`);
+    }
+  };
 
   const handleAddHotel = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newHotel.name) return;
+    if (!newHotel.name.trim()) return;
 
     try {
+      const effectiveOrgId = user?.orgId || "org-1";
       const created = await hotelsApi.create({
-        name: newHotel.name,
-        city: newHotel.city,
-        region: newHotel.region,
-        totalRooms: Number(newHotel.totalRooms),
-        managerName: newHotel.managerName,
-        phone: newHotel.phone,
+        orgId: effectiveOrgId,
+        name: newHotel.name.trim(),
+        city: newHotel.city.trim() || "Main City",
+        region: newHotel.region.trim() || "Central Zone",
+        totalRooms: Number(newHotel.totalRooms) || 0,
+        managerName: newHotel.managerName.trim() || "General Manager",
+        phone: newHotel.phone.trim() || "+91 90000 00000",
       });
 
-      setHotels([created, ...hotels]);
+      setHotels((prev) => [created, ...prev.filter((h) => h.id !== created.id)]);
       setIsModalOpen(false);
-      setToastMsg(`✅ Property "${created.name}" added to portfolio`);
+      setToastMsg(`✅ Property "${created.name}" saved to database`);
       setTimeout(() => setToastMsg(null), 4000);
 
       setNewHotel({
         name: "",
-        city: "Mumbai",
-        region: "West Zone",
-        totalRooms: 80,
-        managerName: "General Manager",
-        phone: "+91 99999 12345",
+        city: "",
+        region: "",
+        totalRooms: "",
+        managerName: "",
+        phone: "",
       });
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      console.error("Failed to create hotel:", err);
+      setToastMsg(`❌ Failed to save property: ${err?.message || "Server error"}`);
     }
   };
 
@@ -143,14 +175,15 @@ export default function HotelsManagementPage() {
                 <th className="py-3 px-4 font-bold">GENERAL MANAGER</th>
                 <th className="py-3 px-4 font-bold">TOTAL ROOMS</th>
                 <th className="py-3 px-4 font-bold">OCCUPANCY</th>
-                <th className="py-3 px-4 text-right font-bold">STATUS</th>
+                <th className="py-3 px-4 font-bold">STATUS</th>
+                <th className="py-3 px-4 text-right font-bold">ACTION</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#F3F4F6]">
               {filteredHotels.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-[#9CA3AF]">
-                    No hotel properties matching search
+                  <td colSpan={7} className="py-8 text-center text-[#9CA3AF]">
+                    No hotel properties found
                   </td>
                 </tr>
               ) : (
@@ -171,12 +204,22 @@ export default function HotelsManagementPage() {
                       {h.totalRooms} Rooms
                     </td>
                     <td className="py-3.5 px-4 text-[#4B5563]">
-                      <span className="font-bold text-[#111827]">{h.occupancyRate || 80}%</span>
+                      <span className="font-bold text-[#111827]">{h.occupancyRate || 0}%</span>
                     </td>
-                    <td className="py-3.5 px-4 text-right">
+                    <td className="py-3.5 px-4">
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded capitalize bg-emerald-50 text-emerald-800 border border-emerald-200">
                         Active
                       </span>
+                    </td>
+                    <td className="py-3.5 px-4 text-right">
+                      <button
+                        onClick={() => handleDeleteHotel(h.id, h.name)}
+                        title={`Delete ${h.name}`}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 text-red-600 hover:bg-red-50 rounded text-[11px] font-semibold transition-colors cursor-pointer border border-transparent hover:border-red-200"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Delete</span>
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -211,7 +254,7 @@ export default function HotelsManagementPage() {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Meridian Seaside Resort"
+                  placeholder="e.g. Royal Heritage Resort"
                   value={newHotel.name}
                   onChange={(e) => setNewHotel({ ...newHotel, name: e.target.value })}
                   className="w-full px-3 py-2 border border-[#D1D5DB] rounded focus:outline-none focus:border-[#EC3013]"
@@ -225,7 +268,7 @@ export default function HotelsManagementPage() {
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. Goa"
+                    placeholder="e.g. Mumbai"
                     value={newHotel.city}
                     onChange={(e) => setNewHotel({ ...newHotel, city: e.target.value })}
                     className="w-full px-3 py-2 border border-[#D1D5DB] rounded"
@@ -237,7 +280,7 @@ export default function HotelsManagementPage() {
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. Coastal Area"
+                    placeholder="e.g. West Zone"
                     value={newHotel.region}
                     onChange={(e) => setNewHotel({ ...newHotel, region: e.target.value })}
                     className="w-full px-3 py-2 border border-[#D1D5DB] rounded"
@@ -252,8 +295,9 @@ export default function HotelsManagementPage() {
                   </label>
                   <input
                     type="number"
+                    placeholder="e.g. 50"
                     value={newHotel.totalRooms}
-                    onChange={(e) => setNewHotel({ ...newHotel, totalRooms: Number(e.target.value) })}
+                    onChange={(e) => setNewHotel({ ...newHotel, totalRooms: e.target.value })}
                     className="w-full px-3 py-2 border border-[#D1D5DB] rounded"
                   />
                 </div>
@@ -263,7 +307,7 @@ export default function HotelsManagementPage() {
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. R. Sharma"
+                    placeholder="e.g. Rajesh Sharma"
                     value={newHotel.managerName}
                     onChange={(e) => setNewHotel({ ...newHotel, managerName: e.target.value })}
                     className="w-full px-3 py-2 border border-[#D1D5DB] rounded"
@@ -277,7 +321,7 @@ export default function HotelsManagementPage() {
                 </label>
                 <input
                   type="text"
-                  placeholder="+1 555 0199"
+                  placeholder="e.g. +91 98000 00000"
                   value={newHotel.phone}
                   onChange={(e) => setNewHotel({ ...newHotel, phone: e.target.value })}
                   className="w-full px-3 py-2 border border-[#D1D5DB] rounded"

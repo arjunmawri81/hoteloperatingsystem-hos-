@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { staffApi } from "@/lib/api";
-import { Plus, X, Search, Users, CheckCircle2, RefreshCw } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { staffApi, hotelsApi } from "@/lib/api";
+import { Hotel, UserRole } from "@/types";
+import { Plus, X, Search, Users, CheckCircle2, RefreshCw, Lock, Eye, EyeOff, Shield } from "lucide-react";
 
 interface StaffMember {
   _id?: string;
@@ -13,72 +15,117 @@ interface StaffMember {
   hotel: string;
   department: "Reception" | "Housekeeping" | "Restaurant" | "Inventory" | "Finance" | "Sales";
   role: string;
+  systemRole?: string;
   status: "active" | "inactive";
 }
 
 export default function StaffManagementPage() {
+  const { user, isLoading: isAuthLoading } = useAuth();
   const [staffList, setStaffList] = useState<StaffMember[]>([]);
+  const [orgHotels, setOrgHotels] = useState<Hotel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [deptFilter, setDeptFilter] = useState("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
-  const [newStaff, setNewStaff] = useState({
+  const [newStaff, setNewStaff] = useState<{
+    name: string;
+    email: string;
+    phone: string;
+    hotel: string;
+    department: StaffMember["department"] | "";
+    role: string;
+    systemRole: UserRole | "";
+    password: string;
+  }>({
     name: "",
     email: "",
     phone: "",
-    hotel: "Meridian Grand Palace",
-    department: "Reception" as StaffMember["department"],
-    role: "Front Desk Officer",
+    hotel: "",
+    department: "",
+    role: "",
+    systemRole: "",
+    password: "",
   });
 
   const loadStaff = async () => {
+    if (isAuthLoading) return;
     setIsLoading(true);
     try {
-      const res = await staffApi.getAll();
-      setStaffList(res);
+      const effectiveOrgId = user?.orgId || "org-1";
+      const [staffData, hotelsData] = await Promise.all([
+        staffApi.getAll({ orgId: effectiveOrgId }),
+        hotelsApi.getAll({ orgId: effectiveOrgId }),
+      ]);
+      setStaffList(staffData);
+      setOrgHotels(hotelsData);
     } catch (e) {
-      console.error(e);
+      console.error("Failed to load staff:", e);
+      setStaffList([]);
+      setOrgHotels([]);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    loadStaff();
-  }, []);
+    if (!isAuthLoading) {
+      loadStaff();
+    }
+  }, [user?.orgId, isAuthLoading]);
 
   const handleAddStaff = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newStaff.name || !newStaff.email) return;
+    if (!newStaff.name.trim() || !newStaff.email.trim()) {
+      setToastMsg("⚠️ Please enter staff name and email.");
+      return;
+    }
+
+    if (!newStaff.systemRole) {
+      setToastMsg("⚠️ Please select a System Login Role.");
+      return;
+    }
+
+    if (!newStaff.password || newStaff.password.length < 6) {
+      setToastMsg("⚠️ Please enter a login password (min 6 characters) for this staff member.");
+      return;
+    }
 
     try {
+      const effectiveOrgId = user?.orgId || "org-1";
       const created = await staffApi.create({
-        name: newStaff.name,
-        email: newStaff.email,
-        phone: newStaff.phone || "+91 98000 00000",
-        hotel: newStaff.hotel,
-        department: newStaff.department,
-        role: newStaff.role,
+        orgId: effectiveOrgId,
+        name: newStaff.name.trim(),
+        email: newStaff.email.toLowerCase().trim(),
+        phone: newStaff.phone.trim() || "+91 98000 00000",
+        hotel: newStaff.hotel || (orgHotels[0]?.name || "Main Property"),
+        department: (newStaff.department || "Reception") as any,
+        role: newStaff.role.trim() || newStaff.systemRole,
+        systemRole: newStaff.systemRole,
+        password: newStaff.password.trim(),
         status: "active",
       });
 
-      setStaffList([created, ...staffList]);
+      setStaffList((prev) => [created, ...prev.filter((s) => s.id !== created.id)]);
       setIsModalOpen(false);
-      setToastMsg(`✅ Staff member "${created.name}" saved to MongoDB database`);
-      setTimeout(() => setToastMsg(null), 3500);
+      setToastMsg(`✅ Staff member "${newStaff.name}" saved to database! Login: ${newStaff.email} (${newStaff.systemRole})`);
+      setTimeout(() => setToastMsg(null), 6000);
 
       setNewStaff({
         name: "",
         email: "",
         phone: "",
-        hotel: "Meridian Grand Palace",
-        department: "Reception",
-        role: "Front Desk Officer",
+        hotel: "",
+        department: "",
+        role: "",
+        systemRole: "",
+        password: "",
       });
-    } catch (err) {
-      console.error("Failed to add staff:", err);
+    } catch (err: any) {
+      console.error("Failed to create staff:", err);
+      setToastMsg(`❌ Failed to save staff member: ${err?.message || "Server error"}`);
     }
   };
 
@@ -241,7 +288,7 @@ export default function StaffManagementPage() {
               </button>
             </div>
 
-            <form onSubmit={handleAddStaff} className="space-y-4 text-[13px]">
+            <form onSubmit={handleAddStaff} className="space-y-4 text-[13px]" autoComplete="off">
               <div>
                 <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
                   Full Name *
@@ -264,7 +311,9 @@ export default function StaffManagementPage() {
                   <input
                     type="email"
                     required
-                    placeholder="staff@hotel.com"
+                    name="new_staff_member_email"
+                    autoComplete="new-password"
+                    placeholder="e.g. staff@hotel.com"
                     value={newStaff.email}
                     onChange={(e) => setNewStaff({ ...newStaff, email: e.target.value })}
                     className="w-full px-3 py-2 border border-[#D1D5DB] rounded"
@@ -276,7 +325,7 @@ export default function StaffManagementPage() {
                   </label>
                   <input
                     type="text"
-                    placeholder="+91 98000 00000"
+                    placeholder="e.g. +91 98000 00000"
                     value={newStaff.phone}
                     onChange={(e) => setNewStaff({ ...newStaff, phone: e.target.value })}
                     className="w-full px-3 py-2 border border-[#D1D5DB] rounded"
@@ -294,10 +343,17 @@ export default function StaffManagementPage() {
                     onChange={(e) => setNewStaff({ ...newStaff, hotel: e.target.value })}
                     className="w-full px-3 py-2 border border-[#D1D5DB] rounded bg-white"
                   >
-                    <option value="Meridian Grand Palace">Meridian Grand Palace</option>
-                    <option value="Meridian Ocean View">Meridian Ocean View</option>
-                    <option value="Meridian City Heights">Meridian City Heights</option>
-                    <option value="Meridian Royal Heritage">Meridian Royal Heritage</option>
+                    <option value="">Select Property...</option>
+                    {orgHotels.map((h) => (
+                      <option key={h.id} value={h.name}>
+                        {h.name}
+                      </option>
+                    ))}
+                    {orgHotels.length === 0 && (
+                      <option value="Head Office / Central Operations">
+                        Head Office / Central Operations
+                      </option>
+                    )}
                   </select>
                 </div>
                 <div>
@@ -309,6 +365,7 @@ export default function StaffManagementPage() {
                     onChange={(e) => setNewStaff({ ...newStaff, department: e.target.value as any })}
                     className="w-full px-3 py-2 border border-[#D1D5DB] rounded bg-white"
                   >
+                    <option value="">Select Department...</option>
                     <option value="Reception">Reception</option>
                     <option value="Housekeeping">Housekeeping</option>
                     <option value="Restaurant">Restaurant</option>
@@ -319,17 +376,66 @@ export default function StaffManagementPage() {
                 </div>
               </div>
 
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
+                    Designation / Title
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Front Desk Officer"
+                    value={newStaff.role}
+                    onChange={(e) => setNewStaff({ ...newStaff, role: e.target.value })}
+                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
+                    System Login Role *
+                  </label>
+                  <select
+                    value={newStaff.systemRole}
+                    onChange={(e) => setNewStaff({ ...newStaff, systemRole: e.target.value as UserRole })}
+                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded bg-white font-semibold text-[#111827]"
+                  >
+                    <option value="">Select System Role...</option>
+                    <option value="receptionist">Receptionist (/operations/front-desk)</option>
+                    <option value="housekeeping">Housekeeping (/operations/housekeeping)</option>
+                    <option value="hotel_manager">Hotel GM (/operations)</option>
+                    <option value="restaurant_staff">Restaurant POS (/operations/restaurant-pos)</option>
+                    <option value="finance">Finance (/operations/billing)</option>
+                    <option value="area_manager">Area Manager (/area-manager)</option>
+                  </select>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
-                  Designation / Role Title
+                  Staff Login Password *
                 </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Front Desk Shift Leader"
-                  value={newStaff.role}
-                  onChange={(e) => setNewStaff({ ...newStaff, role: e.target.value })}
-                  className="w-full px-3 py-2 border border-[#D1D5DB] rounded"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    minLength={6}
+                    name="new_staff_member_password"
+                    autoComplete="new-password"
+                    placeholder="e.g. Pass@123 (min 6 chars)..."
+                    value={newStaff.password}
+                    onChange={(e) => setNewStaff({ ...newStaff, password: e.target.value })}
+                    className="w-full pl-3 pr-10 py-2 border border-[#D1D5DB] rounded focus:outline-none focus:border-[#EC3013] text-[13px]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#9CA3AF] hover:text-[#4B5563]"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                <p className="text-[11px] text-[#9CA3AF] mt-1">
+                  The staff member will use this email and password to log in at <code>/login</code>.
+                </p>
               </div>
 
               <div className="flex justify-end gap-3 pt-3 border-t border-[#E5E7EB]">
@@ -342,9 +448,9 @@ export default function StaffManagementPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#EC3013] hover:bg-[#D62839] text-white font-bold rounded shadow-xs"
+                  className="px-5 py-2 bg-[#EC3013] hover:bg-[#D62839] text-white font-bold rounded shadow-xs cursor-pointer"
                 >
-                  Save to Database
+                  Create Staff Account
                 </button>
               </div>
             </form>

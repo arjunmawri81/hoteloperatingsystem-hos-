@@ -47,6 +47,13 @@ export interface RegisterData {
   password?: string;
 }
 
+export interface UserSignupData {
+  name: string;
+  email: string;
+  phone?: string;
+  password?: string;
+}
+
 export interface ApiResponse<T = any> {
   success: boolean;
   message?: string;
@@ -60,6 +67,7 @@ export interface Organization {
   code: string;
   ownerName: string;
   ownerEmail: string;
+  ownerPassword?: string;
   hotelsCount: number;
   activeRooms: number;
   monthlyRevenue: number;

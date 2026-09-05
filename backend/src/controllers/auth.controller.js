@@ -9,35 +9,31 @@ const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
 
 class AuthController {
   static async login(req, res, next) {
-    const { email, password, role } = req.body;
+    const { email, password } = req.body;
 
     try {
-      let user = await User.findOne({ email: email.toLowerCase() });
-
-      if (!user && role) {
-        user = await User.findOne({ role });
+      if (!email || !password) {
+        return res.status(400).json({
+          success: false,
+          message: "Email and password are required",
+        });
       }
 
+      const user = await User.findOne({ email: email.toLowerCase().trim() });
+
       if (!user) {
-        const generatedId = `usr-${Date.now()}`;
-        user = new User({
-          id: generatedId,
-          name: email.split("@")[0].replace(".", " "),
-          email: email.toLowerCase(),
-          role: role || "super_admin",
-          orgId: "org-1",
-          orgName: "Meridian Hospitality Group",
-          passwordHash: password || "admin123",
+        return res.status(401).json({
+          success: false,
+          message: "Invalid email or password. Please check your credentials.",
         });
-        await user.save();
-      } else {
-        const isMatch = await bcrypt.compare(password || "admin123", user.passwordHash);
-        if (!isMatch) {
-          return res.status(401).json({
-            success: false,
-            message: "Invalid credentials",
-          });
-        }
+      }
+
+      const isMatch = await bcrypt.compare(password, user.passwordHash);
+      if (!isMatch) {
+        return res.status(401).json({
+          success: false,
+          message: "Invalid email or password. Please check your credentials.",
+        });
       }
 
       const tokenPayload = {
@@ -146,6 +142,62 @@ class AuthController {
       return res.status(201).json({
         success: true,
         message: "Organization registered successfully",
+        token,
+        user: safeUser,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async signup(req, res, next) {
+    const { name, email, phone, password } = req.body;
+
+    try {
+      const existing = await User.findOne({ email: email.toLowerCase().trim() });
+
+      if (existing) {
+        return res.status(409).json({
+          success: false,
+          message: "An account with this email already exists",
+        });
+      }
+
+      const newUser = new User({
+        id: `usr-cust-${Date.now()}`,
+        name: name.trim(),
+        email: email.toLowerCase().trim(),
+        phone: phone || "",
+        role: "customer",
+        passwordHash: password || "guest123",
+      });
+      await newUser.save();
+
+      const token = jwt.sign(
+        {
+          id: newUser.id,
+          email: newUser.email,
+          role: newUser.role,
+        },
+        JWT_SECRET,
+        { expiresIn: JWT_EXPIRES_IN }
+      );
+
+      const safeUser = newUser.toObject();
+      delete safeUser.passwordHash;
+
+      await AuditService.log({
+        userId: newUser.id,
+        userRole: newUser.role,
+        action: "REGISTER_USER",
+        resource: "auth",
+        resourceId: newUser.id,
+        ipAddress: req.ip || req.connection?.remoteAddress,
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: "User account created successfully",
         token,
         user: safeUser,
       });

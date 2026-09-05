@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 import { areasApi } from "@/lib/api";
-import { Plus, X, Search, MapPin, CheckCircle2, RefreshCw } from "lucide-react";
+import { Plus, X, Search, MapPin, CheckCircle2, RefreshCw, Eye, EyeOff, Lock } from "lucide-react";
 
 interface Area {
   _id?: string;
@@ -18,60 +19,90 @@ interface Area {
 }
 
 export default function AreaManagementPage() {
+  const { user, isLoading: isAuthLoading } = useAuth();
   const [areas, setAreas] = useState<Area[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
-  const [newArea, setNewArea] = useState({
+  const [newArea, setNewArea] = useState<{
+    name: string;
+    region: string;
+    manager: string;
+    managerEmail: string;
+    managerPassword: string;
+    hotelsCount: string | number;
+    totalRooms: string | number;
+  }>({
     name: "",
-    region: "West Region",
+    region: "",
     manager: "",
-    hotelsCount: 1,
-    totalRooms: 80,
+    managerEmail: "",
+    managerPassword: "",
+    hotelsCount: "",
+    totalRooms: "",
   });
 
   const loadAreas = async () => {
+    if (isAuthLoading) return;
     setIsLoading(true);
     try {
-      const res = await areasApi.getAll();
+      const effectiveOrgId = user?.orgId || "org-1";
+      const res = await areasApi.getAll({ orgId: effectiveOrgId });
       setAreas(res);
     } catch (e) {
-      console.error(e);
+      console.error("Failed to load areas:", e);
+      setAreas([]);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    loadAreas();
-  }, []);
+    if (!isAuthLoading) {
+      loadAreas();
+    }
+  }, [user?.orgId, isAuthLoading]);
 
   const handleCreateArea = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newArea.name || !newArea.manager) return;
+    if (!newArea.name.trim() || !newArea.manager.trim()) return;
 
     try {
+      const effectiveOrgId = user?.orgId || "org-1";
       const created = await areasApi.create({
-        name: newArea.name,
-        region: newArea.region,
-        manager: newArea.manager,
-        hotelsCount: Number(newArea.hotelsCount),
-        totalRooms: Number(newArea.totalRooms),
+        orgId: effectiveOrgId,
+        name: newArea.name.trim(),
+        region: newArea.region.trim() || "General Zone",
+        manager: newArea.manager.trim(),
+        managerEmail: newArea.managerEmail.trim(),
+        managerPassword: newArea.managerPassword.trim(),
+        hotelsCount: Number(newArea.hotelsCount) || 1,
+        totalRooms: Number(newArea.totalRooms) || 0,
         occupancy: "0%",
-        revenue: "$0",
+        revenue: "₹0",
         status: "active",
       });
 
-      setAreas([created, ...areas]);
+      setAreas((prev) => [created, ...prev.filter((a) => a.id !== created.id)]);
       setIsModalOpen(false);
-      setToastMsg(`✅ Area "${created.name}" saved to MongoDB database`);
-      setTimeout(() => setToastMsg(null), 3500);
+      setToastMsg(`✅ Area "${created.name}" saved to database! ${newArea.managerEmail ? `Manager Login: ${newArea.managerEmail}` : ""}`);
+      setTimeout(() => setToastMsg(null), 5000);
 
-      setNewArea({ name: "", region: "West Region", manager: "", hotelsCount: 1, totalRooms: 80 });
-    } catch (err) {
+      setNewArea({
+        name: "",
+        region: "",
+        manager: "",
+        managerEmail: "",
+        managerPassword: "",
+        hotelsCount: "",
+        totalRooms: "",
+      });
+    } catch (err: any) {
       console.error("Failed to create area:", err);
+      setToastMsg(`❌ Failed to save area cluster: ${err?.message || "Server error"}`);
     }
   };
 
@@ -254,8 +285,9 @@ export default function AreaManagementPage() {
                   </label>
                   <input
                     type="number"
+                    placeholder="e.g. 1"
                     value={newArea.hotelsCount}
-                    onChange={(e) => setNewArea({ ...newArea, hotelsCount: Number(e.target.value) })}
+                    onChange={(e) => setNewArea({ ...newArea, hotelsCount: e.target.value })}
                     className="w-full px-3 py-2 border border-[#D1D5DB] rounded"
                   />
                 </div>
@@ -275,6 +307,43 @@ export default function AreaManagementPage() {
                 />
               </div>
 
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
+                    Manager Email (Login ID)
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="manager@hotel.com"
+                    value={newArea.managerEmail}
+                    onChange={(e) => setNewArea({ ...newArea, managerEmail: e.target.value })}
+                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
+                    Manager Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      minLength={6}
+                      placeholder="Min 6 chars..."
+                      value={newArea.managerPassword}
+                      onChange={(e) => setNewArea({ ...newArea, managerPassword: e.target.value })}
+                      className="w-full pl-3 pr-9 py-2 border border-[#D1D5DB] rounded text-[13px]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-[#9CA3AF] hover:text-[#4B5563]"
+                    >
+                      {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               <div className="flex justify-end gap-3 pt-3 border-t border-[#E5E7EB]">
                 <button
                   type="button"
@@ -285,9 +354,9 @@ export default function AreaManagementPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#EC3013] hover:bg-[#D62839] text-white font-bold rounded shadow-xs"
+                  className="px-5 py-2 bg-[#EC3013] hover:bg-[#D62839] text-white font-bold rounded shadow-xs cursor-pointer"
                 >
-                  Save to Database
+                  Create Area Cluster
                 </button>
               </div>
             </form>

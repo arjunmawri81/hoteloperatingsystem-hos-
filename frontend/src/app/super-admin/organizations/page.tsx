@@ -3,24 +3,36 @@
 import { useState, useEffect } from "react";
 import { organizationsApi } from "@/lib/api";
 import { Organization } from "@/types";
-import { Plus, X, Search, RefreshCw, CheckCircle2, Building, Users } from "lucide-react";
+import { Plus, X, Search, RefreshCw, CheckCircle2, Building, Users, Lock, Eye, EyeOff, Key } from "lucide-react";
 
 export default function OrganizationsPage() {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
-  const [newOrg, setNewOrg] = useState({
+  const [newOrg, setNewOrg] = useState<{
+    name: string;
+    code: string;
+    ownerName: string;
+    ownerEmail: string;
+    ownerPassword: string;
+    hotelsCount: string | number;
+    activeRooms: string | number;
+    monthlyRevenue: string | number;
+    status: Organization["status"];
+  }>({
     name: "",
     code: "",
     ownerName: "",
     ownerEmail: "",
-    hotelsCount: 2,
-    activeRooms: 120,
-    monthlyRevenue: 45000,
-    status: "active" as Organization["status"],
+    ownerPassword: "",
+    hotelsCount: "",
+    activeRooms: "",
+    monthlyRevenue: "",
+    status: "active",
   });
 
   const loadOrgs = async () => {
@@ -29,7 +41,7 @@ export default function OrganizationsPage() {
       const data = await organizationsApi.getAll();
       setOrganizations(data);
     } catch (e) {
-      console.error(e);
+      console.error("Failed to load organizations:", e);
     } finally {
       setIsLoading(false);
     }
@@ -41,37 +53,51 @@ export default function OrganizationsPage() {
 
   const handleCreateOrg = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newOrg.name || !newOrg.ownerName) return;
+    if (!newOrg.name || !newOrg.ownerName || !newOrg.ownerEmail) {
+      setToastMsg("⚠️ Please enter organization name, owner name, and owner email.");
+      return;
+    }
+
+    if (!newOrg.ownerPassword.trim() || newOrg.ownerPassword.trim().length < 6) {
+      setToastMsg("⚠️ Please set a password (min 6 characters) for this organization owner.");
+      return;
+    }
+
+    const assignedPassword = newOrg.ownerPassword.trim();
+    const assignedEmail = newOrg.ownerEmail.toLowerCase().trim();
 
     try {
       const created = await organizationsApi.create({
-        name: newOrg.name,
-        code: newOrg.code || newOrg.name.toUpperCase().slice(0, 4),
-        ownerName: newOrg.ownerName,
-        ownerEmail: newOrg.ownerEmail || "admin@example.com",
-        hotelsCount: Number(newOrg.hotelsCount),
-        activeRooms: Number(newOrg.activeRooms),
-        monthlyRevenue: Number(newOrg.monthlyRevenue),
+        name: newOrg.name.trim(),
+        code: (newOrg.code.trim() || newOrg.name.toUpperCase().slice(0, 4)),
+        ownerName: newOrg.ownerName.trim(),
+        ownerEmail: assignedEmail,
+        ownerPassword: assignedPassword,
+        hotelsCount: Number(newOrg.hotelsCount) || 1,
+        activeRooms: Number(newOrg.activeRooms) || 0,
+        monthlyRevenue: Number(newOrg.monthlyRevenue) || 0,
         status: newOrg.status,
       });
 
-      setOrganizations([created, ...organizations]);
+      setOrganizations((prev) => [created, ...prev.filter((o) => o.id !== created.id)]);
       setIsModalOpen(false);
-      setToastMsg(`✅ Organization "${created.name}" created successfully!`);
-      setTimeout(() => setToastMsg(null), 4000);
+      setToastMsg(`✅ Organization "${created.name}" saved to database! Owner Login: ${assignedEmail} | Password: ${assignedPassword}`);
+      setTimeout(() => setToastMsg(null), 8000);
 
       setNewOrg({
         name: "",
         code: "",
         ownerName: "",
         ownerEmail: "",
-        hotelsCount: 2,
-        activeRooms: 120,
-        monthlyRevenue: 45000,
+        ownerPassword: "",
+        hotelsCount: "",
+        activeRooms: "",
+        monthlyRevenue: "",
         status: "active",
       });
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      console.error("Failed to create organization:", err);
+      setToastMsg(`❌ Failed to save organization: ${err?.message || "Server error"}`);
     }
   };
 
@@ -177,7 +203,7 @@ export default function OrganizationsPage() {
                       {org.activeRooms} Rooms
                     </td>
                     <td className="py-3.5 px-4 font-bold text-[#111827]">
-                      ${org.monthlyRevenue?.toLocaleString?.() || org.monthlyRevenue}
+                      ₹{org.monthlyRevenue?.toLocaleString?.() || org.monthlyRevenue}
                     </td>
                     <td className="py-3.5 px-4 text-right">
                       <span
@@ -248,8 +274,9 @@ export default function OrganizationsPage() {
                   </label>
                   <input
                     type="number"
+                    placeholder="e.g. 1"
                     value={newOrg.hotelsCount}
-                    onChange={(e) => setNewOrg({ ...newOrg, hotelsCount: Number(e.target.value) })}
+                    onChange={(e) => setNewOrg({ ...newOrg, hotelsCount: e.target.value })}
                     className="w-full px-3 py-2 border border-[#D1D5DB] rounded"
                   />
                 </div>
@@ -266,21 +293,53 @@ export default function OrganizationsPage() {
                     placeholder="e.g. David Mercer"
                     value={newOrg.ownerName}
                     onChange={(e) => setNewOrg({ ...newOrg, ownerName: e.target.value })}
-                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded"
+                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded focus:outline-none focus:border-[#EC3013]"
                   />
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
-                    Owner Email
+                    Owner Email (Login ID) *
                   </label>
                   <input
                     type="email"
+                    required
                     placeholder="owner@hotel.com"
                     value={newOrg.ownerEmail}
                     onChange={(e) => setNewOrg({ ...newOrg, ownerEmail: e.target.value })}
-                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded"
+                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded focus:outline-none focus:border-[#EC3013]"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
+                  Owner Login Password *
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    minLength={6}
+                    placeholder="Enter new password for owner account (min 6 chars)..."
+                    value={newOrg.ownerPassword}
+                    onChange={(e) => setNewOrg({ ...newOrg, ownerPassword: e.target.value })}
+                    className="w-full pl-3 pr-10 py-2 border border-[#D1D5DB] rounded focus:outline-none focus:border-[#EC3013] text-[13px]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#9CA3AF] hover:text-[#4B5563]"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+                <p className="text-[11px] text-[#6B7280] mt-1">
+                  The Super Admin must set a new password for this hotel organization owner to log in.
+                </p>
               </div>
 
               <div className="flex justify-end gap-3 pt-3 border-t border-[#E5E7EB]">

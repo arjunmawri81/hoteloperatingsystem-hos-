@@ -128,8 +128,10 @@ erDiagram
 ### 3.1 Authentication & User Management
 
 #### `POST /api/auth/login`
+
 - **Description**: Authenticates user and returns JWT token.
 - **Request Body**:
+
 ```json
 {
   "email": "admin@meridianhotels.com",
@@ -137,7 +139,9 @@ erDiagram
   "role": "super_admin"
 }
 ```
+
 - **Response `200 OK`**:
+
 ```json
 {
   "success": true,
@@ -156,8 +160,10 @@ erDiagram
 ```
 
 #### `POST /api/auth/register`
+
 - **Description**: Registers a new hotel organization and creates initial Hotel Admin user.
 - **Request Body**:
+
 ```json
 {
   "orgName": "Meridian Hospitality Group",
@@ -168,7 +174,9 @@ erDiagram
   "password": "Password123!"
 }
 ```
+
 - **Response `201 Created`**:
+
 ```json
 {
   "success": true,
@@ -186,8 +194,10 @@ erDiagram
 ```
 
 #### `GET /api/auth/me`
+
 - **Headers**: `Authorization: Bearer <token>`
 - **Response `200 OK`**:
+
 ```json
 {
   "success": true,
@@ -207,8 +217,10 @@ erDiagram
 ### 3.2 Organizations (Super Admin)
 
 #### `GET /api/organizations`
+
 - **Headers**: `Authorization: Bearer <token>`
 - **Response `200 OK`**:
+
 ```json
 {
   "success": true,
@@ -231,8 +243,10 @@ erDiagram
 ```
 
 #### `POST /api/organizations`
+
 - **Headers**: `Authorization: Bearer <token>`
 - **Request Body**:
+
 ```json
 {
   "name": "Royal Heritage Resorts",
@@ -250,8 +264,10 @@ erDiagram
 ### 3.3 Hotels (Hotel Admin, Area Manager)
 
 #### `GET /api/hotels`
+
 - **Query Params**: `?orgId=org-1&region=West%20Zone`
 - **Response `200 OK`**:
+
 ```json
 {
   "success": true,
@@ -276,8 +292,10 @@ erDiagram
 ```
 
 #### `POST /api/hotels`
+
 - **Headers**: `Authorization: Bearer <token>`
 - **Request Body**:
+
 ```json
 {
   "name": "Meridian Skyline",
@@ -294,8 +312,10 @@ erDiagram
 ### 3.4 Reservations & Front Desk (Hotel Operations)
 
 #### `GET /api/reservations`
+
 - **Query Params**: `?status=confirmed&hotelName=Meridian%20Grand%20Palace`
 - **Response `200 OK`**:
+
 ```json
 {
   "success": true,
@@ -321,7 +341,9 @@ erDiagram
 ```
 
 #### `PATCH /api/reservations/:id/status`
+
 - **Request Body**:
+
 ```json
 {
   "status": "checked_in"
@@ -333,8 +355,10 @@ erDiagram
 ### 3.5 Housekeeping (Hotel Operations)
 
 #### `GET /api/housekeeping`
+
 - **Query Params**: `?floor=2&status=dirty`
 - **Response `200 OK`**:
+
 ```json
 {
   "success": true,
@@ -354,7 +378,9 @@ erDiagram
 ```
 
 #### `PATCH /api/housekeeping/:id/status`
+
 - **Request Body**:
+
 ```json
 {
   "status": "cleaning",
@@ -367,7 +393,9 @@ erDiagram
 ### 3.6 Restaurant POS (Hotel Operations)
 
 #### `GET /api/pos/orders`
+
 - **Response `200 OK`**:
+
 ```json
 {
   "success": true,
@@ -386,7 +414,9 @@ erDiagram
 ```
 
 #### `POST /api/pos/orders`
+
 - **Request Body**:
+
 ```json
 {
   "tableNumber": "T-05",
@@ -402,7 +432,9 @@ erDiagram
 ### 3.7 AI Receptionist & Guest Concierge
 
 #### `GET /api/ai/conversations`
+
 - **Response `200 OK`**:
+
 ```json
 {
   "success": true,
@@ -423,9 +455,107 @@ erDiagram
 ```
 
 #### `POST /api/ai/conversations/:id/messages`
+
 - **Request Body**:
+
 ```json
 {
   "message": "Extra towels requested for Room 402"
+}
+```
+
+---
+
+### 3.8 Invoices, Billing & Revenue Transactions (Hotel Admin & Operations)
+
+#### `GET /api/invoices`
+
+- **Headers**: `Authorization: Bearer <token>`
+- **Query Params**:
+  - `orgId` *(string, optional)*: Filter by hotel organization
+  - `hotelId` *(string, optional)*: Filter by property
+  - `status` *(string, optional)*: `paid` | `pending` | `overdue` | `all`
+  - `billedBy` *(string, optional)*: Filter by issuing staff member
+  - `search` *(string, optional)*: Text search across guest name, invoice ID, room number, staff, or property
+- **Response `200 OK`**:
+
+```json
+{
+  "success": true,
+  "count": 4,
+  "metrics": {
+    "totalInvoiced": 9500,
+    "totalPaid": 8500,
+    "totalPending": 0,
+    "totalOverdue": 1000
+  },
+  "data": [
+    {
+      "id": "INV-8960",
+      "guest": "jhgf",
+      "room": "203",
+      "amount": 1000,
+      "status": "overdue",
+      "date": "Sep 5, 2026",
+      "hotelId": "hotel-1788547097892",
+      "hotelName": "Regal 77",
+      "paymentMethod": "Pending",
+      "orgId": "org-987123-1788542768377",
+      "billedBy": "Aviral yadav",
+      "billedByRole": "receptionist"
+    }
+  ]
+}
+```
+
+#### `POST /api/invoices`
+
+- **Headers**: `Authorization: Bearer <token>`
+- **Request Body**:
+
+```json
+{
+  "guest": "Rahul Sharma",
+  "room": "101",
+  "amount": 3500,
+  "status": "pending",
+  "paymentMethod": "Pending",
+  "hotelId": "hotel-1788547097892",
+  "hotelName": "Regal 77",
+  "orgId": "org-987123-1788542768377",
+  "billedBy": "Aviral yadav",
+  "billedByRole": "receptionist"
+}
+```
+
+- **Validation**:
+  - `room` must exist in the property room inventory (`Room` collection).
+  - When `status` is `paid`, `paymentMethod` specifies the settlement method (`UPI / Digital`, `Credit Card`, `Cash`, `Room Charge`, `Bank Transfer`).
+  - When `status` is `pending` or `overdue`, `paymentMethod` defaults to `Pending`.
+
+#### `PATCH /api/invoices/:id/pay`
+
+- **Headers**: `Authorization: Bearer <token>`
+- **Request Body**:
+
+```json
+{
+  "paymentMethod": "UPI / Digital"
+}
+```
+
+- **Response `200 OK`**:
+
+```json
+{
+  "success": true,
+  "message": "Invoice marked as paid & payment settlement recorded.",
+  "data": {
+    "id": "INV-8960",
+    "status": "paid",
+    "paymentMethod": "UPI / Digital",
+    "transactionRef": "TXN-SETTLE-1788561092680",
+    "paidAt": "2026-09-05T04:21:25.210Z"
+  }
 }
 ```

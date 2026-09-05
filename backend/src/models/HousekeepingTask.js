@@ -21,7 +21,7 @@ const HousekeepingTaskSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["dirty", "cleaning", "inspected", "clean", "out_of_order"],
+      enum: ["dirty", "cleaning", "inspection", "inspected", "clean", "out_of_order"],
       default: "dirty",
     },
     assignedTo: {
@@ -30,7 +30,7 @@ const HousekeepingTaskSchema = new mongoose.Schema(
     },
     priority: {
       type: String,
-      enum: ["high", "medium", "low"],
+      enum: ["urgent", "high", "medium", "low"],
       default: "medium",
     },
     lastCleaned: {

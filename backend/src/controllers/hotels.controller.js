@@ -82,6 +82,39 @@ class HotelsController {
       next(err);
     }
   }
+
+  static async delete(req, res, next) {
+    try {
+      const { id } = req.params;
+      const hotel = await Hotel.findOneAndDelete({ id });
+      if (!hotel) {
+        return res.status(404).json({
+          success: false,
+          message: "Hotel not found",
+        });
+      }
+
+      await AuditService.log({
+        userId: req.user?.id || "system",
+        userRole: req.user?.role || "hotel_admin",
+        orgId: hotel.orgId,
+        hotelId: hotel.id,
+        action: "DELETE_HOTEL",
+        resource: "hotels",
+        resourceId: hotel.id,
+        details: { name: hotel.name },
+        ipAddress: req.ip || req.connection?.remoteAddress,
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: `Property "${hotel.name}" deleted successfully`,
+        data: hotel,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
 }
 
 module.exports = HotelsController;

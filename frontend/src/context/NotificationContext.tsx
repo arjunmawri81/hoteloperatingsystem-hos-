@@ -40,24 +40,12 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 
 const STORAGE_KEY = "hos_live_notifications";
 
-const INITIAL_NOTIFICATIONS: SystemNotification[] = [
-  {
-    id: "notif-init-1",
-    title: "System Online & Connected",
-    description: "Hotel Operating System connected to database and ready for real-time operations.",
-    time: "Just now",
-    timestamp: Date.now(),
-    category: "system",
-    href: "/operations",
-    read: false,
-    type: "info",
-  },
-];
+const INITIAL_NOTIFICATIONS: SystemNotification[] = [];
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const [notifications, setNotifications] = useState<SystemNotification[]>(INITIAL_NOTIFICATIONS);
   const [toasts, setToasts] = useState<ToastAlert[]>([]);
-  const [isLiveStreaming, setIsLiveStreaming] = useState(true);
+  const [isLiveStreaming, setIsLiveStreaming] = useState(false);
 
   // Restore notifications from localStorage
   useEffect(() => {
@@ -151,7 +139,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     setIsLiveStreaming((prev) => !prev);
   }, []);
 
-  // Listen to custom window notifications
+  // Listen to real custom window notifications
   useEffect(() => {
     function handleCustomEvent(e: Event) {
       const custom = e as CustomEvent;
@@ -162,53 +150,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     window.addEventListener("hos_notification", handleCustomEvent);
     return () => window.removeEventListener("hos_notification", handleCustomEvent);
   }, [addNotification]);
-
-  // Simulated Real-Time Property Activity Generator (every 60s)
-  useEffect(() => {
-    if (!isLiveStreaming) return;
-
-    const streamEvents = [
-      {
-        title: "Guest Checked In",
-        description: "Front Desk completed check-in for Room 302",
-        category: "booking" as const,
-        href: "/operations/front-desk",
-      },
-      {
-        title: "Room Turnover Completed",
-        description: "Room 103 inspected & marked Clean by Supervisor",
-        category: "housekeeping" as const,
-        href: "/operations/room-map",
-      },
-      {
-        title: "New Dining Order Received",
-        description: "Table T2 placed order for 2× Club Sandwiches ($42.00)",
-        category: "pos" as const,
-        href: "/operations/restaurant-pos",
-      },
-      {
-        title: "Invoice Settled Online",
-        description: "Guest paid Invoice #INV-8824 ($205.00) via portal",
-        category: "billing" as const,
-        href: "/operations/billing",
-      },
-      {
-        title: "AI Receptionist Handled Query",
-        description: "Aura AI answered breakfast timings for guest in Room 204",
-        category: "ai" as const,
-        href: "/ai-receptionist",
-      },
-    ];
-
-    let index = 0;
-    const interval = setInterval(() => {
-      const event = streamEvents[index % streamEvents.length];
-      index++;
-      addNotification(event);
-    }, 60000);
-
-    return () => clearInterval(interval);
-  }, [isLiveStreaming, addNotification]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 

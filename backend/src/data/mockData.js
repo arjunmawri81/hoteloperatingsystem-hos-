@@ -99,64 +99,7 @@ const mockOrganizations = [
   },
 ];
 
-const mockHotels = [
-  {
-    id: "hotel-101",
-    orgId: "org-1",
-    name: "Meridian Grand Palace",
-    city: "Mumbai",
-    region: "West Zone",
-    totalRooms: 120,
-    occupiedRooms: 0,
-    occupancyRate: 0.0,
-    rating: 4.8,
-    managerName: "Vikram Malhotra",
-    phone: "+91 98201 12345",
-    status: "open",
-  },
-  {
-    id: "hotel-102",
-    orgId: "org-1",
-    name: "Meridian Ocean View",
-    city: "Goa",
-    region: "West Zone",
-    totalRooms: 80,
-    occupiedRooms: 0,
-    occupancyRate: 0.0,
-    rating: 4.9,
-    managerName: "Anita Desai",
-    phone: "+91 98202 54321",
-    status: "open",
-  },
-  {
-    id: "hotel-103",
-    orgId: "org-1",
-    name: "Meridian City Heights",
-    city: "Bengaluru",
-    region: "South Zone",
-    totalRooms: 100,
-    occupiedRooms: 0,
-    occupancyRate: 0.0,
-    rating: 4.6,
-    managerName: "Ramesh Nair",
-    phone: "+91 98203 99887",
-    status: "open",
-  },
-  {
-    id: "hotel-104",
-    orgId: "org-1",
-    name: "Meridian Royal Heritage",
-    city: "Jaipur",
-    region: "North Zone",
-    totalRooms: 90,
-    occupiedRooms: 0,
-    occupancyRate: 0.0,
-    rating: 4.7,
-    managerName: "Sunil Rathore",
-    phone: "+91 98204 44556",
-    status: "open",
-  },
-];
+const mockHotels = [];
 
 // Operational demo collections cleared
 const mockReservations = [];

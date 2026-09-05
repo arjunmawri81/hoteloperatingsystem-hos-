@@ -33,6 +33,27 @@ class PosController {
       next(err);
     }
   }
+
+  static async updateOrderStatus(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      const order = await PosService.updateOrderStatus({
+        id,
+        status,
+        user: req.user,
+        tenant: req.tenant,
+        ipAddress: req.ip || req.connection?.remoteAddress,
+      });
+      return res.status(200).json({
+        success: true,
+        message: `Order ${id} status updated to ${status}`,
+        data: order,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
 }
 
 module.exports = PosController;

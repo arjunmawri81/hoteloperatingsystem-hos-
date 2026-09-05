@@ -26,24 +26,24 @@ function BookingContent() {
       id: "Standard Room",
       name: "Standard Room",
       details: "City view · 28 m² · King bed · 2 guests",
-      price: "$142/night",
-      rawPrice: 142,
+      price: "₹2,500/night",
+      rawPrice: 2500,
       roomNumber: "102",
     },
     {
       id: "Deluxe Room",
       name: "Deluxe Room",
       details: "River view · 34 m² · King bed · Balcony · 2 guests",
-      price: "$180/night",
-      rawPrice: 180,
+      price: "₹3,500/night",
+      rawPrice: 3500,
       roomNumber: "204",
     },
     {
       id: "Executive Suite",
       name: "Executive Suite",
       details: "Panoramic view · 52 m² · Living area · 3 guests",
-      price: "$260/night",
-      rawPrice: 260,
+      price: "₹5,500/night",
+      rawPrice: 5500,
       roomNumber: "304",
     },
   ];
@@ -85,7 +85,7 @@ function BookingContent() {
         new CustomEvent("hos_notification", {
           detail: {
             title: "New Booking Created",
-            description: `${guestName} booked ${currentRoom.name} at ${initialHotel} ($${total})`,
+            description: `${guestName} booked ${currentRoom.name} at ${initialHotel} (₹${total.toLocaleString("en-IN")})`,
             category: "booking",
             href: "/operations/front-desk",
           },
@@ -261,15 +261,15 @@ function BookingContent() {
             <div className="space-y-2 text-[13px]">
               <div className="flex justify-between text-[#4B5563]">
                 <span>{currentRoom.name} × {nights} nights</span>
-                <span>${roomTotal}</span>
+                <span>₹{roomTotal.toLocaleString("en-IN")}</span>
               </div>
               <div className="flex justify-between text-[#4B5563]">
                 <span>Taxes &amp; Tourism Fees</span>
-                <span>${taxes}</span>
+                <span>₹{taxes.toLocaleString("en-IN")}</span>
               </div>
               <div className="flex justify-between font-black text-[16px] text-[#111827] pt-3 border-t border-[#E5E7EB]">
                 <span>Total Due</span>
-                <span>${total}</span>
+                <span>₹{total.toLocaleString("en-IN")}</span>
               </div>
             </div>
 
@@ -291,7 +291,7 @@ function BookingContent() {
                 </>
               ) : (
                 <>
-                  <span>Confirm &amp; Pay ${total}</span>
+                  <span>Confirm &amp; Pay ₹{total.toLocaleString("en-IN")}</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}

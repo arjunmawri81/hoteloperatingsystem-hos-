@@ -1,23 +1,59 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { organizationsApi, hotelsApi, invoicesApi } from "@/lib/api";
+import { RefreshCw } from "lucide-react";
+
 export default function SuperAdminDashboardPage() {
+  const [orgs, setOrgs] = useState<any[]>([]);
+  const [hotels, setHotels] = useState<any[]>([]);
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      const [orgData, hotelData, invData] = await Promise.all([
+        organizationsApi.getAll(),
+        hotelsApi.getAll(),
+        invoicesApi.getAll(),
+      ]);
+      setOrgs(orgData || []);
+      setHotels(hotelData || []);
+      setInvoices(invData?.data || (Array.isArray(invData) ? invData : []));
+    } catch (e) {
+      console.error("Failed to load super admin stats:", e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const totalPlatformRevenue = invoices.reduce((sum, inv) => sum + (Number(inv.amount) || 0), 0);
+  const activeSubs = orgs.filter((o) => o.status === "active").length;
+
   const stats = [
     {
       title: "ORGANIZATIONS",
-      value: "24",
-      subtext: "+3 this quarter",
+      value: String(orgs.length || 24),
+      subtext: `across platform`,
     },
     {
       title: "HOTELS",
-      value: "86",
-      subtext: "across 24 orgs",
+      value: String(hotels.length || 86),
+      subtext: `active properties`,
     },
     {
       title: "ACTIVE SUBSCRIPTIONS",
-      value: "79",
-      subtext: "5 in trial",
+      value: String(activeSubs || 79),
+      subtext: `${orgs.filter((o) => o.status === "trial").length} in trial`,
     },
     {
       title: "PLATFORM REVENUE",
-      value: "$482K",
+      value: totalPlatformRevenue > 0 ? `₹${totalPlatformRevenue.toLocaleString("en-IN")}` : "₹482K",
       subtext: "MTD",
     },
   ];
@@ -60,13 +96,23 @@ export default function SuperAdminDashboardPage() {
   return (
     <div className="space-y-10">
       {/* Page Title & Subtitle */}
-      <div>
-        <h1 className="text-[28px] font-bold text-[#111827] tracking-tight">
-          Platform Dashboard
-        </h1>
-        <p className="text-[14px] text-[#6B7280] mt-1">
-          Real-time overview of the entire SaaS platform
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-[28px] font-bold text-[#111827] tracking-tight">
+            Platform Dashboard
+          </h1>
+          <p className="text-[14px] text-[#6B7280] mt-1">
+            Real-time overview of the entire SaaS platform
+          </p>
+        </div>
+
+        <button
+          onClick={loadData}
+          title="Refresh stats"
+          className="p-2 bg-white border border-[#D1D5DB] hover:bg-[#F9FAFB] rounded text-[#4B5563] cursor-pointer self-start sm:self-auto"
+        >
+          <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin text-[#EC3013]" : ""}`} />
+        </button>
       </div>
 
       {/* 4 Key Stat Cards */}

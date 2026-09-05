@@ -30,4 +30,15 @@ router.post(
   HotelsController.create
 );
 
+/**
+ * DELETE /api/hotels/:id
+ */
+router.delete(
+  "/:id",
+  verifyToken,
+  identifyTenant,
+  requireRole(["super_admin", "hotel_admin"]),
+  HotelsController.delete
+);
+
 module.exports = router;

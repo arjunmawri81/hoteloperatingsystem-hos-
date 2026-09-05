@@ -1,32 +1,48 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { invoicesApi, InvoiceRecord } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
+import { invoicesApi, InvoiceRecord, roomsApi } from "@/lib/api";
 import { Receipt, Plus, Search, CheckCircle2, X, CreditCard, RefreshCw } from "lucide-react";
+import { RoleGuard } from "@/components/layout/RoleGuard";
 
 export default function BillingPage() {
+  const { user } = useAuth();
   const [invoices, setInvoices] = useState<InvoiceRecord[]>([]);
+  const [rooms, setRooms] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
-  const [newInvoice, setNewInvoice] = useState({
+  const [newInvoice, setNewInvoice] = useState<{
+    guest: string;
+    room: string;
+    amount: string | number;
+    status: InvoiceRecord["status"];
+    paymentMethod: string;
+  }>({
     guest: "",
-    room: "204",
-    amount: 350.0,
-    status: "pending" as InvoiceRecord["status"],
+    room: "",
+    amount: "",
+    status: "pending",
     paymentMethod: "Credit Card",
   });
 
   const loadInvoices = async () => {
     setIsLoading(true);
     try {
-      const res = await invoicesApi.getAll();
+      const effectiveOrgId = user?.orgId || "org-987123-1788542768377";
+      const [res, roomList] = await Promise.all([
+        invoicesApi.getAll({ orgId: effectiveOrgId }),
+        roomsApi.getAll({ orgId: effectiveOrgId }),
+      ]);
+
       if (res && res.data) {
         setInvoices(res.data);
       }
+      setRooms(roomList || []);
     } catch (e) {
       console.error("Error loading invoices from database:", e);
     } finally {
@@ -36,25 +52,37 @@ export default function BillingPage() {
 
   useEffect(() => {
     loadInvoices();
-  }, []);
+  }, [user?.orgId]);
 
   const handleCreateInvoice = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newInvoice.guest) return;
 
     try {
+      const selectedRoom = rooms.find(
+        (r: any) => String(r.number || r.roomNumber) === String(newInvoice.room)
+      );
+      const targetHotelId = selectedRoom?.hotelId || user?.hotelId || "hotel-1788547097892";
+      const targetHotelName =
+        selectedRoom?.hotelName ||
+        (targetHotelId === "hotel-1788547097892" ? "Regal 77" : (user?.hotelName || "Royal hotel"));
+
       const created = await invoicesApi.create({
         guest: newInvoice.guest,
         room: newInvoice.room,
         amount: Number(newInvoice.amount),
         status: newInvoice.status,
         paymentMethod: newInvoice.paymentMethod,
-        hotelName: "Meridian Grand Palace",
+        hotelId: targetHotelId,
+        hotelName: targetHotelName,
+        orgId: user?.orgId || "org-987123-1788542768377",
+        billedBy: user?.name || "Front Desk Staff",
+        billedByRole: user?.role || "receptionist",
       });
 
       setInvoices([created, ...invoices]);
       setIsModalOpen(false);
-      setToastMsg(`✅ Invoice ${created.id} ($${created.amount}) saved directly to MongoDB database`);
+      setToastMsg(`✅ Invoice ${created.id} (₹${created.amount}) saved directly to MongoDB database`);
       setTimeout(() => setToastMsg(null), 3500);
 
       // Broadcast real-time notification
@@ -63,7 +91,7 @@ export default function BillingPage() {
           new CustomEvent("hos_notification", {
             detail: {
               title: "Invoice & Revenue Record Created",
-              description: `Invoice ${created.id} for ${created.guest} (Room ${created.room}) saved to database for $${created.amount}`,
+              description: `Invoice ${created.id} for ${created.guest} (Room ${created.room}) saved to database for ₹${created.amount}`,
               category: "billing",
               href: "/operations/billing",
             },
@@ -71,9 +99,10 @@ export default function BillingPage() {
         );
       }
 
-      setNewInvoice({ guest: "", room: "204", amount: 350.0, status: "pending", paymentMethod: "Credit Card" });
+      setNewInvoice({ guest: "", room: "", amount: "", status: "pending", paymentMethod: "Credit Card" });
     } catch (err: any) {
       console.error("Failed to save invoice:", err);
+      setToastMsg(`❌ Failed to save invoice: ${err?.message || "Server error"}`);
     }
   };
 
@@ -119,7 +148,11 @@ export default function BillingPage() {
   const totalOverdue = invoices.filter((i) => i.status === "overdue").reduce((acc, i) => acc + (i.amount || 0), 0);
 
   return (
-    <div className="space-y-6">
+    <RoleGuard
+      allowedRoles={["super_admin", "hotel_admin", "hotel_manager", "finance", "receptionist"]}
+      moduleName="Billing & Revenue Transactions"
+    >
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -140,7 +173,10 @@ export default function BillingPage() {
             <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin text-[#EC3013]" : ""}`} />
           </button>
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => {
+              setNewInvoice({ guest: "", room: "", amount: "", status: "pending", paymentMethod: "Credit Card" });
+              setIsModalOpen(true);
+            }}
             className="flex items-center gap-1.5 px-4 py-2 bg-[#EC3013] hover:bg-[#D62839] text-white text-[13px] font-bold rounded shadow-xs transition-colors cursor-pointer"
           >
             <Plus className="w-4 h-4" />
@@ -161,19 +197,19 @@ export default function BillingPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-5 rounded-lg border border-[#E5E7EB] shadow-xs">
           <div className="text-[11px] font-bold text-[#6B7280] uppercase">Total Invoiced</div>
-          <div className="text-[24px] font-bold text-[#111827] mt-1.5">${totalInvoiced.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+          <div className="text-[24px] font-bold text-[#111827] mt-1.5">₹{totalInvoiced.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
         </div>
         <div className="bg-white p-5 rounded-lg border border-[#E5E7EB] shadow-xs">
           <div className="text-[11px] font-bold text-emerald-600 uppercase">Paid &amp; Settled</div>
-          <div className="text-[24px] font-bold text-emerald-700 mt-1.5">${totalPaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+          <div className="text-[24px] font-bold text-emerald-700 mt-1.5">₹{totalPaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
         </div>
         <div className="bg-white p-5 rounded-lg border border-[#E5E7EB] shadow-xs">
           <div className="text-[11px] font-bold text-amber-600 uppercase">Pending Collection</div>
-          <div className="text-[24px] font-bold text-amber-700 mt-1.5">${totalPending.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+          <div className="text-[24px] font-bold text-amber-700 mt-1.5">₹{totalPending.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
         </div>
         <div className="bg-white p-5 rounded-lg border border-[#E5E7EB] shadow-xs">
           <div className="text-[11px] font-bold text-rose-600 uppercase">Overdue</div>
-          <div className="text-[24px] font-bold text-rose-700 mt-1.5">${totalOverdue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+          <div className="text-[24px] font-bold text-rose-700 mt-1.5">₹{totalOverdue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
         </div>
       </div>
 
@@ -269,7 +305,7 @@ export default function BillingPage() {
                       )}
                     </td>
                     <td className="py-3.5 px-4 font-bold text-[#111827]">
-                      ${(inv.amount || 0).toFixed(2)}
+                      ₹{(inv.amount || 0).toFixed(2)}
                     </td>
                     <td className="py-3.5 px-4 text-right">
                       {inv.status !== "paid" ? (
@@ -327,25 +363,46 @@ export default function BillingPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
-                    Room Number
+                    Available Room *
                   </label>
-                  <input
-                    type="text"
-                    value={newInvoice.room}
-                    onChange={(e) => setNewInvoice({ ...newInvoice, room: e.target.value })}
-                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded"
-                  />
+                  {rooms.length > 0 ? (
+                    <select
+                      required
+                      value={newInvoice.room}
+                      onChange={(e) => setNewInvoice({ ...newInvoice, room: e.target.value })}
+                      className="w-full px-3 py-2 border border-[#D1D5DB] rounded bg-white focus:outline-none focus:border-[#EC3013]"
+                    >
+                      <option value="">-- Select an Available Room --</option>
+                      {rooms.map((r: any) => {
+                        const num = r.number || r.roomNumber;
+                        return (
+                          <option key={r.id || num} value={num}>
+                            Room {num} ({r.type || "Standard"} - Floor {r.floor || 1})
+                          </option>
+                        );
+                      })}
+                    </select>
+                  ) : (
+                    <div className="px-2 py-2 bg-amber-50 border border-amber-200 rounded text-[11px] text-amber-800">
+                      ⚠️ No rooms configured
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
-                    Amount ($)
+                    Amount (₹) *
                   </label>
                   <input
-                    type="number"
-                    step="0.01"
+                    type="text"
+                    inputMode="numeric"
+                    required
+                    placeholder="Enter amount (e.g. 3500)"
                     value={newInvoice.amount}
-                    onChange={(e) => setNewInvoice({ ...newInvoice, amount: Number(e.target.value) })}
-                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded"
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[^0-9.]/g, "");
+                      setNewInvoice({ ...newInvoice, amount: val });
+                    }}
+                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded focus:outline-none focus:border-[#EC3013]"
                   />
                 </div>
               </div>
@@ -353,33 +410,52 @@ export default function BillingPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
-                    Payment Status
+                    Payment Status *
                   </label>
                   <select
                     value={newInvoice.status}
-                    onChange={(e) => setNewInvoice({ ...newInvoice, status: e.target.value as any })}
-                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded bg-white"
+                    onChange={(e) => {
+                      const newStatus = e.target.value as any;
+                      setNewInvoice({
+                        ...newInvoice,
+                        status: newStatus,
+                        paymentMethod: newStatus === "paid" ? (newInvoice.paymentMethod && newInvoice.paymentMethod !== "—" ? newInvoice.paymentMethod : "Credit Card") : "—",
+                      });
+                    }}
+                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded bg-white focus:outline-none focus:border-[#EC3013]"
                   >
-                    <option value="pending">Pending Payment</option>
-                    <option value="paid">Paid</option>
+                    <option value="pending">Pending Payment (Unpaid)</option>
+                    <option value="paid">Paid (Immediate Settlement)</option>
                     <option value="overdue">Overdue</option>
                   </select>
                 </div>
-                <div>
-                  <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
-                    Payment Method
-                  </label>
-                  <select
-                    value={newInvoice.paymentMethod}
-                    onChange={(e) => setNewInvoice({ ...newInvoice, paymentMethod: e.target.value })}
-                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded bg-white"
-                  >
-                    <option value="Credit Card">Credit Card</option>
-                    <option value="Cash">Cash</option>
-                    <option value="UPI / Digital">UPI / Digital</option>
-                    <option value="Bank Transfer">Bank Transfer</option>
-                  </select>
-                </div>
+                {newInvoice.status === "paid" ? (
+                  <div>
+                    <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
+                      Payment Method *
+                    </label>
+                    <select
+                      value={newInvoice.paymentMethod || "Credit Card"}
+                      onChange={(e) => setNewInvoice({ ...newInvoice, paymentMethod: e.target.value })}
+                      className="w-full px-3 py-2 border border-[#D1D5DB] rounded bg-white focus:outline-none focus:border-[#EC3013]"
+                    >
+                      <option value="Credit Card">Credit Card</option>
+                      <option value="Cash">Cash</option>
+                      <option value="UPI / Digital">UPI / Digital</option>
+                      <option value="Bank Transfer">Bank Transfer</option>
+                    </select>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-[11px] font-bold text-[#9CA3AF] uppercase mb-1">
+                      Payment Method
+                    </label>
+                    <div className="px-3 py-2 bg-[#F3F4F6] border border-[#E5E7EB] rounded text-[12px] text-[#6B7280] flex items-center justify-between">
+                      <span>Unpaid (Pending)</span>
+                      <span className="text-[10px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded uppercase">Pending</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-end gap-3 pt-3 border-t border-[#E5E7EB]">
@@ -401,6 +477,7 @@ export default function BillingPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </RoleGuard>
   );
 }

@@ -125,72 +125,82 @@ export default function HotelDiscoveryPage() {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
-          {filteredHotels.map((h) => {
-            const price = h.totalRooms > 80 ? 180 : 142;
-            return (
-              <div
-                key={h.id}
-                className="bg-white rounded-lg border border-[#E5E7EB] hover:border-[#D1D5DB] shadow-xs hover:shadow-md transition-all overflow-hidden flex flex-col justify-between"
-              >
-                <div>
-                  {/* Photo Header Placeholder */}
-                  <div className="h-40 bg-gradient-to-tr from-[#201E1D] to-[#4B5563] p-4 flex flex-col justify-between text-white relative">
-                    <div className="flex justify-between items-start">
-                      <span className="bg-[#EC3013] text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
-                        Featured Stay
-                      </span>
-                      <span className="inline-flex items-center gap-1 bg-black/50 backdrop-blur-xs text-[11px] font-bold px-2 py-0.5 rounded">
-                        <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                        {h.rating || "4.6"}
-                      </span>
+        {filteredHotels.length === 0 ? (
+          <div className="bg-white rounded-lg border border-[#E5E7EB] p-12 text-center">
+            <Building className="w-12 h-12 text-[#9CA3AF] mx-auto mb-3" />
+            <h3 className="text-[16px] font-bold text-[#111827]">No Hotels Found</h3>
+            <p className="text-[13px] text-[#6B7280] mt-1 max-w-sm mx-auto">
+              There are currently no listed properties matching your destination or search criteria.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
+            {filteredHotels.map((h) => {
+              const price = h.totalRooms > 80 ? 3500 : 2500;
+              return (
+                <div
+                  key={h.id}
+                  className="bg-white rounded-lg border border-[#E5E7EB] hover:border-[#D1D5DB] shadow-xs hover:shadow-md transition-all overflow-hidden flex flex-col justify-between"
+                >
+                  <div>
+                    {/* Photo Header Placeholder */}
+                    <div className="h-40 bg-gradient-to-tr from-[#201E1D] to-[#4B5563] p-4 flex flex-col justify-between text-white relative">
+                      <div className="flex justify-between items-start">
+                        <span className="bg-[#EC3013] text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
+                          Featured Stay
+                        </span>
+                        <span className="inline-flex items-center gap-1 bg-black/50 backdrop-blur-xs text-[11px] font-bold px-2 py-0.5 rounded">
+                          <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                          {h.rating || "4.6"}
+                        </span>
+                      </div>
+
+                      <div>
+                        <div className="text-[18px] font-black">{h.name}</div>
+                        <div className="text-[12px] opacity-80 flex items-center gap-1 mt-0.5">
+                          <MapPin className="w-3 h-3" />
+                          <span>{h.city || "City Center"}, {h.region || "Central"}</span>
+                        </div>
+                      </div>
                     </div>
 
-                    <div>
-                      <div className="text-[18px] font-black">{h.name}</div>
-                      <div className="text-[12px] opacity-80 flex items-center gap-1 mt-0.5">
-                        <MapPin className="w-3 h-3" />
-                        <span>{h.city || "City Center"}, {h.region || "Central"}</span>
+                    {/* Body Info */}
+                    <div className="p-4 space-y-2 text-[13px] text-[#4B5563]">
+                      <div className="flex justify-between">
+                        <span>Total Rooms:</span>
+                        <span className="font-semibold text-[#111827]">{h.totalRooms} Rooms</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>General Manager:</span>
+                        <span className="font-medium text-[#111827]">{h.managerName}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Contact:</span>
+                        <span className="text-[#6B7280]">{h.phone || "+91 90000 00000"}</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Body Info */}
-                  <div className="p-4 space-y-2 text-[13px] text-[#4B5563]">
-                    <div className="flex justify-between">
-                      <span>Total Rooms:</span>
-                      <span className="font-semibold text-[#111827]">{h.totalRooms} Rooms</span>
+                  {/* Footer Pricing & CTA */}
+                  <div className="p-4 bg-[#F9FAFB] border-t border-[#E5E7EB] flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-[#6B7280] block uppercase font-bold">From</span>
+                      <span className="text-[17px] font-black text-[#111827]">₹{price.toLocaleString("en-IN")}</span>
+                      <span className="text-[11px] text-[#6B7280]"> / night</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span>General Manager:</span>
-                      <span className="font-medium text-[#111827]">{h.managerName}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Contact:</span>
-                      <span className="text-[#6B7280]">{h.phone || "+1 555 0192"}</span>
-                    </div>
+
+                    <Link
+                      href={`/customer/booking?hotelId=${h.id}&hotelName=${encodeURIComponent(h.name)}`}
+                      className="px-4 py-2 bg-[#EC3013] hover:bg-[#D62839] text-white text-[12px] font-bold rounded shadow-xs transition-colors"
+                    >
+                      Select &amp; Book
+                    </Link>
                   </div>
                 </div>
-
-                {/* Footer Pricing & CTA */}
-                <div className="p-4 bg-[#F9FAFB] border-t border-[#E5E7EB] flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] text-[#6B7280] block uppercase font-bold">From</span>
-                    <span className="text-[17px] font-black text-[#111827]">${price}</span>
-                    <span className="text-[11px] text-[#6B7280]"> / night</span>
-                  </div>
-
-                  <Link
-                    href={`/customer/booking?hotelId=${h.id}&hotelName=${encodeURIComponent(h.name)}`}
-                    className="px-4 py-2 bg-[#EC3013] hover:bg-[#D62839] text-white text-[12px] font-bold rounded shadow-xs transition-colors"
-                  >
-                    Select &amp; Book
-                  </Link>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -53,7 +53,7 @@ const schemas = {
   },
 
   housekeepingStatus: (data) => {
-    const validStatuses = ["dirty", "cleaning", "inspected", "clean", "out_of_order"];
+    const validStatuses = ["dirty", "cleaning", "inspection", "inspected", "clean", "out_of_order"];
     const errors = [];
     if (data.status && !validStatuses.includes(data.status)) {
       errors.push(`status must be one of: ${validStatuses.join(", ")}`);
@@ -64,6 +64,17 @@ const schemas = {
   authLogin: (data) => {
     const errors = [];
     if (!data.email || typeof data.email !== "string") errors.push("email is required");
+    return errors;
+  },
+
+  authSignup: (data) => {
+    const errors = [];
+    if (!data.name || typeof data.name !== "string" || !data.name.trim()) {
+      errors.push("name is required");
+    }
+    if (!data.email || typeof data.email !== "string" || !data.email.trim()) {
+      errors.push("email is required");
+    }
     return errors;
   },
 

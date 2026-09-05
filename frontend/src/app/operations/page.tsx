@@ -2,51 +2,72 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { reservationsApi, housekeepingApi } from "@/lib/api";
-import { Reservation, HousekeepingTask } from "@/types";
+import { useAuth } from "@/context/AuthContext";
+import { reservationsApi, housekeepingApi, hotelsApi, roomsApi } from "@/lib/api";
+import { Reservation, HousekeepingTask, Hotel } from "@/types";
 import { ArrowRight, RefreshCw, LogIn, Sparkles, BedDouble, Utensils } from "lucide-react";
+import { RoleGuard } from "@/components/layout/RoleGuard";
 
 export default function OperationsDashboardPage() {
+  const { user, isLoading: isAuthLoading } = useAuth();
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [tasks, setTasks] = useState<HousekeepingTask[]>([]);
+  const [hotels, setHotels] = useState<Hotel[]>([]);
+  const [dbRooms, setDbRooms] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const loadData = async () => {
+    if (isAuthLoading) return;
     setIsLoading(true);
     try {
-      const [resData, taskData] = await Promise.all([
+      const effectiveOrgId = user?.orgId || "org-1";
+      const [resData, taskData, hotelsData, roomsData] = await Promise.all([
         reservationsApi.getAll(),
         housekeepingApi.getAll(),
+        hotelsApi.getAll({ orgId: effectiveOrgId }),
+        roomsApi.getAll(),
       ]);
       setReservations(resData);
       setTasks(taskData);
+      setHotels(hotelsData);
+      setDbRooms(roomsData);
     } catch (e) {
-      console.error(e);
+      console.error("Failed to load operations data:", e);
+      setReservations([]);
+      setTasks([]);
+      setHotels([]);
+      setDbRooms([]);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (!isAuthLoading) {
+      loadData();
+    }
+  }, [user?.orgId, isAuthLoading]);
 
+  const assignedHotel = hotels.find((h) => h.id === user?.hotelId) || hotels[0] || null;
+  const propertyName = user?.hotelName || assignedHotel?.name || user?.orgName || "Hotel Property";
+
+  const totalRooms = dbRooms.length;
   const checkedInCount = reservations.filter((r) => r.status === "checked_in").length;
   const confirmedCount = reservations.filter((r) => r.status === "confirmed").length;
   const dirtyCount = tasks.filter((t) => t.status === "dirty" || t.status === "cleaning").length;
-  const availableRooms = 96 - checkedInCount - dirtyCount;
-  const occupancyPct = Math.round((checkedInCount / 96) * 100) || 75;
+  const availableRooms = dbRooms.filter((r) => r.status === "available").length;
+  const occupancyPct = totalRooms > 0 ? Math.round((checkedInCount / totalRooms) * 100) : 0;
 
   const stats = [
     {
       title: "OCCUPANCY",
       value: `${occupancyPct}%`,
-      subtext: `${checkedInCount} of 96 rooms occupied`,
+      subtext: totalRooms > 0 ? `${checkedInCount} of ${totalRooms} rooms occupied` : "0 rooms occupied",
       link: "/operations/room-map",
     },
     {
       title: "AVAILABLE ROOMS",
-      value: String(Math.max(0, availableRooms)),
+      value: String(availableRooms),
       subtext: "Clean & ready for check-in",
       link: "/operations/room-map",
     },
@@ -69,7 +90,11 @@ export default function OperationsDashboardPage() {
     .slice(0, 5);
 
   return (
-    <div className="space-y-8">
+    <RoleGuard
+      allowedRoles={["super_admin", "hotel_admin", "hotel_manager", "receptionist", "finance"]}
+      moduleName="Operations Dashboard"
+    >
+      <div className="space-y-8">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -77,7 +102,7 @@ export default function OperationsDashboardPage() {
             Property Operations Dashboard
           </h1>
           <p className="text-[13px] text-[#6B7280] mt-0.5">
-            Meridian Downtown — live property occupancy, arrivals, and housekeeping
+            {propertyName} — live property occupancy, arrivals, and housekeeping
           </p>
         </div>
 
@@ -240,5 +265,6 @@ export default function OperationsDashboardPage() {
         </div>
       </div>
     </div>
+    </RoleGuard>
   );
 }

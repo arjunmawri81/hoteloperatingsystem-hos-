@@ -32,11 +32,19 @@ const RoomSchema = new mongoose.Schema(
     },
     rate: {
       type: Number,
-      default: 180,
+      default: 2500,
     },
     hotelId: {
       type: String,
       default: "hotel-101",
+    },
+    hotelName: {
+      type: String,
+      default: "",
+    },
+    orgId: {
+      type: String,
+      default: "org-1",
     },
   },
   {

@@ -30,11 +30,11 @@ export default function AIReceptionistPage() {
     ],
     "conv-2": [
       { id: "m-1", sender: "guest", text: "Do you have a Deluxe room available tomorrow?", timestamp: "1:30 PM" },
-      { id: "m-2", sender: "ai", text: "Yes! We have Deluxe King rooms available starting at $180/night with river view and complimentary breakfast.", timestamp: "1:31 PM" },
+      { id: "m-2", sender: "ai", text: "Yes! We have Deluxe King rooms available starting at ₹3,500/night with river view and complimentary breakfast.", timestamp: "1:31 PM" },
     ],
     "conv-3": [
       { id: "m-1", sender: "guest", text: "Can I get late checkout at 2:00 PM?", timestamp: "11:15 AM" },
-      { id: "m-2", sender: "ai", text: "Late checkout up to 1:00 PM is complimentary for our guests. 2:00 PM can be arranged with the front desk for a $25 fee. Shall I request this for you?", timestamp: "11:16 AM" },
+      { id: "m-2", sender: "ai", text: "Late checkout up to 1:00 PM is complimentary for our guests. 2:00 PM can be arranged with the front desk for a ₹500 fee. Shall I request this for you?", timestamp: "11:16 AM" },
     ],
   });
 

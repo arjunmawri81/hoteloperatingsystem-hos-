@@ -147,7 +147,7 @@ function MyBookingsContent() {
                   </div>
 
                   <div className="text-[12px] text-[#6B7280] mt-1">
-                    📅 {b.checkIn} → {b.checkOut} · Total: <span className="font-bold text-[#111827]">${b.totalAmount}</span>
+                    📅 {b.checkIn} → {b.checkOut} · Total: <span className="font-bold text-[#111827]">₹{b.totalAmount?.toLocaleString?.("en-IN") || b.totalAmount}</span>
                   </div>
                 </div>
 

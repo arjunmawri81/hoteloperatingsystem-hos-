@@ -28,6 +28,8 @@ const UserSchema = new mongoose.Schema(
         "hotel_manager",
         "receptionist",
         "housekeeping",
+        "restaurant_staff",
+        "finance",
         "customer",
         "ai_receptionist",
       ],

@@ -28,11 +28,11 @@ export class ApiError extends Error {
 }
 
 /**
- * Get stored auth token
+ * Get stored auth token (prioritizes tab-isolated sessionStorage over shared localStorage)
  */
 export function getStoredToken(): string | null {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem(TOKEN_KEY);
+  return sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY);
 }
 
 /**
@@ -41,8 +41,10 @@ export function getStoredToken(): string | null {
 export function setStoredToken(token: string | null): void {
   if (typeof window === "undefined") return;
   if (token) {
+    sessionStorage.setItem(TOKEN_KEY, token);
     localStorage.setItem(TOKEN_KEY, token);
   } else {
+    sessionStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(TOKEN_KEY);
   }
 }

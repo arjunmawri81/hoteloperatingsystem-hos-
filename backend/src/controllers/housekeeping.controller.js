@@ -17,6 +17,28 @@ class HousekeepingController {
     }
   }
 
+  static async create(req, res, next) {
+    try {
+      const task = await HousekeepingService.createTask({
+        roomNumber: req.body.roomNumber,
+        assignedTo: req.body.assignedTo,
+        priority: req.body.priority,
+        status: req.body.status,
+        floor: req.body.floor,
+        user: req.user,
+        tenant: req.tenant,
+        ipAddress: req.ip || req.connection?.remoteAddress,
+      });
+      return res.status(201).json({
+        success: true,
+        message: "Housekeeping task created",
+        data: task,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   static async updateStatus(req, res, next) {
     try {
       const task = await HousekeepingService.updateStatus({

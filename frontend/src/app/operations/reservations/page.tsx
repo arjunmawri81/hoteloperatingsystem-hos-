@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { reservationsApi } from "@/lib/api";
 import { Reservation } from "@/types";
 import { Search, Plus, X, RefreshCw, CheckCircle2, Calendar, Filter } from "lucide-react";
+import { RoleGuard } from "@/components/layout/RoleGuard";
 
 export default function ReservationsPage() {
   const [reservations, setReservations] = useState<Reservation[]>([]);
@@ -14,16 +15,26 @@ export default function ReservationsPage() {
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   // Form State
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    guestName: string;
+    guestEmail: string;
+    guestPhone: string;
+    roomType: string;
+    roomNumber: string;
+    checkIn: string;
+    checkOut: string;
+    totalAmount: string | number;
+    paidAmount: string | number;
+  }>({
     guestName: "",
     guestEmail: "",
     guestPhone: "",
     roomType: "Deluxe King",
-    roomNumber: "204",
+    roomNumber: "",
     checkIn: new Date().toISOString().split("T")[0],
     checkOut: new Date(Date.now() + 86400000 * 3).toISOString().split("T")[0],
-    totalAmount: 18000,
-    paidAmount: 18000,
+    totalAmount: "",
+    paidAmount: "",
   });
 
   const loadReservations = async () => {
@@ -111,7 +122,11 @@ export default function ReservationsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <RoleGuard
+      allowedRoles={["super_admin", "hotel_admin", "hotel_manager", "receptionist", "finance"]}
+      moduleName="Reservations Management"
+    >
+      <div className="space-y-6">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -219,7 +234,7 @@ export default function ReservationsPage() {
                     <td className="py-3.5 px-4 text-[#4B5563]">{res.checkOut}</td>
                     <td className="py-3.5 px-4">{getStatusBadge(res.status)}</td>
                     <td className="py-3.5 px-4 text-right font-bold text-[#111827]">
-                      ${res.totalAmount?.toLocaleString?.() || res.totalAmount}
+                      ₹{res.totalAmount?.toLocaleString?.() || res.totalAmount}
                     </td>
                   </tr>
                 ))
@@ -296,10 +311,10 @@ export default function ReservationsPage() {
                     onChange={(e) => setFormData({ ...formData, roomType: e.target.value })}
                     className="w-full px-3 py-2 border border-[#D1D5DB] rounded bg-white focus:outline-none focus:border-[#EC3013]"
                   >
-                    <option value="Standard Room">Standard Room ($140/nt)</option>
-                    <option value="Deluxe King">Deluxe King ($180/nt)</option>
-                    <option value="Executive Suite">Executive Suite ($260/nt)</option>
-                    <option value="Presidential Suite">Presidential Suite ($450/nt)</option>
+                    <option value="Standard Room">Standard Room</option>
+                    <option value="Deluxe King">Deluxe King</option>
+                    <option value="Executive Suite">Executive Suite</option>
+                    <option value="Presidential Suite">Presidential Suite</option>
                   </select>
                 </div>
                 <div>
@@ -343,7 +358,7 @@ export default function ReservationsPage() {
 
               <div>
                 <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
-                  Total Amount ($)
+                  Total Amount (₹)
                 </label>
                 <input
                   type="number"
@@ -372,6 +387,7 @@ export default function ReservationsPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </RoleGuard>
   );
 }

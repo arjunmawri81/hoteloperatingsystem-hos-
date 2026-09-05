@@ -2,10 +2,11 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { User, UserRole, LoginCredentials, RegisterData } from "@/types";
+import { User, UserRole, LoginCredentials, RegisterData, UserSignupData } from "@/types";
 import {
   loginApi,
   registerApi,
+  signupUserApi,
   logoutApi,
   getStoredToken,
   setStoredToken,
@@ -22,6 +23,7 @@ interface AuthContextType {
   apiMode: ApiMode;
   login: (credentials: LoginCredentials) => Promise<User>;
   register: (data: RegisterData) => Promise<User>;
+  signup: (data: UserSignupData) => Promise<User>;
   logout: () => Promise<void>;
   switchRole: (role: UserRole) => void;
   setApiMode: (mode: ApiMode) => void;
@@ -53,31 +55,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [apiMode, setApiModeState] = useState<ApiMode>("live");
 
-  // Load initial session on mount
+  // Load initial session on mount (prioritize tab-isolated sessionStorage)
   useEffect(() => {
     try {
       const storedToken = getStoredToken();
-      const storedUserJson = localStorage.getItem(USER_STORAGE_KEY);
-      const storedMode = localStorage.getItem(API_MODE_KEY) as ApiMode;
+      const storedUserJson =
+        sessionStorage.getItem(USER_STORAGE_KEY) ||
+        localStorage.getItem(USER_STORAGE_KEY);
+      const storedMode =
+        (sessionStorage.getItem(API_MODE_KEY) as ApiMode) ||
+        (localStorage.getItem(API_MODE_KEY) as ApiMode);
 
       if (storedMode) {
         setApiModeState(storedMode);
       }
 
-      if (storedToken && storedUserJson) {
+      if (storedUserJson) {
         const parsedUser = JSON.parse(storedUserJson);
         setUser(parsedUser);
-        setToken(storedToken);
+        const activeToken =
+          storedToken ||
+          `mock_jwt_token_${parsedUser.role || "hotel_admin"}_${Date.now()}`;
+        setToken(activeToken);
+        setStoredToken(activeToken);
+        sessionStorage.setItem(USER_STORAGE_KEY, storedUserJson);
       } else {
-        // Default dev initial session (Super Admin) for immediate usability
-        const defaultUser = MOCK_USERS["super_admin"];
+        const defaultUser = MOCK_USERS.hotel_admin;
+        const defaultToken = `mock_jwt_token_hotel_admin_${Date.now()}`;
         setUser(defaultUser);
-        setToken("dev_session_token");
+        setToken(defaultToken);
+        setStoredToken(defaultToken);
+        sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(defaultUser));
         localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(defaultUser));
-        setStoredToken("dev_session_token");
       }
     } catch (e) {
-      console.error("Failed to restore session from localStorage", e);
+      console.error("Failed to restore session from storage", e);
+      setUser(null);
+      setToken(null);
     } finally {
       setIsLoading(false);
     }
@@ -85,12 +99,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const setApiMode = useCallback((mode: ApiMode) => {
     setApiModeState(mode);
+    sessionStorage.setItem(API_MODE_KEY, mode);
     localStorage.setItem(API_MODE_KEY, mode);
   }, []);
 
   const toggleApiMode = useCallback(() => {
     setApiModeState((prev) => {
       const next = prev === "live" ? "mock" : "live";
+      sessionStorage.setItem(API_MODE_KEY, next);
       localStorage.setItem(API_MODE_KEY, next);
       return next;
     });
@@ -106,6 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         setUser(loggedInUser);
         setToken(authResponse.token);
+        sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(loggedInUser));
         localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(loggedInUser));
 
         return loggedInUser;
@@ -126,6 +143,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         setUser(registeredUser);
         setToken(authResponse.token);
+        sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(registeredUser));
+        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(registeredUser));
+
+        return registeredUser;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [apiMode]
+  );
+
+  const signup = useCallback(
+    async (data: UserSignupData): Promise<User> => {
+      setIsLoading(true);
+      try {
+        const isForceMock = apiMode === "mock";
+        const authResponse = await signupUserApi(data, isForceMock);
+        const registeredUser = authResponse.user;
+
+        setUser(registeredUser);
+        setToken(authResponse.token);
+        sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(registeredUser));
         localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(registeredUser));
 
         return registeredUser;
@@ -142,6 +181,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await logoutApi();
       setUser(null);
       setToken(null);
+      sessionStorage.removeItem(USER_STORAGE_KEY);
       localStorage.removeItem(USER_STORAGE_KEY);
       router.push("/login");
     } finally {
@@ -159,8 +199,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         orgId: "org-1",
         orgName: "Meridian Hospitality Group",
       };
+      const mockToken = `mock_jwt_token_${role}_${Date.now()}`;
 
       setUser(mockUser);
+      setToken(mockToken);
+      setStoredToken(mockToken);
+      sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mockUser));
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mockUser));
 
       const targetPath = ROLE_ROUTE_MAP[role] || "/";
@@ -179,6 +223,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         apiMode,
         login,
         register,
+        signup,
         logout,
         switchRole,
         setApiMode,

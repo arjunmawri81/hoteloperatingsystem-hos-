@@ -34,7 +34,7 @@ const AreaSchema = new mongoose.Schema(
     },
     revenue: {
       type: String,
-      default: "$0",
+      default: "₹0",
     },
     status: {
       type: String,

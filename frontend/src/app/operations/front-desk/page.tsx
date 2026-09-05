@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { reservationsApi } from "@/lib/api";
 import { Reservation } from "@/types";
 import { CheckCircle2, Search, RefreshCw, LogIn, LogOut, Clock, UserCheck } from "lucide-react";
+import { RoleGuard } from "@/components/layout/RoleGuard";
 
 export default function FrontDeskPage() {
   const [reservations, setReservations] = useState<Reservation[]>([]);
@@ -70,7 +71,11 @@ export default function FrontDeskPage() {
   const departures = filtered.filter((r) => r.status === "checked_in" || r.status === "checked_out");
 
   return (
-    <div className="space-y-6">
+    <RoleGuard
+      allowedRoles={["super_admin", "hotel_admin", "hotel_manager", "receptionist"]}
+      moduleName="Front Desk Check-In & Departures"
+    >
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -256,5 +261,6 @@ export default function FrontDeskPage() {
         </div>
       </div>
     </div>
+    </RoleGuard>
   );
 }

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { guestsApi } from "@/lib/api";
 import { Plus, X, Search, CheckCircle2, User, Star, Award, Heart, MessageSquare, History, RefreshCw } from "lucide-react";
+import { RoleGuard } from "@/components/layout/RoleGuard";
 
 interface GuestProfile {
   _id?: string;
@@ -109,7 +110,11 @@ export default function GuestCRMPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <RoleGuard
+      allowedRoles={["super_admin", "hotel_admin", "hotel_manager", "receptionist"]}
+      moduleName="Guest CRM & History"
+    >
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -219,7 +224,7 @@ export default function GuestCRMPage() {
                 </div>
                 <div>
                   <span className="text-[#9CA3AF] block text-[10px] uppercase font-bold">Total Spend</span>
-                  <span className="font-bold text-[#111827]">${(guest.totalSpend || 0).toLocaleString()}</span>
+                  <span className="font-bold text-[#111827]">₹{(guest.totalSpend || 0).toLocaleString("en-IN")}</span>
                 </div>
               </div>
 
@@ -364,6 +369,7 @@ export default function GuestCRMPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </RoleGuard>
   );
 }

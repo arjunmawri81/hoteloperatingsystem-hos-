@@ -11,6 +11,13 @@ const router = express.Router();
  * GET /api/housekeeping
  */
 router.get("/", identifyTenant, HousekeepingController.getAll);
+router.post(
+  "/",
+  verifyToken,
+  identifyTenant,
+  requireRole(["hotel_manager", "housekeeping", "super_admin", "hotel_admin", "ai_receptionist", "receptionist"]),
+  HousekeepingController.create
+);
 
 /**
  * PATCH /api/housekeeping/:id/status
@@ -20,7 +27,7 @@ router.patch(
   "/:id/status",
   verifyToken,
   identifyTenant,
-  requireRole(["hotel_manager", "housekeeping", "super_admin", "hotel_admin", "ai_receptionist"]),
+  requireRole(["hotel_manager", "housekeeping", "super_admin", "hotel_admin", "ai_receptionist", "receptionist"]),
   validate(schemas.housekeepingStatus),
   HousekeepingController.updateStatus
 );

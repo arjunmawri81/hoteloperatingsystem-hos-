@@ -1,42 +1,12 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { UserRole } from "@/types";
-import {
-  LogOut,
-  ChevronDown,
-  Shield,
-  Building,
-  MapPin,
-  ConciergeBell,
-  UserCheck,
-  Bot,
-  Activity,
-  Server,
-  Database,
-  Check,
-} from "lucide-react";
-
-interface RoleOption {
-  role: UserRole;
-  label: string;
-  badge: string;
-  icon: React.ElementType;
-}
-
-const ROLE_OPTIONS: RoleOption[] = [
-  { role: "super_admin", label: "Super Admin", badge: "Platform Owner", icon: Shield },
-  { role: "hotel_admin", label: "Hotel Admin", badge: "Chain Owner", icon: Building },
-  { role: "area_manager", label: "Area Manager", badge: "Regional", icon: MapPin },
-  { role: "hotel_manager", label: "Operations (PMS)", badge: "Front Desk & Ops", icon: ConciergeBell },
-  { role: "customer", label: "Customer Portal", badge: "Guest Booking", icon: UserCheck },
-  { role: "ai_receptionist", label: "AI Receptionist", badge: "AI Console", icon: Bot },
-];
+import { LogOut, ChevronDown } from "lucide-react";
 
 export function UserMenu() {
-  const { user, logout, switchRole, apiMode, toggleApiMode } = useAuth();
+  const { user, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -110,7 +80,7 @@ export function UserMenu() {
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-72 bg-white border border-[#E5E7EB] rounded-lg shadow-xl py-2 z-50 animate-in fade-in zoom-in-95 duration-100 font-sans">
+        <div className="absolute right-0 mt-2 w-64 bg-white border border-[#E5E7EB] rounded-lg shadow-xl py-2 z-50 animate-in fade-in zoom-in-95 duration-100 font-sans">
           {/* User Profile Card */}
           <div className="px-4 py-3 border-b border-[#F3F4F6]">
             <div className="flex items-center gap-3">
@@ -132,71 +102,34 @@ export function UserMenu() {
             </div>
           </div>
 
-          {/* Backend API Mode Switcher */}
-          <div className="px-4 py-2.5 border-b border-[#F3F4F6] bg-[#FAFAFA]">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {apiMode === "live" ? (
-                  <Server className="w-4 h-4 text-emerald-600" />
-                ) : (
-                  <Database className="w-4 h-4 text-amber-500" />
-                )}
-                <div>
-                  <div className="text-[11px] font-bold text-[#374151]">
-                    {apiMode === "live" ? "Backend API (Live)" : "Mock Data Mode"}
-                  </div>
-                  <div className="text-[10px] text-[#9CA3AF]">
-                    {apiMode === "live" ? "http://localhost:5000/api" : "Client-side fallback"}
-                  </div>
-                </div>
+          {/* Workspace Switcher (Strictly for Hotel Admin) */}
+          {user?.role === "hotel_admin" && (
+            <div className="px-2 py-2 border-b border-[#F3F4F6]">
+              <p className="px-2 pb-1.5 text-[10px] font-bold uppercase tracking-wider text-[#9CA3AF]">
+                Switch Workspace
+              </p>
+              <div className="space-y-0.5">
+                <a
+                  href="/hotel-admin"
+                  className="flex items-center justify-between px-2.5 py-1.5 rounded text-[12px] font-medium text-[#374151] hover:bg-[#F3F4F6] hover:text-[#111827] transition-colors"
+                >
+                  <span>🏢 Hotel Admin (Portfolio)</span>
+                </a>
+                <a
+                  href="/operations"
+                  className="flex items-center justify-between px-2.5 py-1.5 rounded text-[12px] font-medium text-[#374151] hover:bg-[#F3F4F6] hover:text-[#111827] transition-colors"
+                >
+                  <span>🛎️ Hotel Operations (PMS)</span>
+                </a>
+                <a
+                  href="/customer"
+                  className="flex items-center justify-between px-2.5 py-1.5 rounded text-[12px] font-medium text-[#374151] hover:bg-[#F3F4F6] hover:text-[#111827] transition-colors"
+                >
+                  <span>✨ Guest Booking Portal</span>
+                </a>
               </div>
-              <button
-                type="button"
-                onClick={toggleApiMode}
-                className={`text-[10px] font-bold px-2 py-0.5 rounded border transition-colors ${
-                  apiMode === "live"
-                    ? "bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100"
-                    : "bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100"
-                }`}
-              >
-                {apiMode === "live" ? "LIVE" : "MOCK"}
-              </button>
             </div>
-          </div>
-
-          {/* Quick Role Switcher for Developer Testing */}
-          <div className="py-2 border-b border-[#F3F4F6]">
-            <div className="px-4 py-1 text-[10px] font-bold uppercase tracking-wider text-[#9CA3AF]">
-              Switch Panel / Role
-            </div>
-            <div className="space-y-0.5 px-1.5 mt-1">
-              {ROLE_OPTIONS.map((opt) => {
-                const Icon = opt.icon;
-                const isCurrent = user?.role === opt.role;
-                return (
-                  <button
-                    key={opt.role}
-                    type="button"
-                    onClick={() => {
-                      switchRole(opt.role);
-                      setIsOpen(false);
-                    }}
-                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded text-[12px] font-medium transition-colors text-left ${
-                      isCurrent
-                        ? "bg-[#FFF5F5] text-[#E63946] font-semibold"
-                        : "text-[#374151] hover:bg-[#F3F4F6] hover:text-[#111827]"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Icon className={`w-3.5 h-3.5 ${isCurrent ? "text-[#E63946]" : "text-[#9CA3AF]"}`} />
-                      <span>{opt.label}</span>
-                    </div>
-                    {isCurrent && <Check className="w-3.5 h-3.5 text-[#E63946]" />}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          )}
 
           {/* Logout Action */}
           <div className="pt-1.5 px-1.5">
@@ -206,7 +139,7 @@ export function UserMenu() {
                 setIsOpen(false);
                 logout();
               }}
-              className="w-full flex items-center gap-2 px-2.5 py-2 rounded text-[12px] font-medium text-red-600 hover:bg-red-50 transition-colors"
+              className="w-full flex items-center gap-2 px-2.5 py-2 rounded text-[12px] font-medium text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span>Sign Out</span>

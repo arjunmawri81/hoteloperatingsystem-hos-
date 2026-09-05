@@ -19,48 +19,61 @@ import {
   UserCheck,
 } from "lucide-react";
 
+import { useAuth } from "@/context/AuthContext";
+import { UserRole } from "@/types";
+
 interface SearchResult {
   id: string;
-  category: "Navigation" | "Guests" | "Rooms" | "Operations" | "Actions";
+  category: "Navigation" | "Operations" | "Customer" | "Admin";
   title: string;
   subtitle: string;
   href: string;
   icon: React.ElementType;
+  allowedRoles?: UserRole[];
 }
 
 const SEARCH_ITEMS: SearchResult[] = [
-  // Navigation & Core Modules
-  { id: "nav-1", category: "Navigation", title: "Front Desk (Arrivals & Departures)", subtitle: "Hotel Operations · Guest Check-in & Checkout", href: "/operations/front-desk", icon: BedDouble },
-  { id: "nav-2", category: "Navigation", title: "Reservations Registry", subtitle: "Hotel Operations · Live Bookings Registry", href: "/operations/reservations", icon: BedDouble },
-  { id: "nav-3", category: "Navigation", title: "Interactive Room Map", subtitle: "Hotel Operations · 24-Room Floorplan & Status", href: "/operations/room-map", icon: BedDouble },
-  { id: "nav-4", category: "Navigation", title: "Housekeeping Board", subtitle: "Hotel Operations · Turnover Kanban", href: "/operations/housekeeping", icon: Sparkles },
-  { id: "nav-5", category: "Navigation", title: "Restaurant POS & Dining", subtitle: "Hotel Operations · Table Orders & Kitchen", href: "/operations/restaurant-pos", icon: Utensils },
-  { id: "nav-6", category: "Navigation", title: "Guest CRM & History", subtitle: "Hotel Operations · VIP Preferences & Profiles (Sec 15)", href: "/operations/guests", icon: Users },
-  { id: "nav-7", category: "Navigation", title: "Inventory & Stock Management", subtitle: "Hotel Operations · Stock Ledger & SKU Alerts (Sec 19)", href: "/operations/inventory", icon: Package },
-  { id: "nav-8", category: "Navigation", title: "Billing & Invoices", subtitle: "Hotel Operations · Guest Folios & Reconciliation", href: "/operations/billing", icon: Receipt },
-  { id: "nav-9", category: "Navigation", title: "Area Management", subtitle: "Hotel Admin · Regional Clusters & Managers (Sec 3)", href: "/hotel-admin/areas", icon: MapPin },
-  { id: "nav-10", category: "Navigation", title: "Staff & Role Assignment", subtitle: "Hotel Admin · Personnel & Department RBAC (Sec 6)", href: "/hotel-admin/staff", icon: UserCheck },
-  { id: "nav-11", category: "Navigation", title: "Hotel Properties Portfolio", subtitle: "Hotel Admin · Property Capacities & Managers", href: "/hotel-admin/hotels", icon: Building },
-  { id: "nav-12", category: "Navigation", title: "Super Admin Organizations", subtitle: "Super Admin · Multi-tenant SaaS Management", href: "/super-admin/organizations", icon: Building },
-  { id: "nav-13", category: "Navigation", title: "AI Lead Pipeline & Calling", subtitle: "AI Receptionist · Lead Capture & Voice Summaries (Sec 24)", href: "/ai-receptionist/leads", icon: PhoneCall },
-  { id: "nav-14", category: "Navigation", title: "AI Receptionist Console", subtitle: "AI Receptionist · 24/7 Live Guest Chat", href: "/ai-receptionist", icon: Bot },
-  { id: "nav-15", category: "Navigation", title: "Customer Portal & Booking", subtitle: "Customer · Direct Hotel Discovery & Booking", href: "/customer", icon: Users },
+  // Super Admin
+  { id: "sa-1", category: "Admin", title: "Super Admin Dashboard", subtitle: "Multi-tenant overview & platform statistics", href: "/super-admin", icon: Building, allowedRoles: ["super_admin"] },
+  { id: "sa-2", category: "Admin", title: "Organizations", subtitle: "Manage hotel chains and SaaS tenant organizations", href: "/super-admin/organizations", icon: Building, allowedRoles: ["super_admin"] },
 
-  // Rooms
-  { id: "rm-1", category: "Rooms", title: "Room 101", subtitle: "Floor 1 · Standard Room", href: "/operations/room-map", icon: BedDouble },
-  { id: "rm-2", category: "Rooms", title: "Room 204", subtitle: "Floor 2 · Deluxe King", href: "/operations/room-map", icon: BedDouble },
-  { id: "rm-3", category: "Rooms", title: "Room 305", subtitle: "Floor 3 · Deluxe King", href: "/operations/room-map", icon: BedDouble },
-  { id: "rm-4", category: "Rooms", title: "Room 401", subtitle: "Floor 4 · Presidential Suite", href: "/operations/room-map", icon: BedDouble },
+  // Hotel Admin
+  { id: "ha-1", category: "Admin", title: "Hotel Admin Dashboard", subtitle: "Chain portfolio metrics & revenue overview", href: "/hotel-admin", icon: Building, allowedRoles: ["super_admin", "hotel_admin"] },
+  { id: "ha-2", category: "Admin", title: "Hotel Properties Portfolio", subtitle: "Manage hotels, locations and property managers", href: "/hotel-admin/hotels", icon: Building, allowedRoles: ["super_admin", "hotel_admin", "area_manager"] },
+  { id: "ha-3", category: "Admin", title: "Room Setup & Inventory", subtitle: "Configure room units, floor plans and base rates", href: "/hotel-admin/rooms", icon: BedDouble, allowedRoles: ["super_admin", "hotel_admin"] },
+  { id: "ha-4", category: "Admin", title: "Billing & Revenue Ledger", subtitle: "Organization revenue transactions, settlement & overdue tracking", href: "/hotel-admin/billing", icon: Receipt, allowedRoles: ["super_admin", "hotel_admin"] },
+  { id: "ha-5", category: "Admin", title: "Area Management", subtitle: "Regional clusters, area managers & territory oversight", href: "/hotel-admin/areas", icon: MapPin, allowedRoles: ["super_admin", "hotel_admin", "area_manager"] },
+  { id: "ha-6", category: "Admin", title: "Staff & Role Assignment", subtitle: "Personnel accounts, roles & department permissions", href: "/hotel-admin/staff", icon: UserCheck, allowedRoles: ["super_admin", "hotel_admin"] },
 
-  // Actions
-  { id: "act-1", category: "Actions", title: "Direct Room Booking Engine", subtitle: "Customer direct booking with instant confirmation", href: "/customer/booking", icon: ArrowRight },
-  { id: "act-2", category: "Actions", title: "Capture New Sales Lead", subtitle: "Record inbound customer enquiry into sales pipeline", href: "/ai-receptionist/leads", icon: PhoneCall },
-  { id: "act-3", category: "Actions", title: "Create New Reservation", subtitle: "Front desk manual booking entry", href: "/operations/reservations", icon: BedDouble },
-  { id: "act-4", category: "Actions", title: "Generate Guest Invoice", subtitle: "Create folio and bill guest", href: "/operations/billing", icon: Receipt },
+  // Area Manager
+  { id: "am-1", category: "Admin", title: "Area Manager Dashboard", subtitle: "Regional cluster performance and property oversight", href: "/area-manager", icon: MapPin, allowedRoles: ["super_admin", "hotel_admin", "area_manager"] },
+  { id: "am-2", category: "Admin", title: "Hotel Comparison", subtitle: "Compare revenue, occupancy and ADR across regional properties", href: "/area-manager/comparison", icon: MapPin, allowedRoles: ["super_admin", "hotel_admin", "area_manager"] },
+
+  // Hotel Operations (PMS)
+  { id: "ops-1", category: "Operations", title: "Operations Dashboard", subtitle: "Property occupancy, arrivals today & turnover summary", href: "/operations", icon: BedDouble, allowedRoles: ["super_admin", "hotel_admin", "hotel_manager", "receptionist", "finance"] },
+  { id: "ops-2", category: "Operations", title: "Front Desk Check-In & Departures", subtitle: "Guest check-in, checkout & arrivals pipeline", href: "/operations/front-desk", icon: BedDouble, allowedRoles: ["super_admin", "hotel_admin", "hotel_manager", "receptionist"] },
+  { id: "ops-3", category: "Operations", title: "Reservations Registry", subtitle: "Search, create and manage property bookings", href: "/operations/reservations", icon: BedDouble, allowedRoles: ["super_admin", "hotel_admin", "hotel_manager", "receptionist", "finance"] },
+  { id: "ops-4", category: "Operations", title: "Interactive Room Map", subtitle: "Visual room floorplan and real-time room status", href: "/operations/room-map", icon: BedDouble, allowedRoles: ["super_admin", "hotel_admin", "hotel_manager", "receptionist", "housekeeping"] },
+  { id: "ops-5", category: "Operations", title: "Housekeeping Board", subtitle: "Cleaning queues, turnover kanban & room inspection", href: "/operations/housekeeping", icon: Sparkles, allowedRoles: ["super_admin", "hotel_admin", "hotel_manager", "housekeeping", "receptionist"] },
+  { id: "ops-6", category: "Operations", title: "Restaurant POS & Dining", subtitle: "Dining floor tables, kitchen order queue & room charges", href: "/operations/restaurant-pos", icon: Utensils, allowedRoles: ["super_admin", "hotel_admin", "hotel_manager", "restaurant_staff"] },
+  { id: "ops-7", category: "Operations", title: "Guest CRM & History", subtitle: "Guest profiles, stay history, and VIP preferences", href: "/operations/guests", icon: Users, allowedRoles: ["super_admin", "hotel_admin", "hotel_manager", "receptionist"] },
+  { id: "ops-8", category: "Operations", title: "Inventory & Stock Management", subtitle: "Consumables, linen par levels, stock audits & supplier tracking", href: "/operations/inventory", icon: Package, allowedRoles: ["super_admin", "hotel_admin", "hotel_manager", "housekeeping", "restaurant_staff"] },
+  { id: "ops-9", category: "Operations", title: "Front Desk Invoicing & Billing", subtitle: "Issue guest folios, record receipts and settle payments", href: "/operations/billing", icon: Receipt, allowedRoles: ["super_admin", "hotel_admin", "hotel_manager", "finance", "receptionist"] },
+
+  // AI Receptionist
+  { id: "ai-1", category: "Navigation", title: "AI Receptionist Console", subtitle: "Autonomous 24/7 guest chat and inquiry handling", href: "/ai-receptionist", icon: Bot, allowedRoles: ["super_admin", "hotel_admin", "ai_receptionist", "hotel_manager", "receptionist"] },
+  { id: "ai-2", category: "Navigation", title: "AI Knowledge Base", subtitle: "Property policies, amenities data & training questions", href: "/ai-receptionist/knowledge-base", icon: Bot, allowedRoles: ["super_admin", "hotel_admin", "ai_receptionist", "hotel_manager", "receptionist"] },
+  { id: "ai-3", category: "Navigation", title: "AI Lead Pipeline", subtitle: "Inbound guest inquiries, call summaries & sales stages", href: "/ai-receptionist/leads", icon: PhoneCall, allowedRoles: ["super_admin", "hotel_admin", "ai_receptionist", "hotel_manager", "receptionist"] },
+
+  // Customer Portal
+  { id: "cust-1", category: "Customer", title: "Hotel Discovery", subtitle: "Explore available hotel properties and destinations", href: "/customer", icon: Building },
+  { id: "cust-2", category: "Customer", title: "Direct Room Booking", subtitle: "Direct booking engine with instant room confirmation", href: "/customer/booking", icon: ArrowRight },
+  { id: "cust-3", category: "Customer", title: "My Bookings", subtitle: "View active reservations and guest stay receipts", href: "/customer/my-bookings", icon: Users },
 ];
 
 export function GlobalSearchModal() {
   const router = useRouter();
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -88,7 +101,15 @@ export function GlobalSearchModal() {
     }
   }, [isOpen]);
 
-  const filtered = SEARCH_ITEMS.filter(
+  const userRole = user?.role || "customer";
+
+  const visibleItems = SEARCH_ITEMS.filter((item) => {
+    if (userRole === "super_admin") return true;
+    if (!item.allowedRoles) return true;
+    return item.allowedRoles.includes(userRole);
+  });
+
+  const filtered = visibleItems.filter(
     (item) =>
       item.title.toLowerCase().includes(query.toLowerCase()) ||
       item.subtitle.toLowerCase().includes(query.toLowerCase()) ||

@@ -15,18 +15,37 @@ import {
   ChevronRight,
 } from "lucide-react";
 
+import { useAuth } from "@/context/AuthContext";
+import { UserRole } from "@/types";
+import { UserMenu } from "./UserMenu";
+
 export function Navbar() {
   const pathname = usePathname();
+  const { user } = useAuth();
 
-  const navItems = [
+  const userRole = user?.role || "customer";
+
+  const navItems: {
+    name: string;
+    href: string;
+    icon: any;
+    badge?: string;
+    allowedRoles?: UserRole[];
+  }[] = [
     { name: "HOS Hub", href: "/", icon: Home },
-    { name: "Super Admin", href: "/super-admin", icon: ShieldAlert, badge: "SaaS" },
-    { name: "Hotel Admin", href: "/hotel-admin", icon: Building2, badge: "Owner" },
-    { name: "Area Manager", href: "/area-manager", icon: MapPin, badge: "Regional" },
-    { name: "Operations", href: "/operations", icon: ConciergeBell, badge: "Staff PMS" },
+    { name: "Super Admin", href: "/super-admin", icon: ShieldAlert, badge: "SaaS", allowedRoles: ["super_admin"] },
+    { name: "Hotel Admin", href: "/hotel-admin", icon: Building2, badge: "Owner", allowedRoles: ["super_admin", "hotel_admin"] },
+    { name: "Area Manager", href: "/area-manager", icon: MapPin, badge: "Regional", allowedRoles: ["super_admin", "hotel_admin", "area_manager"] },
+    { name: "Operations", href: "/operations", icon: ConciergeBell, badge: "Staff PMS", allowedRoles: ["super_admin", "hotel_admin", "hotel_manager", "receptionist", "housekeeping", "restaurant_staff", "finance"] },
     { name: "Guest Booking", href: "/customer", icon: UserCheck, badge: "Web" },
-    { name: "AI Receptionist", href: "/ai-receptionist", icon: Sparkles, badge: "Live AI" },
+    { name: "AI Receptionist", href: "/ai-receptionist", icon: Sparkles, badge: "Live AI", allowedRoles: ["super_admin", "hotel_admin", "ai_receptionist", "receptionist"] },
   ];
+
+  const visibleNavItems = navItems.filter((item) => {
+    if (userRole === "super_admin") return true;
+    if (!item.allowedRoles) return true;
+    return item.allowedRoles.includes(userRole);
+  });
 
   return (
     <header className="sticky top-0 z-50 backdrop-blur-md bg-slate-950/85 border-b border-slate-800/80 text-white">
@@ -54,9 +73,9 @@ export function Navbar() {
             </div>
           </Link>
 
-          {/* Navigation Links */}
+          {/* Navigation Links (Role-Scoped) */}
           <nav className="hidden lg:flex items-center gap-1">
-            {navItems.map((item) => {
+            {visibleNavItems.map((item) => {
               const Icon = item.icon;
               const isActive =
                 item.href === "/"
@@ -80,14 +99,14 @@ export function Navbar() {
             })}
           </nav>
 
-          {/* Quick Info / Live Status */}
+          {/* Quick Info & User Info */}
           <div className="flex items-center gap-3">
             <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>System Online</span>
+              <span>Online</span>
             </div>
-            <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-semibold text-slate-300">
-              AG
+            <div className="bg-slate-900 border border-slate-800 rounded-lg p-0.5">
+              <UserMenu />
             </div>
           </div>
         </div>

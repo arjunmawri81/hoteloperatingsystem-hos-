@@ -47,6 +47,32 @@ class PosService {
 
     return newOrder;
   }
+
+  static async updateOrderStatus({ id, status, user, tenant, ipAddress }) {
+    const order = await RestaurantOrder.findOne({ id });
+    if (!order) {
+      const error = new Error(`Order ${id} not found.`);
+      error.status = 404;
+      throw error;
+    }
+
+    order.status = status;
+    await order.save();
+
+    await AuditService.log({
+      userId: user?.id || "system",
+      userRole: user?.role || "hotel_manager",
+      orgId: tenant?.orgId || "org-1",
+      hotelId: tenant?.hotelId || "",
+      action: "UPDATE_POS_ORDER_STATUS",
+      resource: "pos",
+      resourceId: order.id,
+      details: { status },
+      ipAddress,
+    });
+
+    return order;
+  }
 }
 
 module.exports = PosService;

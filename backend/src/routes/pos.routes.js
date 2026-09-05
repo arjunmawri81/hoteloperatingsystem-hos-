@@ -21,4 +21,13 @@ router.post(
   PosController.createOrder
 );
 
+/**
+ * PATCH /api/pos/orders/:id/status
+ */
+router.patch(
+  "/orders/:id/status",
+  identifyTenant,
+  PosController.updateOrderStatus
+);
+
 module.exports = router;

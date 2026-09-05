@@ -41,7 +41,6 @@ const InvoiceSchema = new mongoose.Schema(
     },
     paymentMethod: {
       type: String,
-      enum: ["Credit Card", "Cash", "UPI / Digital", "Bank Transfer", "Room Charge", "Pending"],
       default: "Pending",
     },
     transactionRef: {
@@ -51,6 +50,18 @@ const InvoiceSchema = new mongoose.Schema(
     paidAt: {
       type: Date,
       default: null,
+    },
+    orgId: {
+      type: String,
+      default: "org-1",
+    },
+    billedBy: {
+      type: String,
+      default: "Front Desk Staff",
+    },
+    billedByRole: {
+      type: String,
+      default: "receptionist",
     },
   },
   {

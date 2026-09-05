@@ -1,5 +1,12 @@
 import { api, setStoredToken } from "./client";
-import { AuthResponse, LoginCredentials, RegisterData, User, UserRole } from "@/types";
+import {
+  AuthResponse,
+  LoginCredentials,
+  RegisterData,
+  UserSignupData,
+  User,
+  UserRole,
+} from "@/types";
 
 /**
  * Pre-defined mock users for development and rapid testing of all roles
@@ -56,98 +63,106 @@ export const MOCK_USERS: Record<string, User> = {
 };
 
 /**
- * Login API with automatic fallback to mock authentication if backend is offline
+ * Login API: Sends credentials to live backend and saves auth token
  */
 export async function loginApi(
   credentials: LoginCredentials,
   forceMock = false
 ): Promise<AuthResponse> {
-  if (!forceMock) {
-    try {
-      const response = await api.post<{ data: AuthResponse } | AuthResponse>(
-        "/auth/login",
-        credentials,
-        { skipAuth: true, timeout: 4000 }
-      );
-      const authData = (response as any).data || response;
-      if (authData?.token) {
-        setStoredToken(authData.token);
-      }
-      return authData;
-    } catch (err: any) {
-      console.warn(
-        "Live backend login unavailable. Using simulated mock session for development.",
-        err?.message
-      );
-    }
+  if (forceMock) {
+    const roleKey = (credentials.role || "super_admin") as string;
+    const mockUser: User = MOCK_USERS[roleKey] || {
+      id: `usr-mock-${Date.now()}`,
+      name: credentials.email.split("@")[0] || "Staff Member",
+      email: credentials.email,
+      role: (credentials.role as UserRole) || "super_admin",
+      orgId: "org-1",
+      orgName: "Meridian Hospitality Group",
+    };
+    const mockToken = `mock_jwt_token_${mockUser.role}_${Date.now()}`;
+    setStoredToken(mockToken);
+    return { user: mockUser, token: mockToken, expiresIn: 86400 };
   }
 
-  // Simulated Fallback Mock Session
-  const roleKey = (credentials.role || "super_admin") as string;
-  const mockUser: User = MOCK_USERS[roleKey] || {
-    id: `usr-mock-${Date.now()}`,
-    name: credentials.email.split("@")[0] || "Staff Member",
-    email: credentials.email,
-    role: (credentials.role as UserRole) || "super_admin",
-    orgId: "org-1",
-    orgName: "Meridian Hospitality Group",
-  };
+  const response = await api.post<{ data: AuthResponse } | AuthResponse>(
+    "/auth/login",
+    credentials,
+    { skipAuth: true, timeout: 8000 }
+  );
 
-  const mockToken = `mock_jwt_token_${mockUser.role}_${Date.now()}`;
-  setStoredToken(mockToken);
-
-  return {
-    user: mockUser,
-    token: mockToken,
-    expiresIn: 86400,
-  };
+  const authData = (response as any).data || response;
+  if (authData?.token) {
+    setStoredToken(authData.token);
+  }
+  return authData;
 }
 
 /**
- * Register API with automatic fallback to mock registration
+ * Register API: Registers a new Organization and Hotel Admin
  */
 export async function registerApi(
   data: RegisterData,
   forceMock = false
 ): Promise<AuthResponse> {
-  if (!forceMock) {
-    try {
-      const response = await api.post<{ data: AuthResponse } | AuthResponse>(
-        "/auth/register",
-        data,
-        { skipAuth: true, timeout: 4000 }
-      );
-      const authData = (response as any).data || response;
-      if (authData?.token) {
-        setStoredToken(authData.token);
-      }
-      return authData;
-    } catch (err: any) {
-      console.warn(
-        "Live backend registration unavailable. Using simulated mock session.",
-        err?.message
-      );
-    }
+  if (forceMock) {
+    const mockUser: User = {
+      id: `usr-org-${Date.now()}`,
+      name: data.adminName,
+      email: data.email,
+      role: "hotel_admin",
+      orgId: `org-${data.orgCode.toLowerCase()}`,
+      orgName: data.orgName,
+      phone: data.phone,
+    };
+    const mockToken = `mock_jwt_token_hotel_admin_${Date.now()}`;
+    setStoredToken(mockToken);
+    return { user: mockUser, token: mockToken, expiresIn: 86400 };
   }
 
-  const mockUser: User = {
-    id: `usr-org-${Date.now()}`,
-    name: data.adminName,
-    email: data.email,
-    role: "hotel_admin",
-    orgId: `org-${data.orgCode.toLowerCase()}`,
-    orgName: data.orgName,
-    phone: data.phone,
-  };
+  const response = await api.post<{ data: AuthResponse } | AuthResponse>(
+    "/auth/register",
+    data,
+    { skipAuth: true, timeout: 8000 }
+  );
 
-  const mockToken = `mock_jwt_token_hotel_admin_${Date.now()}`;
-  setStoredToken(mockToken);
+  const authData = (response as any).data || response;
+  if (authData?.token) {
+    setStoredToken(authData.token);
+  }
+  return authData;
+}
 
-  return {
-    user: mockUser,
-    token: mockToken,
-    expiresIn: 86400,
-  };
+/**
+ * Signup API: Registers an individual guest / customer account
+ */
+export async function signupUserApi(
+  data: UserSignupData,
+  forceMock = false
+): Promise<AuthResponse> {
+  if (forceMock) {
+    const mockUser: User = {
+      id: `usr-cust-${Date.now()}`,
+      name: data.name,
+      email: data.email,
+      role: "customer",
+      phone: data.phone,
+    };
+    const mockToken = `mock_jwt_token_customer_${Date.now()}`;
+    setStoredToken(mockToken);
+    return { user: mockUser, token: mockToken, expiresIn: 86400 };
+  }
+
+  const response = await api.post<{ data: AuthResponse } | AuthResponse>(
+    "/auth/signup",
+    data,
+    { skipAuth: true, timeout: 8000 }
+  );
+
+  const authData = (response as any).data || response;
+  if (authData?.token) {
+    setStoredToken(authData.token);
+  }
+  return authData;
 }
 
 /**

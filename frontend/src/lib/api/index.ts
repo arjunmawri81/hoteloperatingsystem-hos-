@@ -15,7 +15,6 @@ import {
 } from "@/types";
 import {
   mockOrganizations,
-  mockHotels,
   mockReservations,
   mockHousekeepingTasks,
   mockRestaurantOrders,
@@ -33,9 +32,9 @@ export const organizationsApi = {
     try {
       const res = await api.get<{ data: Organization[] } | Organization[]>(
         "/organizations",
-        { timeout: 3000 }
+        { timeout: 5000 }
       );
-      return (res as any).data || res;
+      return (res as any)?.data || res;
     } catch {
       return mockOrganizations;
     }
@@ -43,32 +42,16 @@ export const organizationsApi = {
 
   getById: async (id: string): Promise<Organization | null> => {
     try {
-      const res = await api.get(`/organizations/${id}`, { timeout: 3000 });
-      return res.data || res;
+      const res = await api.get(`/organizations/${id}`, { timeout: 5000 });
+      return (res as any)?.data || res;
     } catch {
       return mockOrganizations.find((o) => o.id === id) || null;
     }
   },
 
   create: async (payload: Partial<Organization>): Promise<Organization> => {
-    try {
-      const res = await api.post("/organizations", payload);
-      return res.data || res;
-    } catch {
-      const newOrg: Organization = {
-        id: `org-${Date.now()}`,
-        name: payload.name || "New Hotel Group",
-        code: payload.code || "NEW_ORG",
-        ownerName: payload.ownerName || "Administrator",
-        ownerEmail: payload.ownerEmail || "admin@example.com",
-        hotelsCount: payload.hotelsCount || 1,
-        activeRooms: payload.activeRooms || 50,
-        monthlyRevenue: payload.monthlyRevenue || 0,
-        status: payload.status || "active",
-        createdAt: new Date().toISOString().split("T")[0],
-      };
-      return newOrg;
-    }
+    const res = await api.post("/organizations", payload);
+    return (res as any)?.data || res;
   },
 };
 
@@ -80,44 +63,40 @@ export const hotelsApi = {
     try {
       const res = await api.get<{ data: Hotel[] } | Hotel[]>("/hotels", {
         params,
-        timeout: 3000,
+        timeout: 5000,
       });
-      return (res as any).data || res;
+      const items: Hotel[] = Array.isArray(res)
+        ? res
+        : Array.isArray((res as any)?.data)
+        ? (res as any).data
+        : [];
+      if (params?.orgId) {
+        const matching = items.filter((h) => h.orgId === params.orgId);
+        return matching.length > 0 ? matching : items;
+      }
+      return items;
     } catch {
-      return mockHotels;
+      return [];
     }
   },
 
   getById: async (id: string): Promise<Hotel | null> => {
     try {
-      const res = await api.get(`/hotels/${id}`, { timeout: 3000 });
-      return res.data || res;
+      const res = await api.get(`/hotels/${id}`, { timeout: 5000 });
+      return (res as any)?.data || res;
     } catch {
-      return mockHotels.find((h) => h.id === id) || null;
+      return null;
     }
   },
 
   create: async (payload: Partial<Hotel>): Promise<Hotel> => {
-    try {
-      const res = await api.post("/hotels", payload);
-      return res.data || res;
-    } catch {
-      const newHotel: Hotel = {
-        id: `hotel-${Date.now()}`,
-        orgId: payload.orgId || "org-1",
-        name: payload.name || "New Property",
-        city: payload.city || "Mumbai",
-        region: payload.region || "West Zone",
-        totalRooms: payload.totalRooms || 100,
-        occupiedRooms: 0,
-        occupancyRate: 0,
-        rating: 5.0,
-        managerName: payload.managerName || "General Manager",
-        phone: payload.phone || "+91 99999 00000",
-        status: "open",
-      };
-      return newHotel;
-    }
+    const res = await api.post("/hotels", payload);
+    return (res as any)?.data || res;
+  },
+
+  delete: async (id: string): Promise<{ success: boolean; message: string }> => {
+    const res = await api.delete(`/hotels/${id}`);
+    return (res as any)?.data || res;
   },
 };
 
@@ -129,53 +108,25 @@ export const reservationsApi = {
     try {
       const res = await api.get<{ data: Reservation[] } | Reservation[]>("/reservations", {
         params,
-        timeout: 3000,
+        timeout: 5000,
       });
-      return (res as any).data || res;
+      return (res as any)?.data || (Array.isArray(res) ? res : []);
     } catch {
-      return mockReservations;
+      return [];
     }
   },
 
   create: async (payload: Partial<Reservation>): Promise<Reservation> => {
-    try {
-      const res = await api.post("/reservations", payload);
-      return res.data || res;
-    } catch {
-      const newRes: Reservation = {
-        id: `RES-${Math.floor(1000 + Math.random() * 9000)}`,
-        guestName: payload.guestName || "Guest",
-        guestEmail: payload.guestEmail || "guest@example.com",
-        guestPhone: payload.guestPhone || "+91 90000 00000",
-        hotelName: payload.hotelName || "Meridian Grand Palace",
-        roomNumber: payload.roomNumber || "TBD",
-        roomType: payload.roomType || "Deluxe King",
-        checkIn: payload.checkIn || new Date().toISOString().split("T")[0],
-        checkOut: payload.checkOut || new Date().toISOString().split("T")[0],
-        status: "confirmed",
-        totalAmount: payload.totalAmount || 15000,
-        paidAmount: payload.paidAmount || 0,
-        source: payload.source || "Web Direct",
-      };
-      return newRes;
-    }
+    const res = await api.post("/reservations", payload);
+    return (res as any)?.data || res;
   },
 
   updateStatus: async (
     id: string,
     status: "confirmed" | "checked_in" | "checked_out" | "cancelled"
   ): Promise<Reservation | null> => {
-    try {
-      const res = await api.patch(`/reservations/${id}/status`, { status });
-      return res.data || res;
-    } catch {
-      const target = mockReservations.find((r) => r.id === id);
-      if (target) {
-        target.status = status;
-        return { ...target };
-      }
-      return null;
-    }
+    const res = await api.patch(`/reservations/${id}/status`, { status });
+    return (res as any)?.data || res;
   },
 };
 
@@ -187,11 +138,11 @@ export const housekeepingApi = {
     try {
       const res = await api.get<{ data: HousekeepingTask[] } | HousekeepingTask[]>(
         "/housekeeping",
-        { params, timeout: 3000 }
+        { params, timeout: 5000 }
       );
-      return (res as any).data || res;
+      return (res as any)?.data || (Array.isArray(res) ? res : []);
     } catch {
-      return mockHousekeepingTasks;
+      return [];
     }
   },
 
@@ -199,17 +150,15 @@ export const housekeepingApi = {
     id: string,
     status: HousekeepingTask["status"]
   ): Promise<HousekeepingTask | null> => {
-    try {
-      const res = await api.patch(`/housekeeping/${id}/status`, { status });
-      return res.data || res;
-    } catch {
-      const task = mockHousekeepingTasks.find((t) => t.id === id);
-      if (task) {
-        task.status = status;
-        return { ...task };
-      }
-      return null;
-    }
+    const res = await api.patch(`/housekeeping/${id}/status`, { status });
+    return (res as any)?.data || res;
+  },
+
+  createTask: async (
+    data: Partial<HousekeepingTask>
+  ): Promise<HousekeepingTask> => {
+    const res = await api.post<{ data: HousekeepingTask } | HousekeepingTask>("/housekeeping", data);
+    return (res as any)?.data || res;
   },
 };
 
@@ -221,30 +170,22 @@ export const posApi = {
     try {
       const res = await api.get<{ data: RestaurantOrder[] } | RestaurantOrder[]>("/pos/orders", {
         params,
-        timeout: 3000,
+        timeout: 5000,
       });
-      return (res as any).data || res;
+      return (res as any)?.data || (Array.isArray(res) ? res : []);
     } catch {
-      return mockRestaurantOrders;
+      return [];
     }
   },
 
   createOrder: async (payload: Partial<RestaurantOrder>): Promise<RestaurantOrder> => {
-    try {
-      const res = await api.post("/pos/orders", payload);
-      return res.data || res;
-    } catch {
-      const newOrder: RestaurantOrder = {
-        id: `POS-${Math.floor(400 + Math.random() * 600)}`,
-        tableNumber: payload.tableNumber || "T-01",
-        roomNumber: payload.roomNumber,
-        items: payload.items || ["Room Dining Item"],
-        total: payload.total || 1200,
-        status: payload.status || "cooking",
-        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      };
-      return newOrder;
-    }
+    const res = await api.post("/pos/orders", payload);
+    return (res as any)?.data || res;
+  },
+
+  updateStatus: async (id: string, status: string): Promise<RestaurantOrder> => {
+    const res = await api.patch(`/pos/orders/${id}/status`, { status });
+    return (res as any)?.data || res;
   },
 };
 
@@ -256,24 +197,17 @@ export const aiApi = {
     try {
       const res = await api.get<{ data: AIConversation[] } | AIConversation[]>(
         "/ai/conversations",
-        { params, timeout: 3000 }
+        { params, timeout: 5000 }
       );
-      return (res as any).data || res;
+      return (res as any)?.data || (Array.isArray(res) ? res : []);
     } catch {
-      return mockAIConversations;
+      return [];
     }
   },
 
   sendMessage: async (conversationId: string, message: string): Promise<any> => {
-    try {
-      const res = await api.post(`/ai/conversations/${conversationId}/messages`, { message });
-      return res.data || res;
-    } catch {
-      return {
-        reply: "Simulated AI Concierge response: Your request has been acknowledged and logged.",
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      };
-    }
+    const res = await api.post(`/ai/conversations/${conversationId}/messages`, { message });
+    return (res as any)?.data || res;
   },
 };
 
@@ -289,15 +223,18 @@ export interface InvoiceRecord {
   date: string;
   hotelId?: string;
   hotelName?: string;
+  orgId?: string;
+  billedBy?: string;
+  billedByRole?: string;
   paymentMethod?: string;
   transactionRef?: string;
   paidAt?: string;
 }
 
 export const invoicesApi = {
-  getAll: async (params?: { status?: string; search?: string }): Promise<{ data: InvoiceRecord[]; metrics: any }> => {
+  getAll: async (params?: { status?: string; search?: string; orgId?: string; hotelId?: string; billedBy?: string }): Promise<{ data: InvoiceRecord[]; metrics: any }> => {
     try {
-      const res = await api.get<{ data: InvoiceRecord[]; metrics: any }>("/invoices", { params, timeout: 3000 });
+      const res = await api.get<{ data: InvoiceRecord[]; metrics: any }>("/invoices", { params, timeout: 5000 });
       return res.data ? res : { data: (res as any), metrics: null };
     } catch {
       return { data: [], metrics: null };
@@ -305,19 +242,8 @@ export const invoicesApi = {
   },
 
   create: async (payload: Partial<InvoiceRecord>): Promise<InvoiceRecord> => {
-    try {
-      const res = await api.post("/invoices", payload);
-      return res.data || res;
-    } catch {
-      return {
-        id: `INV-${Math.floor(8820 + Math.random() * 500)}`,
-        guest: payload.guest || "Guest",
-        room: payload.room || "101",
-        amount: payload.amount || 0,
-        status: payload.status || "pending",
-        date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-      };
-    }
+    const res = await api.post("/invoices", payload);
+    return res.data || res;
   },
 
   markPaid: async (id: string, paymentMethod?: string): Promise<InvoiceRecord> => {
@@ -342,7 +268,7 @@ export const invoicesApi = {
 // 8. AREAS API (Hotel Admin)
 // -------------------------------------------------------------
 export const areasApi = {
-  getAll: async (params?: { search?: string }): Promise<any[]> => {
+  getAll: async (params?: { search?: string; orgId?: string }): Promise<any[]> => {
     try {
       const res = await api.get<{ data: any[] }>("/areas", { params, timeout: 3000 });
       return res.data || (res as any) || [];
@@ -360,7 +286,7 @@ export const areasApi = {
 // 9. STAFF & ROLES API (Hotel Admin)
 // -------------------------------------------------------------
 export const staffApi = {
-  getAll: async (params?: { department?: string; search?: string }): Promise<any[]> => {
+  getAll: async (params?: { department?: string; search?: string; orgId?: string }): Promise<any[]> => {
     try {
       const res = await api.get<{ data: any[] }>("/staff", { params, timeout: 3000 });
       return res.data || (res as any) || [];
@@ -437,19 +363,70 @@ export const leadsApi = {
 };
 
 // -------------------------------------------------------------
-// 13. ROOMS & INVENTORY API (Operations, Room Map)
+// 13. ROOMS & INVENTORY API (Operations, Room Map, Hotel Admin)
 // -------------------------------------------------------------
 export const roomsApi = {
-  getAll: async (params?: { floor?: number; status?: string }): Promise<any[]> => {
+  getAll: async (params?: { floor?: number; status?: string; hotelId?: string; orgId?: string }): Promise<any[]> => {
     try {
-      const res = await api.get<{ data: any[] }>("/rooms", { params, timeout: 3000 });
+      const res = await api.get<{ data: any[] }>("/rooms", { params, timeout: 5000 });
       return res.data || (res as any) || [];
     } catch {
       return [];
     }
   },
-  updateStatus: async (number: string, payload: { status: string; guest?: string; cleaner?: string }): Promise<any> => {
+  create: async (payload: {
+    number: string;
+    floor: number;
+    type: string;
+    rate?: number;
+    hotelId?: string;
+    hotelName?: string;
+    orgId?: string;
+    status?: string;
+  }): Promise<any> => {
+    const res = await api.post("/rooms", payload);
+    return (res as any)?.data || res;
+  },
+  createBulk: async (payload: {
+    rooms: Array<{
+      number: string;
+      floor: number;
+      type: string;
+      rate?: number;
+      status?: string;
+      hotelId?: string;
+      hotelName?: string;
+      orgId?: string;
+    }>;
+    hotelId?: string;
+    hotelName?: string;
+    orgId?: string;
+  }): Promise<any> => {
+    const res = await api.post("/rooms/bulk", payload);
+    return (res as any)?.data || res;
+  },
+  batchGenerate: async (payload: {
+    hotelId?: string;
+    hotelName?: string;
+    orgId?: string;
+    totalRooms?: number;
+    floors?: number;
+    defaultRate?: number;
+  }): Promise<any> => {
+    const res = await api.post("/rooms/batch", payload);
+    return (res as any)?.data || res;
+  },
+  updateStatus: async (
+    number: string,
+    payload: { status?: string; guest?: string; cleaner?: string; rate?: number; type?: string }
+  ): Promise<any> => {
     const res = await api.patch(`/rooms/${number}/status`, payload);
-    return res.data || res;
+    return (res as any)?.data || res;
+  },
+  delete: async (number: string): Promise<any> => {
+    const res = await api.delete(`/rooms/${number}`);
+    return (res as any)?.data || res;
   },
 };
+
+

@@ -16,6 +16,12 @@ router.post("/login", validate(schemas.authLogin), AuthController.login);
 router.post("/register", validate(schemas.authRegister), AuthController.register);
 
 /**
+ * POST /api/auth/signup (Create Individual User Account)
+ */
+router.post("/signup", validate(schemas.authSignup), AuthController.signup);
+router.post("/create-account", validate(schemas.authSignup), AuthController.signup);
+
+/**
  * GET /api/auth/me
  */
 router.get("/me", verifyToken, AuthController.getMe);

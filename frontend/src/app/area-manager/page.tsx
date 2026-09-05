@@ -42,13 +42,13 @@ export default function AreaManagerDashboardPage() {
     {
       id: "app-2",
       title: "Refund request — Booking #RES-10311",
-      details: "Meridian Airport · $95 refund for early cancellation",
+      details: "Meridian Airport · ₹7,500 refund for early cancellation",
       status: "pending",
     },
     {
       id: "app-3",
       title: "Emergency Linen Stock Purchase",
-      details: "Meridian Downtown · Housekeeping ($1,200)",
+      details: "Meridian Downtown · Housekeeping (₹12,000)",
       status: "pending",
     },
   ]);

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { posApi } from "@/lib/api";
 import { RestaurantOrder } from "@/types";
 import { Utensils, Plus, CheckCircle2, X, RefreshCw, Clock, DollarSign } from "lucide-react";
+import { RoleGuard } from "@/components/layout/RoleGuard";
 
 export default function RestaurantPOSPage() {
   const [orders, setOrders] = useState<RestaurantOrder[]>([]);
@@ -13,22 +14,27 @@ export default function RestaurantPOSPage() {
 
   // Table layout
   const [tables, setTables] = useState([
-    { id: "T1", status: "occupied", orderId: "ORD-3312" },
-    { id: "T2", status: "occupied", orderId: "ORD-3315" },
+    { id: "T1", status: "available" },
+    { id: "T2", status: "available" },
     { id: "T3", status: "available" },
-    { id: "T4", status: "occupied", orderId: "ORD-3313" },
+    { id: "T4", status: "available" },
     { id: "T5", status: "available" },
-    { id: "T6", status: "occupied", orderId: "ORD-3314" },
+    { id: "T6", status: "available" },
     { id: "T7", status: "available" },
-    { id: "T8", status: "reserved" },
+    { id: "T8", status: "available" },
     { id: "T9", status: "available" },
   ]);
 
-  const [newOrder, setNewOrder] = useState({
-    tableNumber: "T3",
-    roomNumber: "204",
-    items: "Club Sandwich, Fresh Lime Soda",
-    total: 35.0,
+  const [newOrder, setNewOrder] = useState<{
+    tableNumber: string;
+    roomNumber: string;
+    items: string;
+    total: string | number;
+  }>({
+    tableNumber: "T1",
+    roomNumber: "",
+    items: "",
+    total: "",
   });
 
   const loadOrders = async () => {
@@ -36,8 +42,23 @@ export default function RestaurantPOSPage() {
     try {
       const data = await posApi.getOrders();
       setOrders(data);
+      // Sync tables with active orders
+      const activeTableMap = new Map();
+      data.forEach((o) => {
+        if (o.status === "cooking" || o.status === "preparing" || o.status === "ready" || o.status === "served") {
+          activeTableMap.set(o.tableNumber, o.id);
+        }
+      });
+      setTables((prev) =>
+        prev.map((t) =>
+          activeTableMap.has(t.id)
+            ? { ...t, status: "occupied", orderId: activeTableMap.get(t.id) }
+            : { ...t, status: "available", orderId: undefined }
+        )
+      );
     } catch (e) {
       console.error(e);
+      setOrders([]);
     } finally {
       setIsLoading(false);
     }
@@ -49,12 +70,14 @@ export default function RestaurantPOSPage() {
 
   const handleCreateOrder = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!newOrder.items.trim()) return;
+
     try {
       const created = await posApi.createOrder({
         tableNumber: newOrder.tableNumber,
         roomNumber: newOrder.roomNumber,
         items: newOrder.items.split(",").map((s) => s.trim()),
-        total: Number(newOrder.total),
+        total: Number(newOrder.total) || 0,
         status: "cooking",
       });
 
@@ -69,23 +92,63 @@ export default function RestaurantPOSPage() {
       setIsModalOpen(false);
       setToastMsg(`✅ Order ${created.id} for Table ${created.tableNumber} sent to Kitchen`);
       setTimeout(() => setToastMsg(null), 3500);
+
+      setNewOrder({
+        tableNumber: "T1",
+        roomNumber: "",
+        items: "",
+        total: "",
+      });
     } catch (e) {
       console.error(e);
     }
   };
 
-  const advanceOrderStatus = (orderId: string) => {
-    setOrders(
-      orders.map((o) => {
-        if (o.id !== orderId) return o;
-        if (o.status === "cooking" || o.status === "preparing") return { ...o, status: "ready" };
-        if (o.status === "ready") return { ...o, status: "served" };
-        if (o.status === "served") return { ...o, status: "paid" };
-        return o;
-      })
-    );
-    setToastMsg(`Order ${orderId} status advanced`);
-    setTimeout(() => setToastMsg(null), 3000);
+  const advanceOrderStatus = async (orderId: string) => {
+    const currentOrder = orders.find((o) => o.id === orderId);
+    if (!currentOrder) return;
+
+    let nextStatus = "ready";
+    if (currentOrder.status === "cooking" || currentOrder.status === "preparing") nextStatus = "ready";
+    else if (currentOrder.status === "ready") nextStatus = "served";
+    else if (currentOrder.status === "served") nextStatus = "paid";
+
+    try {
+      // 1. Persist status change to MongoDB
+      await posApi.updateStatus(orderId, nextStatus);
+
+      // 2. Update local orders state
+      setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, status: nextStatus as any } : o))
+      );
+
+      // 3. Free up table if order is completed / paid
+      if (nextStatus === "paid") {
+        setTables((prev) =>
+          prev.map((t) => (t.id === currentOrder.tableNumber ? { ...t, status: "available", orderId: undefined } : t))
+        );
+      }
+
+      // 4. Broadcast live notification event
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("hos_notification", {
+            detail: {
+              title: "Dining Order Status Updated",
+              description: `Order ${orderId} status advanced to ${nextStatus.toUpperCase()}`,
+              category: "pos",
+              href: "/operations/restaurant-pos",
+            },
+          })
+        );
+      }
+
+      setToastMsg(`✅ Order ${orderId} marked as ${nextStatus.toUpperCase()} and saved to database!`);
+      setTimeout(() => setToastMsg(null), 3000);
+    } catch (err: any) {
+      console.error("Failed to update POS order status:", err);
+      setToastMsg(`❌ Failed to update order: ${err?.message || "Server error"}`);
+    }
   };
 
   const getOrderStatusBadge = (status: string) => {
@@ -105,7 +168,11 @@ export default function RestaurantPOSPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <RoleGuard
+      allowedRoles={["super_admin", "hotel_admin", "hotel_manager", "restaurant_staff"]}
+      moduleName="Restaurant Point of Sale & Kitchen"
+    >
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -226,7 +293,7 @@ export default function RestaurantPOSPage() {
                           {Array.isArray(ord.items) ? ord.items.join(", ") : ord.items}
                         </div>
                         <div className="text-[11px] font-bold text-[#111827] mt-0.5">
-                          ${ord.total}
+                          ₹{ord.total}
                         </div>
                       </td>
                       <td className="py-3 px-4">
@@ -324,7 +391,7 @@ export default function RestaurantPOSPage() {
 
               <div>
                 <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
-                  Total Amount ($)
+                  Total Amount (₹)
                 </label>
                 <input
                   type="number"
@@ -354,6 +421,7 @@ export default function RestaurantPOSPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </RoleGuard>
   );
 }

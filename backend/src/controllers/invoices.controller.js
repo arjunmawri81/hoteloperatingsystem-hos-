@@ -1,13 +1,26 @@
 const Invoice = require("../models/Invoice");
+const Room = require("../models/Room");
 
 // 1. Get all Invoices & calculate revenue metrics directly from MongoDB
 exports.getAllInvoices = async (req, res, next) => {
   try {
-    const { status, search } = req.query;
+    const { status, search, orgId, hotelId, billedBy } = req.query;
     const filter = {};
 
     if (status && status !== "all") {
       filter.status = status;
+    }
+
+    if (orgId) {
+      filter.orgId = orgId;
+    }
+
+    if (hotelId && hotelId !== "all") {
+      filter.hotelId = hotelId;
+    }
+
+    if (billedBy && billedBy !== "all") {
+      filter.billedBy = billedBy;
     }
 
     if (search) {
@@ -15,12 +28,21 @@ exports.getAllInvoices = async (req, res, next) => {
         { guest: { $regex: search, $options: "i" } },
         { id: { $regex: search, $options: "i" } },
         { room: { $regex: search, $options: "i" } },
+        { billedBy: { $regex: search, $options: "i" } },
+        { hotelName: { $regex: search, $options: "i" } },
       ];
     }
 
-    const invoices = await Invoice.find(filter).sort({ createdAt: -1 });
+    let invoices = await Invoice.find(filter).sort({ createdAt: -1 });
 
-    // Aggregate overall revenue stats from all documents in database
+    // Fallback if orgId strictly filtered out legacy items
+    if (invoices.length === 0 && orgId) {
+      const allMatching = await Invoice.find({}).sort({ createdAt: -1 });
+      if (allMatching.length > 0) {
+        invoices = allMatching;
+      }
+    }
+
     const allInvoices = await Invoice.find({});
     const totalInvoiced = allInvoices.reduce((sum, i) => sum + (i.amount || 0), 0);
     const totalPaid = allInvoices.filter((i) => i.status === "paid").reduce((sum, i) => sum + (i.amount || 0), 0);
@@ -46,7 +68,34 @@ exports.getAllInvoices = async (req, res, next) => {
 // 2. Create and persist new Invoice & transaction record to MongoDB
 exports.createInvoice = async (req, res, next) => {
   try {
-    const { guest, room, amount, status, date, hotelId, hotelName, paymentMethod } = req.body;
+    const { guest, room, amount, status, date, hotelId, hotelName, paymentMethod, orgId, billedBy, billedByRole } = req.body;
+
+    if (!room) {
+      return res.status(400).json({
+        success: false,
+        message: "Room number is required.",
+      });
+    }
+
+    // Validate that room exists for this hotel
+    const targetHotelId = hotelId || "hotel-1788547097892";
+    const hotelRoomsCount = await Room.countDocuments({ hotelId: targetHotelId });
+    if (hotelRoomsCount > 0) {
+      const roomExists = await Room.findOne({
+        hotelId: targetHotelId,
+        $or: [
+          { number: String(room) },
+          { roomNumber: String(room) },
+        ],
+      });
+
+      if (!roomExists) {
+        return res.status(400).json({
+          success: false,
+          message: `Room "${room}" does not exist in property "${hotelName || "this hotel"}". Please select an available room from the property inventory.`,
+        });
+      }
+    }
 
     const id = `INV-${Math.floor(8820 + Math.random() * 500)}`;
     const formattedDate = date || new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -58,11 +107,14 @@ exports.createInvoice = async (req, res, next) => {
       amount: Number(amount),
       status: status || "pending",
       date: formattedDate,
-      hotelId: hotelId || "hotel-101",
-      hotelName: hotelName || "Meridian Grand Palace",
+      hotelId: hotelId || "hotel-1788547097892",
+      hotelName: hotelName || "Regal 77",
       paymentMethod: paymentMethod || (status === "paid" ? "Credit Card" : "Pending"),
       paidAt: status === "paid" ? new Date() : null,
       transactionRef: status === "paid" ? `TXN-${Date.now()}` : null,
+      orgId: orgId || req.tenant?.orgId || req.user?.orgId || "org-1",
+      billedBy: billedBy || req.user?.name || "Front Desk Staff",
+      billedByRole: billedByRole || req.user?.role || "receptionist",
     });
 
     res.status(201).json({
