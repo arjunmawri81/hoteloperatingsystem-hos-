@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { organizationsApi, hotelsApi, invoicesApi } from "@/lib/api";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, ArrowRight } from "lucide-react";
 
 export default function SuperAdminDashboardPage() {
   const [orgs, setOrgs] = useState<any[]>([]);
@@ -40,21 +41,25 @@ export default function SuperAdminDashboardPage() {
       title: "ORGANIZATIONS",
       value: String(orgs.length || 24),
       subtext: `across platform`,
+      href: "/super-admin/organizations",
     },
     {
       title: "HOTELS",
       value: String(hotels.length || 86),
       subtext: `active properties`,
+      href: "/hotel-admin/hotels",
     },
     {
       title: "ACTIVE SUBSCRIPTIONS",
       value: String(activeSubs || 79),
       subtext: `${orgs.filter((o) => o.status === "trial").length} in trial`,
+      href: "/super-admin/organizations",
     },
     {
       title: "PLATFORM REVENUE",
       value: totalPlatformRevenue > 0 ? `₹${totalPlatformRevenue.toLocaleString("en-IN")}` : "₹482K",
       subtext: "MTD",
+      href: "/hotel-admin/billing",
     },
   ];
 
@@ -94,7 +99,7 @@ export default function SuperAdminDashboardPage() {
   ];
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-10 font-sans antialiased text-[#111827]">
       {/* Page Title & Subtitle */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -118,12 +123,16 @@ export default function SuperAdminDashboardPage() {
       {/* 4 Key Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, i) => (
-          <div
+          <Link
             key={i}
-            className="bg-white p-6 rounded-md border border-[#E5E7EB] shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
+            href={stat.href}
+            className="bg-white p-6 rounded-md border border-[#E5E7EB] shadow-[0_1px_2px_rgba(0,0,0,0.04)] cursor-pointer hover:border-[#D1D5DB] hover:shadow-md transition-all group block"
           >
-            <div className="text-[11px] font-bold text-[#E63946] uppercase tracking-wider">
-              {stat.title}
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold text-[#E63946] uppercase tracking-wider">
+                {stat.title}
+              </span>
+              <ArrowRight className="w-3.5 h-3.5 text-[#9CA3AF] group-hover:text-[#EC3013] group-hover:translate-x-0.5 transition-all" />
             </div>
             <div className="text-[34px] font-bold text-[#111827] mt-3 tracking-tight">
               {stat.value}
@@ -131,7 +140,7 @@ export default function SuperAdminDashboardPage() {
             <div className="text-[13px] text-[#9CA3AF] mt-2 font-normal">
               {stat.subtext}
             </div>
-          </div>
+          </Link>
         ))}
       </div>
 

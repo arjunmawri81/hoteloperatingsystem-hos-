@@ -173,25 +173,25 @@ export default function HotelAdminDashboardPage() {
       title: "ASSIGNED HOTELS",
       value: String(hotels.length),
       subtext: `${distinctAreas} area${distinctAreas !== 1 ? "s" : ""}`,
-      action: () => setActiveTab("performance"),
+      href: "/hotel-admin/hotels",
     },
     {
       title: "TOTAL ROOMS",
       value: String(totalRooms),
       subtext: "across all properties",
-      action: () => setActiveTab("performance"),
+      href: "/hotel-admin/rooms",
     },
     {
       title: "OCCUPANCY",
       value: `${avgOccupancy}%`,
       subtext: "org-wide",
-      action: () => setActiveTab("performance"),
+      href: "/operations/room-map",
     },
     {
       title: "REVENUE",
       value: `₹${totalRevenue.toLocaleString("en-IN")}`,
       subtext: invoices.length > 0 ? `${invoices.length} bill${invoices.length !== 1 ? "s" : ""} / folios` : "MTD",
-      action: () => setActiveTab("transactions"),
+      href: "/hotel-admin/billing",
     },
   ];
 
@@ -233,10 +233,10 @@ export default function HotelAdminDashboardPage() {
       {/* 4 Interactive Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, i) => (
-          <div
+          <Link
             key={i}
-            onClick={stat.action}
-            className="bg-white p-6 rounded-md border border-[#E5E7EB] shadow-[0_1px_2px_rgba(0,0,0,0.04)] cursor-pointer hover:border-[#D1D5DB] hover:shadow-md transition-all group"
+            href={stat.href}
+            className="bg-white p-6 rounded-md border border-[#E5E7EB] shadow-[0_1px_2px_rgba(0,0,0,0.04)] cursor-pointer hover:border-[#D1D5DB] hover:shadow-md transition-all group block"
           >
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold text-[#EC3013] uppercase tracking-wider">
@@ -250,7 +250,7 @@ export default function HotelAdminDashboardPage() {
             <div className="text-[13px] text-[#9CA3AF] mt-2 font-normal">
               {stat.subtext}
             </div>
-          </div>
+          </Link>
         ))}
       </div>
 

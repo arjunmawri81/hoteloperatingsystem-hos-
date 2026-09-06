@@ -8,7 +8,7 @@ class NotificationService {
     channel = "all",
     payload = {},
   }) {
-    console.log(`🔔 [Notification] Dispatched [${type}] to [${recipient}] via [${channel}]`);
+    console.log(`[Notification] Sent ${type} to ${recipient} via ${channel}`);
     return {
       sent: true,
       timestamp: new Date().toISOString(),
