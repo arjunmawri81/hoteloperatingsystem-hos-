@@ -117,7 +117,7 @@ export default function OrganizationsPage() {
             Organizations
           </h1>
           <p className="text-[13px] text-[#6B7280] mt-0.5">
-            All hotel organizations &amp; hospitality chains registered on the platform ({organizations.length})
+            All hotel organizations &amp; hotel chains registered on the platform ({organizations.length})
           </p>
         </div>
 

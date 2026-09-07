@@ -1,7 +1,7 @@
 {
-  "name": "hos-backend",
+  "name": "lucknexa-backend",
   "version": "1.0.0",
-  "description": "Hotel Operating System (HOS) REST API Backend",
+  "description": "LuckNexa — All-In-One AI-Powered Hotel Operating System REST API Backend",
   "main": "src/server.js",
   "type": "commonjs",
   "scripts": {
@@ -9,13 +9,13 @@
     "dev": "nodemon src/server.js"
   },
   "keywords": [
+    "lucknexa",
     "hotel-operating-system",
-    "hospitality-api",
     "pms",
     "express",
     "jwt"
   ],
-  "author": "Meridian Hospitality Group",
+  "author": "LuckNexa",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^2.4.3",

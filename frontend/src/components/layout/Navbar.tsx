@@ -32,7 +32,7 @@ export function Navbar() {
     badge?: string;
     allowedRoles?: UserRole[];
   }[] = [
-    { name: "HOS Hub", href: "/", icon: Home },
+    { name: "LuckNexa Hub", href: "/", icon: Home },
     { name: "Super Admin", href: "/super-admin", icon: ShieldAlert, badge: "SaaS", allowedRoles: ["super_admin"] },
     { name: "Hotel Admin", href: "/hotel-admin", icon: Building2, badge: "Owner", allowedRoles: ["super_admin", "hotel_admin"] },
     { name: "Area Manager", href: "/area-manager", icon: MapPin, badge: "Regional", allowedRoles: ["super_admin", "hotel_admin", "area_manager"] },
@@ -48,27 +48,29 @@ export function Navbar() {
   });
 
   return (
-    <header className="sticky top-0 z-50 backdrop-blur-md bg-slate-950/85 border-b border-slate-800/80 text-white">
+    <header className="sticky top-0 z-50 backdrop-blur-md bg-slate-950/90 border-b border-slate-800/80 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Brand Logo */}
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 via-indigo-600 to-violet-500 p-0.5 shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform duration-200">
-              <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
-                <Hotel className="w-5 h-5 text-amber-400" />
-              </div>
+            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform duration-200 border border-slate-700/60 bg-[#090D16] flex items-center justify-center p-0.5">
+              <img
+                src="/lucknexa-icon.png"
+                alt="LuckNexa Logo"
+                className="w-full h-full object-contain"
+              />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-amber-200 via-white to-slate-200 bg-clip-text text-transparent">
-                  HOS
+                <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent">
+                  LuckNexa
                 </span>
-                <span className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                  Multi-Tenant
+                <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/30">
+                  AI-Powered OS
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 font-medium tracking-wide">
-                Hotel Operating System
+              <p className="text-[10px] text-slate-400 font-medium tracking-wide">
+                All-In-One Hotel Operating System
               </p>
             </div>
           </Link>

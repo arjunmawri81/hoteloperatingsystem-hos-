@@ -1,5 +1,5 @@
 /**
- * HOS Unified API Service Layer
+ * LuckNexa Unified API Service Layer
  * Clean, type-safe API methods for frontend panels.
  * Integrates directly with backend endpoints while falling back to mock data if backend is offline.
  */

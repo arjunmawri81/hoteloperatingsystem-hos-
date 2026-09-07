@@ -64,14 +64,28 @@ export default function HomePage() {
     <main className="min-h-screen bg-[#FAFAFA] text-[#111827] flex flex-col justify-between p-8 sm:p-12 font-sans antialiased">
       {/* Top Header */}
       <div className="max-w-5xl mx-auto w-full flex items-center justify-between pb-8 border-b border-[#E5E7EB]">
-        <div>
-          <div className="text-[22px] font-bold tracking-tight text-[#111827]">
-            HOS
+        <Link href="/" className="flex items-center gap-3 group">
+          <div className="w-11 h-11 rounded-xl overflow-hidden shadow-md border border-slate-700/30 bg-[#090D16] flex items-center justify-center p-0.5 group-hover:scale-105 transition-transform">
+            <img
+              src="/lucknexa-icon.png"
+              alt="LuckNexa Logo"
+              className="w-full h-full object-contain"
+            />
           </div>
-          <p className="text-[12px] text-[#9CA3AF] tracking-wide mt-0.5">
-            Hotel Operating System
-          </p>
-        </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[20px] font-black tracking-tight text-[#111827]">
+                Luck<span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Nexa</span>
+              </span>
+              <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                AI Powered
+              </span>
+            </div>
+            <p className="text-[11px] text-[#6B7280] font-medium tracking-wide">
+              All-In-One. AI-Powered. Total Control.
+            </p>
+          </div>
+        </Link>
 
         <div className="flex items-center gap-2 sm:gap-3">
           {isAuthenticated && user ? (
@@ -82,19 +96,19 @@ export default function HomePage() {
             <>
               <Link
                 href="/login"
-                className="px-3.5 py-1.5 sm:px-4 sm:py-2 text-[12px] sm:text-[13px] font-bold text-[#111827] bg-white border border-[#D1D5DB] hover:bg-[#F9FAFB] rounded-sm transition-colors"
+                className="px-3.5 py-1.5 sm:px-4 sm:py-2 text-[12px] sm:text-[13px] font-bold text-[#111827] bg-white border border-[#D1D5DB] hover:bg-[#F9FAFB] rounded-md transition-colors shadow-2xs"
               >
                 Sign In
               </Link>
               <Link
                 href="/signup"
-                className="px-3.5 py-1.5 sm:px-4 sm:py-2 text-[12px] sm:text-[13px] font-bold text-[#111827] bg-[#F3F4F6] hover:bg-[#E5E7EB] border border-[#D1D5DB] rounded-sm transition-colors"
+                className="px-3.5 py-1.5 sm:px-4 sm:py-2 text-[12px] sm:text-[13px] font-bold text-[#111827] bg-[#F3F4F6] hover:bg-[#E5E7EB] border border-[#D1D5DB] rounded-md transition-colors"
               >
                 Create Account
               </Link>
               <Link
                 href="/register"
-                className="px-3.5 py-1.5 sm:px-4 sm:py-2 text-[12px] sm:text-[13px] font-bold text-white bg-[#EC3013] hover:bg-[#D62839] rounded-sm transition-colors shadow-xs"
+                className="px-3.5 py-1.5 sm:px-4 sm:py-2 text-[12px] sm:text-[13px] font-bold text-white bg-[#EC3013] hover:bg-[#D62839] rounded-md transition-colors shadow-xs"
               >
                 Register Org
               </Link>
@@ -108,10 +122,10 @@ export default function HomePage() {
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-[28px] font-bold text-[#111827] tracking-tight">
-              Hotel Management Portals
+              LuckNexa Hotel Workspaces
             </h1>
             <p className="text-[14px] text-[#6B7280] mt-1">
-              Select a dedicated workspace to manage your hotel operations
+              Smart AI Assistant · Real-Time Insights · Maximum Profit
             </p>
           </div>
 
@@ -135,7 +149,7 @@ export default function HomePage() {
               <Link
                 key={p.path}
                 href={p.path}
-                className={`bg-white p-6 rounded-md border shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-all flex flex-col justify-between group ${
+                className={`bg-white p-6 rounded-lg border shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-all flex flex-col justify-between group ${
                   hasAccess
                     ? "border-[#E5E7EB] hover:border-[#D1D5DB] hover:shadow-md"
                     : "border-[#E5E7EB] opacity-75 hover:border-rose-200"
@@ -162,7 +176,7 @@ export default function HomePage() {
                 </div>
 
                 <div className="mt-6 pt-4 border-t border-[#F3F4F6] flex items-center justify-between text-[12px] font-bold text-[#111827]">
-                  <span>{hasAccess ? "Open Panel" : "View Permission Info"}</span>
+                  <span>{hasAccess ? "Open Workspace" : "View Permission Info"}</span>
                   <ArrowRight className="w-4 h-4 text-[#9CA3AF] group-hover:text-[#EC3013] group-hover:translate-x-0.5 transition-transform" />
                 </div>
               </Link>
@@ -173,7 +187,7 @@ export default function HomePage() {
 
       {/* Footer */}
       <div className="max-w-5xl mx-auto w-full pt-8 border-t border-[#E5E7EB] text-center text-[12px] text-[#9CA3AF]">
-        Meridian Hotels & Resorts · Hotel Operating System
+        LuckNexa Hotel Operating System · All Rights Reserved
       </div>
     </main>
   );

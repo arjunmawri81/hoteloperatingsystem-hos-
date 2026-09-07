@@ -1,6 +1,6 @@
-# 🏨 HOS (Hotel Operating System) — Backend API Server
+# 🏨 LuckNexa — Hotel Operating System Backend API Server
 
-A modular, production-ready REST API backend for the **Hotel Operating System (HOS)** platform built with **Express.js**, **JWT authentication**, and **Role-Based Access Control (RBAC)**.
+A modular, production-ready REST API backend for the **LuckNexa Hotel Operating System** platform built with **Express.js**, **JWT authentication**, and **Role-Based Access Control (RBAC)**.
 
 ---
 

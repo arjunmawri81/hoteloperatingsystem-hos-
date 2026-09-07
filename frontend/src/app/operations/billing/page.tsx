@@ -149,7 +149,7 @@ export default function BillingPage() {
 
   return (
     <RoleGuard
-      allowedRoles={["super_admin", "hotel_admin", "hotel_manager", "finance", "receptionist"]}
+      allowedRoles={["super_admin", "hotel_admin", "hotel_manager", "finance"]}
       moduleName="Billing & Revenue Transactions"
     >
       <div className="space-y-6">

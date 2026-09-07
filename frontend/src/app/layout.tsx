@@ -16,8 +16,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "HOS - Hotel Operating System",
-  description: "Hotel Operating System Platform",
+  title: "LuckNexa — All-In-One AI-Powered Hotel Operating System",
+  description: "LuckNexa: All-In-One. AI-Powered. Total Control. Complete cloud ERP & PMS platform for Hotels, Restaurants, Resorts, and Banquets.",
+  icons: {
+    icon: "/lucknexa-icon.jpg",
+    apple: "/lucknexa-icon.jpg",
+  },
 };
 
 export default function RootLayout({

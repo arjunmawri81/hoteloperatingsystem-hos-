@@ -70,7 +70,7 @@ export default function SuperAdminDashboardPage() {
       time: "10 min ago",
     },
     {
-      org: "Sunstone Hospitality",
+      org: "Sunstone Hotels",
       event: "Subscription renewed",
       time: "1 hr ago",
     },

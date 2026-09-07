@@ -8,14 +8,50 @@ const {
   updateRoomStatus,
   deleteRoom,
 } = require("../controllers/rooms.controller");
+const { verifyToken } = require("../middleware/auth");
+const { identifyTenant } = require("../middleware/tenant");
+const { requireRole } = require("../middleware/rbac");
 
-router.get("/", getAllRooms);
-router.post("/", createRoom);
-router.post("/bulk", createBulkRooms);
-router.post("/batch", batchGenerateRooms);
-router.patch("/:number/status", updateRoomStatus);
-router.delete("/:number", deleteRoom);
+router.get("/", identifyTenant, getAllRooms);
 
+router.post(
+  "/",
+  verifyToken,
+  identifyTenant,
+  requireRole(["super_admin", "hotel_admin", "hotel_manager"]),
+  createRoom
+);
+
+router.post(
+  "/bulk",
+  verifyToken,
+  identifyTenant,
+  requireRole(["super_admin", "hotel_admin", "hotel_manager"]),
+  createBulkRooms
+);
+
+router.post(
+  "/batch",
+  verifyToken,
+  identifyTenant,
+  requireRole(["super_admin", "hotel_admin", "hotel_manager"]),
+  batchGenerateRooms
+);
+
+router.patch(
+  "/:number/status",
+  verifyToken,
+  identifyTenant,
+  requireRole(["super_admin", "hotel_admin", "hotel_manager", "receptionist", "housekeeping", "ai_receptionist"]),
+  updateRoomStatus
+);
+
+router.delete(
+  "/:number",
+  verifyToken,
+  identifyTenant,
+  requireRole(["super_admin", "hotel_admin", "hotel_manager"]),
+  deleteRoom
+);
 
 module.exports = router;
-

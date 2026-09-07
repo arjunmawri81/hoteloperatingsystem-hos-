@@ -572,12 +572,16 @@ export default function HotelAdminBillingPage() {
             <div className="bg-[#111827] text-white p-6 flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 bg-[#EC3013] text-white font-black text-[10px] flex items-center justify-center rounded">
-                    HOS
-                  </span>
+                  <div className="w-7 h-7 rounded-lg overflow-hidden bg-[#090D16] border border-slate-700/40 flex items-center justify-center shrink-0 p-0.5">
+                    <img
+                      src="/lucknexa-icon.png"
+                      alt="LuckNexa"
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
                   <h3 className="text-[17px] font-bold">{selectedFolio.hotelName || "Regal 77"}</h3>
                 </div>
-                <p className="text-[11px] text-gray-400 mt-1">Official Tax Invoice &amp; Guest Folio</p>
+                <p className="text-[11px] text-gray-400 mt-1">Official Tax Invoice &amp; Guest Folio · LuckNexa Platform</p>
               </div>
 
               <button

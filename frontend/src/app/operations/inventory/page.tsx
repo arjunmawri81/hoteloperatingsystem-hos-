@@ -121,7 +121,7 @@ export default function InventoryManagementPage() {
 
   return (
     <RoleGuard
-      allowedRoles={["super_admin", "hotel_admin", "hotel_manager", "housekeeping", "restaurant_staff"]}
+      allowedRoles={["super_admin", "hotel_admin", "hotel_manager"]}
       moduleName="Inventory & Stock Management"
     >
       <div className="space-y-6">

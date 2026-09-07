@@ -19,6 +19,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { RoleGuard } from "@/components/layout/RoleGuard";
+import { useAuth } from "@/context/AuthContext";
 
 interface Room {
   _id?: string;
@@ -73,6 +74,12 @@ const generateFloorRooms = (
 };
 
 export default function RoomMapPage() {
+  const { user } = useAuth();
+  const canManageRooms =
+    user?.role === "super_admin" ||
+    user?.role === "hotel_admin" ||
+    user?.role === "hotel_manager";
+
   const [rooms, setRooms] = useState<Room[]>([]);
   const [hotels, setHotels] = useState<Hotel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -372,29 +379,33 @@ export default function RoomMapPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <Link
-            href="/hotel-admin/rooms"
-            className="flex items-center gap-1.5 px-3 py-1.5 border border-[#D1D5DB] rounded text-[#374151] hover:bg-[#F3F4F6] text-[13px] font-semibold transition-colors"
-          >
-            <span>Hotel Admin Room Setup</span>
-            <ExternalLink className="w-3.5 h-3.5 text-[#6B7280]" />
-          </Link>
+          {canManageRooms && (
+            <>
+              <Link
+                href="/hotel-admin/rooms"
+                className="flex items-center gap-1.5 px-3 py-1.5 border border-[#D1D5DB] rounded text-[#374151] hover:bg-[#F3F4F6] text-[13px] font-semibold transition-colors"
+              >
+                <span>Hotel Admin Room Setup</span>
+                <ExternalLink className="w-3.5 h-3.5 text-[#6B7280]" />
+              </Link>
 
-          <button
-            onClick={() => setIsBatchModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-[#D1D5DB] hover:bg-[#F3F4F6] text-[#111827] text-[13px] font-bold rounded shadow-2xs transition-colors cursor-pointer"
-          >
-            <Zap className="w-4 h-4 text-amber-500 fill-amber-500" />
-            <span>⚡ Auto-Generate</span>
-          </button>
+              <button
+                onClick={() => setIsBatchModalOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-[#D1D5DB] hover:bg-[#F3F4F6] text-[#111827] text-[13px] font-bold rounded shadow-2xs transition-colors cursor-pointer"
+              >
+                <Zap className="w-4 h-4 text-amber-500 fill-amber-500" />
+                <span>⚡ Auto-Generate</span>
+              </button>
 
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#EC3013] hover:bg-[#D62839] text-white text-[13px] font-bold rounded shadow-xs transition-colors cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            <span>+ Create Rooms</span>
-          </button>
+              <button
+                onClick={() => setIsAddModalOpen(true)}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#EC3013] hover:bg-[#D62839] text-white text-[13px] font-bold rounded shadow-xs transition-colors cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>+ Create Rooms</span>
+              </button>
+            </>
+          )}
 
           <button
             onClick={loadData}
@@ -448,17 +459,23 @@ export default function RoomMapPage() {
         <div className="flex items-center gap-2">
           <Filter className="w-4 h-4 text-[#6B7280]" />
           <span className="text-[13px] font-bold text-[#374151]">Status:</span>
-          {["all", "available", "occupied", "dirty", "out_of_order"].map((status) => (
+          {[
+            { id: "all", label: "All" },
+            { id: "available", label: "Available" },
+            { id: "occupied", label: "Occupied" },
+            { id: "dirty", label: "Dirty" },
+            { id: "out_of_order", label: "Out of Order" },
+          ].map((st) => (
             <button
-              key={status}
-              onClick={() => setFilterStatus(status)}
-              className={`px-3 py-1 rounded text-[12px] font-semibold capitalize transition-colors ${
-                filterStatus === status
+              key={st.id}
+              onClick={() => setFilterStatus(st.id)}
+              className={`px-3 py-1 rounded text-[12px] font-semibold transition-colors cursor-pointer ${
+                filterStatus === st.id
                   ? "bg-[#111827] text-white"
                   : "bg-[#F3F4F6] text-[#4B5563] hover:bg-[#E5E7EB]"
               }`}
             >
-              {status.replace("_", " ")}
+              {st.label}
             </button>
           ))}
         </div>
@@ -469,7 +486,7 @@ export default function RoomMapPage() {
             <button
               key={floor}
               onClick={() => setFilterFloor(floor)}
-              className={`px-3 py-1 rounded text-[12px] font-semibold transition-colors ${
+              className={`px-3 py-1 rounded text-[12px] font-semibold transition-colors cursor-pointer ${
                 filterFloor === floor
                   ? "bg-[#EC3013] text-white"
                   : "bg-[#F3F4F6] text-[#4B5563] hover:bg-[#E5E7EB]"
@@ -485,29 +502,60 @@ export default function RoomMapPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Rooms Grid */}
         <div className="lg:col-span-2 space-y-6">
-          {filteredRooms.length === 0 ? (
+          {rooms.length === 0 ? (
             <div className="bg-white p-12 rounded-lg border border-[#E5E7EB] text-center space-y-4 shadow-xs">
               <BedDouble className="w-12 h-12 text-[#9CA3AF] mx-auto opacity-50" />
               <div className="space-y-1">
                 <h3 className="text-[16px] font-bold text-[#111827]">No Rooms in Database</h3>
                 <p className="text-[13px] text-[#6B7280] max-w-md mx-auto">
-                  No room units have been added for this property yet. Select a floor and choose the number of rooms to create.
+                  {canManageRooms
+                    ? "No room units have been added for this property yet. Select a floor and choose the number of rooms to create."
+                    : "No room units are currently configured for this property. Please contact your Hotel Administrator."}
                 </p>
               </div>
-              <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+              {canManageRooms && (
+                <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                  <button
+                    onClick={() => setIsAddModalOpen(true)}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-[#EC3013] hover:bg-[#D62839] text-white text-[13px] font-bold rounded shadow-xs transition-colors cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>+ Create Rooms</span>
+                  </button>
+                  <button
+                    onClick={() => setIsBatchModalOpen(true)}
+                    className="flex items-center gap-1.5 px-4 py-2 border border-[#D1D5DB] hover:bg-[#F3F4F6] text-[#374151] text-[13px] font-bold rounded transition-colors cursor-pointer"
+                  >
+                    <Zap className="w-4 h-4 text-amber-500 fill-amber-500" />
+                    <span>⚡ Auto-Generate 12 Rooms</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : filteredRooms.length === 0 ? (
+            <div className="bg-white p-10 rounded-lg border border-[#E5E7EB] text-center space-y-4 shadow-xs">
+              <div className="w-12 h-12 bg-[#F3F4F6] rounded-full flex items-center justify-center mx-auto text-[#6B7280]">
+                <Filter className="w-6 h-6 text-[#9CA3AF]" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-[16px] font-bold text-[#111827]">
+                  No {filterStatus !== "all" ? (filterStatus === "out_of_order" ? "Out of Order" : filterStatus === "dirty" ? "Dirty / Turnover" : filterStatus === "occupied" ? "Occupied" : "Available") : ""} Rooms Found
+                  {filterFloor !== "all" ? ` on Floor ${filterFloor}` : ""}
+                </h3>
+                <p className="text-[13px] text-[#6B7280] max-w-md mx-auto">
+                  There are currently 0 rooms matching the &quot;{filterStatus.replace("_", " ")}&quot; status filter
+                  {filterFloor !== "all" ? ` on Floor ${filterFloor}` : ""}. All {rooms.length} property rooms are currently in other statuses.
+                </p>
+              </div>
+              <div className="pt-2">
                 <button
-                  onClick={() => setIsAddModalOpen(true)}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-[#EC3013] hover:bg-[#D62839] text-white text-[13px] font-bold rounded shadow-xs transition-colors cursor-pointer"
+                  onClick={() => {
+                    setFilterStatus("all");
+                    setFilterFloor("all");
+                  }}
+                  className="px-4 py-2 bg-[#111827] hover:bg-[#1F2937] text-white text-[12px] font-bold rounded shadow-xs transition-colors cursor-pointer"
                 >
-                  <Plus className="w-4 h-4" />
-                  <span>+ Create Rooms</span>
-                </button>
-                <button
-                  onClick={() => setIsBatchModalOpen(true)}
-                  className="flex items-center gap-1.5 px-4 py-2 border border-[#D1D5DB] hover:bg-[#F3F4F6] text-[#374151] text-[13px] font-bold rounded transition-colors cursor-pointer"
-                >
-                  <Zap className="w-4 h-4 text-amber-500 fill-amber-500" />
-                  <span>⚡ Auto-Generate 12 Rooms</span>
+                  Show All Rooms ({rooms.length})
                 </button>
               </div>
             </div>
@@ -664,7 +712,7 @@ export default function RoomMapPage() {
       {/* ------------------------------------------------------------- */}
       {/* 1. CREATE ROOMS MODAL (1 Floor at a Time with Custom Rooms) */}
       {/* ------------------------------------------------------------- */}
-      {isAddModalOpen && (
+      {canManageRooms && isAddModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-150 overflow-y-auto">
           <div className="bg-white rounded-xl border border-[#E5E7EB] shadow-2xl w-full max-w-4xl p-6 space-y-4 my-8">
             {/* Modal Header */}
@@ -929,7 +977,7 @@ export default function RoomMapPage() {
       )}
 
       {/* Auto-Generate Modal */}
-      {isBatchModalOpen && (
+      {canManageRooms && isBatchModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-150">
           <div className="bg-white rounded-lg border border-[#E5E7EB] shadow-2xl max-w-md w-full p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-[#E5E7EB]">

@@ -1,5 +1,5 @@
 /**
- * HOS API Client
+ * LuckNexa API Client
  * Configured for seamless communication with backend server.
  * Supports hybrid live/mock mode with automatic fallback.
  */
@@ -7,7 +7,8 @@
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
-const TOKEN_KEY = "hos_auth_token";
+const TOKEN_KEY = "lucknexa_auth_token";
+const LEGACY_TOKEN_KEY = "hos_auth_token";
 
 export interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;
@@ -32,7 +33,12 @@ export class ApiError extends Error {
  */
 export function getStoredToken(): string | null {
   if (typeof window === "undefined") return null;
-  return sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY);
+  return (
+    sessionStorage.getItem(TOKEN_KEY) ||
+    localStorage.getItem(TOKEN_KEY) ||
+    sessionStorage.getItem(LEGACY_TOKEN_KEY) ||
+    localStorage.getItem(LEGACY_TOKEN_KEY)
+  );
 }
 
 /**
@@ -46,11 +52,13 @@ export function setStoredToken(token: string | null): void {
   } else {
     sessionStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(LEGACY_TOKEN_KEY);
+    localStorage.removeItem(LEGACY_TOKEN_KEY);
   }
 }
 
 /**
- * Base fetch client for HOS API
+ * Base fetch client for LuckNexa API
  */
 export async function apiClient<T = any>(
   endpoint: string,

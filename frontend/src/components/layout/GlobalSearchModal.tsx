@@ -213,7 +213,7 @@ export function GlobalSearchModal() {
             {/* Footer */}
             <div className="p-3 border-t border-[#E5E7EB] bg-[#F9FAFB] flex items-center justify-between text-[11px] text-[#6B7280]">
               <span>Navigate with click or arrow keys</span>
-              <span>HOS Master Architecture Index</span>
+              <span>LuckNexa Master Architecture Index</span>
             </div>
           </div>
         </div>

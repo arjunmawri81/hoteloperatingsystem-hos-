@@ -18,7 +18,7 @@ export const MOCK_USERS: Record<string, User> = {
     email: "admin@meridianhotels.com",
     role: "super_admin",
     orgId: "org-1",
-    orgName: "Meridian Hospitality Group",
+    orgName: "Meridian Hotel Group",
   },
   hotel_admin: {
     id: "usr-ha-01",
@@ -26,7 +26,7 @@ export const MOCK_USERS: Record<string, User> = {
     email: "owner@meridianhotels.com",
     role: "hotel_admin",
     orgId: "org-1",
-    orgName: "Meridian Hospitality Group",
+    orgName: "Meridian Hotel Group",
   },
   area_manager: {
     id: "usr-am-01",
@@ -34,7 +34,7 @@ export const MOCK_USERS: Record<string, User> = {
     email: "regional@meridianhotels.com",
     role: "area_manager",
     orgId: "org-1",
-    orgName: "Meridian Hospitality Group",
+    orgName: "Meridian Hotel Group",
   },
   hotel_manager: {
     id: "usr-hm-01",
@@ -42,7 +42,7 @@ export const MOCK_USERS: Record<string, User> = {
     email: "frontdesk@meridianhotels.com",
     role: "hotel_manager",
     orgId: "org-1",
-    orgName: "Meridian Hospitality Group",
+    orgName: "Meridian Hotel Group",
     hotelId: "hotel-101",
     hotelName: "Meridian Grand Palace",
   },
@@ -77,7 +77,7 @@ export async function loginApi(
       email: credentials.email,
       role: (credentials.role as UserRole) || "super_admin",
       orgId: "org-1",
-      orgName: "Meridian Hospitality Group",
+      orgName: "Meridian Hotel Group",
     };
     const mockToken = `mock_jwt_token_${mockUser.role}_${Date.now()}`;
     setStoredToken(mockToken);

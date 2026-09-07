@@ -35,7 +35,7 @@ export function PanelLayout({
             <div className="flex items-center gap-2 text-xs text-slate-400 mb-1.5">
               <Link href="/" className="hover:text-white transition-colors flex items-center gap-1">
                 <ArrowLeft className="w-3.5 h-3.5" />
-                <span>HOS Hub</span>
+                <span>LuckNexa Hub</span>
               </Link>
               <ChevronRight className="w-3.5 h-3.5 text-slate-600" />
               <span className="text-slate-300 font-medium">{panelName}</span>

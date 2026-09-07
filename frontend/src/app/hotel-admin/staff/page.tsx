@@ -438,12 +438,12 @@ export default function StaffManagementPage() {
                     className="w-full px-3 py-2 border border-[#D1D5DB] rounded bg-white font-medium text-[#111827] focus:outline-none focus:border-[#EC3013]"
                   >
                     <option value="">Select Department...</option>
-                    <option value="Reception">Reception</option>
-                    <option value="Housekeeping">Housekeeping</option>
-                    <option value="Restaurant">Restaurant</option>
-                    <option value="Finance">Finance</option>
-                    <option value="Management">Management</option>
-                    <option value="Area Operations">Area Operations</option>
+                    <option value="Reception">Reception (Receptionist)</option>
+                    <option value="Housekeeping">Housekeeping (Housekeeping Staff)</option>
+                    <option value="Restaurant">Restaurant (Restaurant POS Staff)</option>
+                    <option value="Finance">Finance (Accounts & Billing)</option>
+                    <option value="Management">Management (Hotel Manager)</option>
+                    <option value="Area Operations">Area Operations (Area Manager)</option>
                   </select>
                 </div>
               </div>

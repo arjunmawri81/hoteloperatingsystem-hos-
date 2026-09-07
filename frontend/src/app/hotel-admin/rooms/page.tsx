@@ -595,7 +595,7 @@ export default function HotelAdminRoomsPage() {
       </div>
 
       {/* Main Room Units Floor Plan View */}
-      {filteredRooms.length === 0 ? (
+      {rooms.length === 0 ? (
         <div className="bg-white p-12 sm:p-16 rounded-lg border border-[#E5E7EB] text-center space-y-4 shadow-xs">
           <div className="w-16 h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mx-auto text-[#9CA3AF]">
             <BedDouble className="w-8 h-8 opacity-60" />
@@ -620,6 +620,30 @@ export default function HotelAdminRoomsPage() {
             >
               <Zap className="w-4 h-4 text-amber-500 fill-amber-500" />
               <span>⚡ Auto-Generate From Capacity</span>
+            </button>
+          </div>
+        </div>
+      ) : filteredRooms.length === 0 ? (
+        <div className="bg-white p-12 rounded-lg border border-[#E5E7EB] text-center space-y-4 shadow-xs">
+          <div className="w-12 h-12 bg-[#F3F4F6] rounded-full flex items-center justify-center mx-auto text-[#6B7280]">
+            <Filter className="w-6 h-6 text-[#9CA3AF]" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-[16px] font-bold text-[#111827]">No Rooms Found Matching Filter</h3>
+            <p className="text-[13px] text-[#6B7280] max-w-md mx-auto">
+              There are currently 0 rooms matching the selected filter criteria. All {rooms.length} property rooms are accounted for in other statuses or floors.
+            </p>
+          </div>
+          <div className="pt-2">
+            <button
+              onClick={() => {
+                setSelectedFloor("all");
+                setSelectedHotelId("all");
+                setSearchQuery("");
+              }}
+              className="px-4 py-2 bg-[#111827] hover:bg-[#1F2937] text-white text-[12px] font-bold rounded shadow-xs transition-colors cursor-pointer"
+            >
+              Clear Filters &amp; Show All Rooms ({rooms.length})
             </button>
           </div>
         </div>

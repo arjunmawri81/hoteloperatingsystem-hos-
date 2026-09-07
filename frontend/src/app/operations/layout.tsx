@@ -31,8 +31,8 @@ export default function OperationsLayout({
     { name: "Housekeeping", href: "/operations/housekeeping", allowedRoles: ["super_admin", "hotel_admin", "hotel_manager", "housekeeping", "receptionist"] },
     { name: "Restaurant POS", href: "/operations/restaurant-pos", allowedRoles: ["super_admin", "hotel_admin", "hotel_manager", "restaurant_staff"] },
     { name: "Guest CRM", href: "/operations/guests", allowedRoles: ["super_admin", "hotel_admin", "hotel_manager", "receptionist"] },
-    { name: "Inventory", href: "/operations/inventory", allowedRoles: ["super_admin", "hotel_admin", "hotel_manager", "housekeeping", "restaurant_staff"] },
-    { name: "Billing", href: "/operations/billing", allowedRoles: ["super_admin", "hotel_admin", "hotel_manager", "finance", "receptionist"] },
+    { name: "Inventory", href: "/operations/inventory", allowedRoles: ["super_admin", "hotel_admin", "hotel_manager"] },
+    { name: "Billing", href: "/operations/billing", allowedRoles: ["super_admin", "hotel_admin", "hotel_manager", "finance"] },
   ];
 
   const visibleNavItems = allNavItems.filter((item) => {
@@ -74,16 +74,20 @@ export default function OperationsLayout({
             <div className="px-5 py-4 border-b border-[#F3F4F6] flex items-center gap-3">
               <Link
                 href="/"
-                title="HOS Home"
-                className="w-8 h-8 bg-[#EC3013] text-white flex items-center justify-center font-black text-xs rounded tracking-tighter shadow-xs hover:bg-[#D62839] transition-colors"
+                title="LuckNexa Home"
+                className="w-9 h-9 rounded-xl overflow-hidden shrink-0 shadow-sm border border-slate-700/30 bg-[#090D16] flex items-center justify-center p-0.5 hover:scale-105 transition-transform"
               >
-                HOS
+                <img
+                  src="/lucknexa-icon.png"
+                  alt="LuckNexa"
+                  className="w-full h-full object-contain"
+                />
               </Link>
               <div>
-                <h2 className="text-[12px] font-bold text-[#111827] uppercase tracking-wider">
-                  Hotel Operations
+                <h2 className="text-[12px] font-extrabold text-[#111827] uppercase tracking-wider">
+                  LuckNexa
                 </h2>
-                <p className="text-[10px] text-[#9CA3AF]">PMS & Front Desk</p>
+                <p className="text-[10px] text-[#6B7280] font-medium">Hotel Operations PMS</p>
               </div>
             </div>
 
@@ -115,10 +119,10 @@ export default function OperationsLayout({
         {/* Sidebar Footer */}
         <div className="px-6 py-5 border-t border-[#E5E7EB]">
           <div className="text-[12px] font-bold text-[#111827] truncate">
-            {user?.orgName || user?.hotelName || "Hotel Operations"}
+            {user?.orgName || user?.hotelName || "LuckNexa Hotel"}
           </div>
           <div className="text-[11px] text-[#9CA3AF] mt-0.5">
-            Hotel Operating System
+            LuckNexa Operating System
           </div>
         </div>
       </aside>

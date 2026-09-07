@@ -82,16 +82,20 @@ function LoginFormContent() {
     <div className="min-h-screen bg-[#F8F9FA] flex flex-col justify-between py-10 px-4 sm:px-6 lg:px-8 font-sans antialiased text-[#111827]">
       {/* Top Bar */}
       <div className="max-w-6xl mx-auto w-full flex items-center justify-between pb-6">
-        <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="w-8 h-8 bg-[#EC3013] text-white flex items-center justify-center font-black text-xs rounded tracking-tighter shadow-sm group-hover:bg-[#D62839] transition-colors">
-            HOS
+        <Link href="/" className="flex items-center gap-3 group">
+          <div className="w-10 h-10 rounded-xl overflow-hidden shadow-sm border border-slate-700/30 bg-[#090D16] flex items-center justify-center p-0.5 group-hover:scale-105 transition-transform">
+            <img
+              src="/lucknexa-icon.png"
+              alt="LuckNexa"
+              className="w-full h-full object-contain"
+            />
           </div>
           <div>
-            <div className="text-[14px] font-bold tracking-tight text-[#111827] leading-none">
-              Hotel Operating System
+            <div className="text-[15px] font-black tracking-tight text-[#111827] leading-none">
+              Luck<span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Nexa</span>
             </div>
-            <p className="text-[11px] text-[#9CA3AF] leading-none mt-0.5">
-              Enterprise Hospitality Platform
+            <p className="text-[10px] text-[#6B7280] font-medium leading-none mt-1">
+              AI-Powered Hotel Operating System
             </p>
           </div>
         </Link>
@@ -387,7 +391,7 @@ function LoginFormContent() {
 
       {/* Page Bottom Footer */}
       <footer className="max-w-6xl mx-auto w-full pt-6 border-t border-[#E5E7EB] flex flex-col sm:flex-row items-center justify-between text-[11px] text-[#9CA3AF] gap-2">
-        <div>Meridian Hospitality Group · Hotel Operating System (HOS)</div>
+        <div>LuckNexa Hotel Operating System · All Rights Reserved</div>
         <div className="flex items-center gap-4">
           <Link href="/" className="hover:text-[#4B5563] transition-colors">
             Home

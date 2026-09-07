@@ -1,6 +1,6 @@
-# 📖 Hotel Operating System (HOS) — Backend API Specification & Contract
+# 📖 LuckNexa — Hotel Operating System Backend API Specification & Contract
 
-This document provides the complete technical specification for backend developers integrating with the HOS frontend.
+This document provides the complete technical specification for backend developers integrating with the LuckNexa frontend.
 
 ---
 
@@ -153,7 +153,7 @@ erDiagram
     "email": "admin@meridianhotels.com",
     "role": "super_admin",
     "orgId": "org-1",
-    "orgName": "Meridian Hospitality Group"
+    "orgName": "Meridian Hotel Group"
   },
   "expiresIn": 604800
 }
@@ -166,7 +166,7 @@ erDiagram
 
 ```json
 {
-  "orgName": "Meridian Hospitality Group",
+  "orgName": "Meridian Hotel Group",
   "orgCode": "MERIDIAN",
   "adminName": "Alexander Whitfield",
   "email": "admin@meridianhotels.com",
@@ -188,7 +188,7 @@ erDiagram
     "email": "admin@meridianhotels.com",
     "role": "hotel_admin",
     "orgId": "org-meridian",
-    "orgName": "Meridian Hospitality Group"
+    "orgName": "Meridian Hotel Group"
   }
 }
 ```
@@ -207,7 +207,7 @@ erDiagram
     "email": "admin@meridianhotels.com",
     "role": "super_admin",
     "orgId": "org-1",
-    "orgName": "Meridian Hospitality Group"
+    "orgName": "Meridian Hotel Group"
   }
 }
 ```
@@ -228,7 +228,7 @@ erDiagram
   "data": [
     {
       "id": "org-1",
-      "name": "Meridian Hospitality Group",
+      "name": "Meridian Hotel Group",
       "code": "MERIDIAN",
       "ownerName": "A. Whitfield",
       "ownerEmail": "a.whitfield@meridianhotels.com",

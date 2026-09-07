@@ -42,7 +42,7 @@ async function verifyToken(req, res, next) {
           email: `${rolePart}@meridianhotels.com`,
           role: rolePart,
           orgId: "org-1",
-          orgName: "Meridian Hospitality Group",
+          orgName: "Meridian Hotel Group",
         };
       }
       return next();

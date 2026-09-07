@@ -15,7 +15,7 @@ export const mockUsers: User[] = [
     email: "admin@meridianhotels.com",
     role: "super_admin",
     orgId: "org-1",
-    orgName: "Meridian Hospitality Group",
+    orgName: "Meridian Hotel Group",
   },
   {
     id: "usr-ha-01",
@@ -23,7 +23,7 @@ export const mockUsers: User[] = [
     email: "owner@meridianhotels.com",
     role: "hotel_admin",
     orgId: "org-1",
-    orgName: "Meridian Hospitality Group",
+    orgName: "Meridian Hotel Group",
   },
   {
     id: "usr-am-01",
@@ -31,7 +31,7 @@ export const mockUsers: User[] = [
     email: "regional@meridianhotels.com",
     role: "area_manager",
     orgId: "org-1",
-    orgName: "Meridian Hospitality Group",
+    orgName: "Meridian Hotel Group",
   },
   {
     id: "usr-hm-01",
@@ -39,7 +39,7 @@ export const mockUsers: User[] = [
     email: "frontdesk@meridianhotels.com",
     role: "hotel_manager",
     orgId: "org-1",
-    orgName: "Meridian Hospitality Group",
+    orgName: "Meridian Hotel Group",
     hotelId: "hotel-101",
     hotelName: "Meridian Grand Palace",
   },
@@ -62,7 +62,7 @@ export const mockUsers: User[] = [
 export const mockOrganizations: Organization[] = [
   {
     id: "org-1",
-    name: "Meridian Hospitality Group",
+    name: "Meridian Hotel Group",
     code: "MERIDIAN",
     ownerName: "A. Whitfield",
     ownerEmail: "a.whitfield@meridianhotels.com",

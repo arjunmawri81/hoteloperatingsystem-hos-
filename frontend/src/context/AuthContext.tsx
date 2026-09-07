@@ -197,7 +197,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: `${role}@meridianhotels.com`,
         role: role,
         orgId: "org-1",
-        orgName: "Meridian Hospitality Group",
+        orgName: "Meridian Hotel Group",
       };
       const mockToken = `mock_jwt_token_${role}_${Date.now()}`;
 

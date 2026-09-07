@@ -28,16 +28,20 @@ export default function SuperAdminLayout({
             <div className="px-5 py-4 border-b border-[#F3F4F6] flex items-center gap-3">
               <Link
                 href="/"
-                title="HOS Home"
-                className="w-8 h-8 bg-[#EC3013] text-white flex items-center justify-center font-black text-xs rounded tracking-tighter shadow-xs hover:bg-[#D62839] transition-colors"
+                title="LuckNexa Home"
+                className="w-9 h-9 rounded-xl overflow-hidden shrink-0 shadow-sm border border-slate-700/30 bg-[#090D16] flex items-center justify-center p-0.5 hover:scale-105 transition-transform"
               >
-                HOS
+                <img
+                  src="/lucknexa-icon.png"
+                  alt="LuckNexa"
+                  className="w-full h-full object-contain"
+                />
               </Link>
               <div>
-                <h2 className="text-[12px] font-bold text-[#111827] uppercase tracking-wider">
-                  Super Admin
+                <h2 className="text-[12px] font-extrabold text-[#111827] uppercase tracking-wider">
+                  LuckNexa
                 </h2>
-                <p className="text-[10px] text-[#9CA3AF]">Platform Management</p>
+                <p className="text-[10px] text-[#6B7280] font-medium">Super Admin Platform</p>
               </div>
             </div>
 
@@ -69,10 +73,10 @@ export default function SuperAdminLayout({
           {/* Sidebar Footer */}
           <div className="px-6 py-5 border-t border-[#E5E7EB]">
             <div className="text-[12px] font-bold text-[#111827]">
-              Meridian Hotels & Resorts
+              LuckNexa Cloud Platform
             </div>
             <div className="text-[11px] text-[#9CA3AF] mt-0.5">
-              Hotel Operating System
+              Enterprise Multi-Tenant SaaS
             </div>
           </div>
         </aside>
