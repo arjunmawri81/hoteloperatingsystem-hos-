@@ -33,4 +33,9 @@ router.patch(
   ReservationsController.updateStatus
 );
 
+/**
+ * DELETE /api/reservations/:id
+ */
+router.delete("/:id", identifyTenant, ReservationsController.delete);
+
 module.exports = router;

@@ -28,8 +28,8 @@ const schemas = {
     if (!data.checkOut || isNaN(Date.parse(data.checkOut))) {
       errors.push("valid checkOut date is required (YYYY-MM-DD)");
     }
-    if (data.checkIn && data.checkOut && new Date(data.checkIn) >= new Date(data.checkOut)) {
-      errors.push("checkIn date must be earlier than checkOut date");
+    if (data.checkIn && data.checkOut && new Date(data.checkIn) > new Date(data.checkOut)) {
+      errors.push("checkIn date must not be after checkOut date");
     }
     return errors;
   },

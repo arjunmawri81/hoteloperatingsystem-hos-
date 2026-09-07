@@ -128,6 +128,15 @@ export const reservationsApi = {
     const res = await api.patch(`/reservations/${id}/status`, { status });
     return (res as any)?.data || res;
   },
+
+  delete: async (id: string): Promise<boolean> => {
+    try {
+      await api.delete(`/reservations/${id}`);
+      return true;
+    } catch {
+      return false;
+    }
+  },
 };
 
 // -------------------------------------------------------------

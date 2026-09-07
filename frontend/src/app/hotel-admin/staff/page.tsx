@@ -19,6 +19,69 @@ interface StaffMember {
   status: "active" | "inactive";
 }
 
+interface RoleOption {
+  value: UserRole;
+  label: string;
+}
+
+const DEPARTMENT_CONFIG: Record<
+  StaffMember["department"],
+  {
+    defaultRole: UserRole;
+    defaultDesignation: string;
+    allowedRoles: RoleOption[];
+  }
+> = {
+  Reception: {
+    defaultRole: "receptionist",
+    defaultDesignation: "Front Desk Officer",
+    allowedRoles: [
+      { value: "receptionist", label: "Receptionist (/operations/front-desk)" },
+      { value: "hotel_manager", label: "Front Desk Manager / Supervisor (/operations)" },
+    ],
+  },
+  Housekeeping: {
+    defaultRole: "housekeeping",
+    defaultDesignation: "Housekeeping Attendant",
+    allowedRoles: [
+      { value: "housekeeping", label: "Housekeeping Staff (/operations/housekeeping)" },
+      { value: "hotel_manager", label: "Housekeeping Supervisor (/operations)" },
+    ],
+  },
+  Restaurant: {
+    defaultRole: "restaurant_staff",
+    defaultDesignation: "Restaurant POS / F&B Staff",
+    allowedRoles: [
+      { value: "restaurant_staff", label: "Restaurant POS Staff (/operations/restaurant-pos)" },
+      { value: "hotel_manager", label: "F&B / Restaurant Manager (/operations)" },
+    ],
+  },
+  Inventory: {
+    defaultRole: "housekeeping",
+    defaultDesignation: "Inventory & Linen Officer",
+    allowedRoles: [
+      { value: "housekeeping", label: "Inventory Staff (/operations/inventory)" },
+      { value: "hotel_manager", label: "Inventory Manager (/operations)" },
+    ],
+  },
+  Finance: {
+    defaultRole: "finance",
+    defaultDesignation: "Accounts & Billing Executive",
+    allowedRoles: [
+      { value: "finance", label: "Finance / Billing Staff (/operations/billing)" },
+      { value: "hotel_manager", label: "Finance Controller / Manager (/operations)" },
+    ],
+  },
+  Sales: {
+    defaultRole: "hotel_manager",
+    defaultDesignation: "Sales & Corporate Manager",
+    allowedRoles: [
+      { value: "hotel_manager", label: "Sales & Operations Manager (/operations)" },
+      { value: "area_manager", label: "Area / Regional Sales Manager (/area-manager)" },
+    ],
+  },
+};
+
 export default function StaffManagementPage() {
   const { user, isLoading: isAuthLoading } = useAuth();
   const [staffList, setStaffList] = useState<StaffMember[]>([]);
@@ -49,6 +112,28 @@ export default function StaffManagementPage() {
     systemRole: "",
     password: "",
   });
+
+  const handleDepartmentChange = (dept: StaffMember["department"] | "") => {
+    if (!dept) {
+      setNewStaff((prev) => ({
+        ...prev,
+        department: "",
+      }));
+      return;
+    }
+
+    const config = DEPARTMENT_CONFIG[dept];
+    if (config) {
+      setNewStaff((prev) => ({
+        ...prev,
+        department: dept,
+        systemRole: config.defaultRole,
+        role: prev.role.trim() ? prev.role : config.defaultDesignation,
+      }));
+    } else {
+      setNewStaff((prev) => ({ ...prev, department: dept }));
+    }
+  };
 
   const loadStaff = async () => {
     if (isAuthLoading) return;
@@ -362,8 +447,8 @@ export default function StaffManagementPage() {
                   </label>
                   <select
                     value={newStaff.department}
-                    onChange={(e) => setNewStaff({ ...newStaff, department: e.target.value as any })}
-                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded bg-white"
+                    onChange={(e) => handleDepartmentChange(e.target.value as any)}
+                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded bg-white focus:outline-none focus:border-[#EC3013]"
                   >
                     <option value="">Select Department...</option>
                     <option value="Reception">Reception</option>
@@ -386,7 +471,7 @@ export default function StaffManagementPage() {
                     placeholder="e.g. Front Desk Officer"
                     value={newStaff.role}
                     onChange={(e) => setNewStaff({ ...newStaff, role: e.target.value })}
-                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded"
+                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded focus:outline-none focus:border-[#EC3013]"
                   />
                 </div>
                 <div>
@@ -396,15 +481,20 @@ export default function StaffManagementPage() {
                   <select
                     value={newStaff.systemRole}
                     onChange={(e) => setNewStaff({ ...newStaff, systemRole: e.target.value as UserRole })}
-                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded bg-white font-semibold text-[#111827]"
+                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded bg-white font-semibold text-[#111827] focus:outline-none focus:border-[#EC3013]"
                   >
-                    <option value="">Select System Role...</option>
-                    <option value="receptionist">Receptionist (/operations/front-desk)</option>
-                    <option value="housekeeping">Housekeeping (/operations/housekeeping)</option>
-                    <option value="hotel_manager">Hotel GM (/operations)</option>
-                    <option value="restaurant_staff">Restaurant POS (/operations/restaurant-pos)</option>
-                    <option value="finance">Finance (/operations/billing)</option>
-                    <option value="area_manager">Area Manager (/area-manager)</option>
+                    {!newStaff.department ? (
+                      <option value="">Select Department first...</option>
+                    ) : (
+                      <>
+                        <option value="">Select System Role...</option>
+                        {DEPARTMENT_CONFIG[newStaff.department as StaffMember["department"]]?.allowedRoles.map((r) => (
+                          <option key={r.value} value={r.value}>
+                            {r.label}
+                          </option>
+                        ))}
+                      </>
+                    )}
                   </select>
                 </div>
               </div>

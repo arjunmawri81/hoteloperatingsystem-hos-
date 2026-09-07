@@ -53,6 +53,21 @@ class ReservationsController {
       next(err);
     }
   }
+
+  static async delete(req, res, next) {
+    try {
+      const reservation = await ReservationsService.deleteReservation({
+        id: req.params.id,
+      });
+      return res.status(200).json({
+        success: true,
+        message: "Reservation deleted successfully",
+        data: reservation,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
 }
 
 module.exports = ReservationsController;

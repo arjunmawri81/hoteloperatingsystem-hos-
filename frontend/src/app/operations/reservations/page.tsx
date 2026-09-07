@@ -13,6 +13,8 @@ export default function ReservationsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState<{
@@ -29,12 +31,12 @@ export default function ReservationsPage() {
     guestName: "",
     guestEmail: "",
     guestPhone: "",
-    roomType: "Deluxe King",
-    roomNumber: "",
+    roomType: "Standard Room",
+    roomNumber: "104",
     checkIn: new Date().toISOString().split("T")[0],
-    checkOut: new Date(Date.now() + 86400000 * 3).toISOString().split("T")[0],
-    totalAmount: "",
-    paidAmount: "",
+    checkOut: new Date(Date.now() + 86400000).toISOString().split("T")[0],
+    totalAmount: 2000,
+    paidAmount: 2000,
   });
 
   const loadReservations = async () => {
@@ -53,44 +55,81 @@ export default function ReservationsPage() {
     loadReservations();
   }, []);
 
+  const handleCheckInChange = (newCheckIn: string) => {
+    setFormError(null);
+    let updatedCheckOut = formData.checkOut;
+    if (!updatedCheckOut || new Date(updatedCheckOut) < new Date(newCheckIn)) {
+      // Set checkout to at least 1 day after check-in
+      const nextDay = new Date(new Date(newCheckIn).getTime() + 86400000)
+        .toISOString()
+        .split("T")[0];
+      updatedCheckOut = nextDay;
+    }
+    setFormData({ ...formData, checkIn: newCheckIn, checkOut: updatedCheckOut });
+  };
+
   const handleCreateReservation = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.guestName || !formData.guestPhone) return;
+    setFormError(null);
 
+    if (!formData.guestName.trim()) {
+      setFormError("Guest name is required.");
+      return;
+    }
+
+    if (!formData.guestPhone.trim()) {
+      setFormError("Phone number is required.");
+      return;
+    }
+
+    if (new Date(formData.checkIn) > new Date(formData.checkOut)) {
+      setFormError("Check-out date cannot be earlier than check-in date.");
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
       const newRes = await reservationsApi.create({
-        guestName: formData.guestName,
-        guestEmail: formData.guestEmail,
-        guestPhone: formData.guestPhone,
+        guestName: formData.guestName.trim(),
+        guestEmail: formData.guestEmail.trim() || "guest@example.com",
+        guestPhone: formData.guestPhone.trim(),
         roomType: formData.roomType,
-        roomNumber: formData.roomNumber,
+        roomNumber: formData.roomNumber.trim() || "101",
         checkIn: formData.checkIn,
         checkOut: formData.checkOut,
-        totalAmount: Number(formData.totalAmount),
-        paidAmount: Number(formData.paidAmount),
+        totalAmount: Number(formData.totalAmount) || 2000,
+        paidAmount: Number(formData.paidAmount) || 0,
         status: "confirmed",
-        hotelName: "Meridian Downtown",
+        hotelName: "Meridian Grand Palace",
       });
 
       setReservations([newRes, ...reservations]);
       setIsModalOpen(false);
-      setToastMsg(`✅ Booking ${newRes.id} for ${newRes.guestName} created successfully!`);
-      setTimeout(() => setToastMsg(null), 4000);
+      setToastMsg(`✅ Reservation for ${newRes.guestName} created successfully! (ID: ${newRes.id})`);
+      setTimeout(() => setToastMsg(null), 5000);
 
       // Reset form
       setFormData({
         guestName: "",
         guestEmail: "",
         guestPhone: "",
-        roomType: "Deluxe King",
-        roomNumber: "204",
+        roomType: "Standard Room",
+        roomNumber: "104",
         checkIn: new Date().toISOString().split("T")[0],
-        checkOut: new Date(Date.now() + 86400000 * 3).toISOString().split("T")[0],
-        totalAmount: 18000,
-        paidAmount: 18000,
+        checkOut: new Date(Date.now() + 86400000).toISOString().split("T")[0],
+        totalAmount: 2000,
+        paidAmount: 2000,
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to create reservation", err);
+      const msg =
+        err?.response?.data?.errors?.join(", ") ||
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to create reservation. Please verify details.";
+      setFormError(msg);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -259,6 +298,13 @@ export default function ReservationsPage() {
             </div>
 
             <form onSubmit={handleCreateReservation} className="space-y-4 text-[13px]">
+              {formError && (
+                <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded text-[12px] flex items-center gap-2 animate-in fade-in duration-200">
+                  <span className="font-bold">⚠️ Error:</span>
+                  <span>{formError}</span>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
@@ -269,7 +315,10 @@ export default function ReservationsPage() {
                     required
                     placeholder="e.g. Sarah Connor"
                     value={formData.guestName}
-                    onChange={(e) => setFormData({ ...formData, guestName: e.target.value })}
+                    onChange={(e) => {
+                      setFormError(null);
+                      setFormData({ ...formData, guestName: e.target.value });
+                    }}
                     className="w-full px-3 py-2 border border-[#D1D5DB] rounded focus:outline-none focus:border-[#EC3013]"
                   />
                 </div>
@@ -280,9 +329,12 @@ export default function ReservationsPage() {
                   <input
                     type="text"
                     required
-                    placeholder="+1 555 0192"
+                    placeholder="+91 98765 43210"
                     value={formData.guestPhone}
-                    onChange={(e) => setFormData({ ...formData, guestPhone: e.target.value })}
+                    onChange={(e) => {
+                      setFormError(null);
+                      setFormData({ ...formData, guestPhone: e.target.value });
+                    }}
                     className="w-full px-3 py-2 border border-[#D1D5DB] rounded focus:outline-none focus:border-[#EC3013]"
                   />
                 </div>
@@ -323,7 +375,7 @@ export default function ReservationsPage() {
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. 305"
+                    placeholder="e.g. 104"
                     value={formData.roomNumber}
                     onChange={(e) => setFormData({ ...formData, roomNumber: e.target.value })}
                     className="w-full px-3 py-2 border border-[#D1D5DB] rounded focus:outline-none focus:border-[#EC3013]"
@@ -334,23 +386,29 @@ export default function ReservationsPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
-                    Check-In Date
+                    Check-In Date *
                   </label>
                   <input
                     type="date"
+                    required
                     value={formData.checkIn}
-                    onChange={(e) => setFormData({ ...formData, checkIn: e.target.value })}
+                    onChange={(e) => handleCheckInChange(e.target.value)}
                     className="w-full px-3 py-2 border border-[#D1D5DB] rounded focus:outline-none focus:border-[#EC3013]"
                   />
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
-                    Check-Out Date
+                    Check-Out Date *
                   </label>
                   <input
                     type="date"
+                    required
+                    min={formData.checkIn}
                     value={formData.checkOut}
-                    onChange={(e) => setFormData({ ...formData, checkOut: e.target.value })}
+                    onChange={(e) => {
+                      setFormError(null);
+                      setFormData({ ...formData, checkOut: e.target.value });
+                    }}
                     className="w-full px-3 py-2 border border-[#D1D5DB] rounded focus:outline-none focus:border-[#EC3013]"
                   />
                 </div>
@@ -362,6 +420,7 @@ export default function ReservationsPage() {
                 </label>
                 <input
                   type="number"
+                  min="0"
                   value={formData.totalAmount}
                   onChange={(e) => setFormData({ ...formData, totalAmount: Number(e.target.value) })}
                   className="w-full px-3 py-2 border border-[#D1D5DB] rounded focus:outline-none focus:border-[#EC3013]"
@@ -371,16 +430,22 @@ export default function ReservationsPage() {
               <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#E5E7EB]">
                 <button
                   type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 border border-[#D1D5DB] rounded text-[#374151] font-semibold hover:bg-[#F3F4F6]"
+                  disabled={isSubmitting}
+                  onClick={() => {
+                    setFormError(null);
+                    setIsModalOpen(false);
+                  }}
+                  className="px-4 py-2 border border-[#D1D5DB] rounded text-[#374151] font-semibold hover:bg-[#F3F4F6] disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#EC3013] hover:bg-[#D62839] text-white font-bold rounded shadow-xs"
+                  disabled={isSubmitting}
+                  className="px-5 py-2 bg-[#EC3013] hover:bg-[#D62839] text-white font-bold rounded shadow-xs disabled:opacity-60 flex items-center gap-1.5"
                 >
-                  Save Reservation
+                  {isSubmitting && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                  <span>{isSubmitting ? "Saving..." : "Save Reservation"}</span>
                 </button>
               </div>
             </form>

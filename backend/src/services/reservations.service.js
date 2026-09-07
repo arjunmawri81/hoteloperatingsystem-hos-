@@ -166,6 +166,19 @@ class ReservationsService {
 
     return reservation;
   }
+
+  /**
+   * Delete a reservation by ID
+   */
+  static async deleteReservation({ id }) {
+    const reservation = await Reservation.findOneAndDelete({ id });
+    if (!reservation) {
+      const error = new Error("Reservation not found");
+      error.status = 404;
+      throw error;
+    }
+    return reservation;
+  }
 }
 
 module.exports = ReservationsService;
