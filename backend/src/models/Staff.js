@@ -27,7 +27,7 @@ const StaffSchema = new mongoose.Schema(
     },
     department: {
       type: String,
-      enum: ["Reception", "Housekeeping", "Restaurant", "Inventory", "Finance", "Sales"],
+      enum: ["Reception", "Housekeeping", "Restaurant", "Finance", "Management", "Area Operations", "Inventory", "Sales"],
       default: "Reception",
     },
     role: {

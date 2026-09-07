@@ -13,72 +13,56 @@ interface StaffMember {
   email: string;
   phone: string;
   hotel: string;
-  department: "Reception" | "Housekeeping" | "Restaurant" | "Inventory" | "Finance" | "Sales";
+  department: "Reception" | "Housekeeping" | "Restaurant" | "Finance" | "Management" | "Area Operations";
   role: string;
   systemRole?: string;
   status: "active" | "inactive";
 }
 
-interface RoleOption {
-  value: UserRole;
-  label: string;
-}
-
 const DEPARTMENT_CONFIG: Record<
   StaffMember["department"],
   {
-    defaultRole: UserRole;
+    systemRole: UserRole;
+    systemRoleLabel: string;
     defaultDesignation: string;
-    allowedRoles: RoleOption[];
+    description: string;
   }
 > = {
   Reception: {
-    defaultRole: "receptionist",
-    defaultDesignation: "Front Desk Officer",
-    allowedRoles: [
-      { value: "receptionist", label: "Receptionist (/operations/front-desk)" },
-      { value: "hotel_manager", label: "Front Desk Manager / Supervisor (/operations)" },
-    ],
+    systemRole: "receptionist",
+    systemRoleLabel: "Receptionist (/operations/front-desk)",
+    defaultDesignation: "Front Desk Receptionist",
+    description: "Front Desk PMS, Reservations, Room Map, & Guest CRM",
   },
   Housekeeping: {
-    defaultRole: "housekeeping",
+    systemRole: "housekeeping",
+    systemRoleLabel: "Housekeeping Staff (/operations/housekeeping)",
     defaultDesignation: "Housekeeping Attendant",
-    allowedRoles: [
-      { value: "housekeeping", label: "Housekeeping Staff (/operations/housekeeping)" },
-      { value: "hotel_manager", label: "Housekeeping Supervisor (/operations)" },
-    ],
+    description: "Room Cleaning Kanban, Room Map, & Housekeeping Inventory",
   },
   Restaurant: {
-    defaultRole: "restaurant_staff",
-    defaultDesignation: "Restaurant POS / F&B Staff",
-    allowedRoles: [
-      { value: "restaurant_staff", label: "Restaurant POS Staff (/operations/restaurant-pos)" },
-      { value: "hotel_manager", label: "F&B / Restaurant Manager (/operations)" },
-    ],
-  },
-  Inventory: {
-    defaultRole: "housekeeping",
-    defaultDesignation: "Inventory & Linen Officer",
-    allowedRoles: [
-      { value: "housekeeping", label: "Inventory Staff (/operations/inventory)" },
-      { value: "hotel_manager", label: "Inventory Manager (/operations)" },
-    ],
+    systemRole: "restaurant_staff",
+    systemRoleLabel: "Restaurant POS Staff (/operations/restaurant-pos)",
+    defaultDesignation: "Restaurant POS Staff",
+    description: "Table Orders, POS Billing, & Kitchen Inventory",
   },
   Finance: {
-    defaultRole: "finance",
+    systemRole: "finance",
+    systemRoleLabel: "Finance & Billing Staff (/operations/billing)",
     defaultDesignation: "Accounts & Billing Executive",
-    allowedRoles: [
-      { value: "finance", label: "Finance / Billing Staff (/operations/billing)" },
-      { value: "hotel_manager", label: "Finance Controller / Manager (/operations)" },
-    ],
+    description: "Guest Folios, Invoices, & Revenue Settlement",
   },
-  Sales: {
-    defaultRole: "hotel_manager",
-    defaultDesignation: "Sales & Corporate Manager",
-    allowedRoles: [
-      { value: "hotel_manager", label: "Sales & Operations Manager (/operations)" },
-      { value: "area_manager", label: "Area / Regional Sales Manager (/area-manager)" },
-    ],
+  Management: {
+    systemRole: "hotel_manager",
+    systemRoleLabel: "Hotel Operations Manager (/operations)",
+    defaultDesignation: "Hotel Operations Manager",
+    description: "Full Operations PMS Control across All Modules",
+  },
+  "Area Operations": {
+    systemRole: "area_manager",
+    systemRoleLabel: "Area / Regional Manager (/area-manager)",
+    defaultDesignation: "Area Regional Manager",
+    description: "Multi-Property Regional Cluster Analytics",
   },
 };
 
@@ -118,6 +102,8 @@ export default function StaffManagementPage() {
       setNewStaff((prev) => ({
         ...prev,
         department: "",
+        systemRole: "",
+        role: "",
       }));
       return;
     }
@@ -127,8 +113,8 @@ export default function StaffManagementPage() {
       setNewStaff((prev) => ({
         ...prev,
         department: dept,
-        systemRole: config.defaultRole,
-        role: prev.role.trim() ? prev.role : config.defaultDesignation,
+        systemRole: config.systemRole,
+        role: config.defaultDesignation,
       }));
     } else {
       setNewStaff((prev) => ({ ...prev, department: dept }));
@@ -169,7 +155,7 @@ export default function StaffManagementPage() {
     }
 
     if (!newStaff.systemRole) {
-      setToastMsg("⚠️ Please select a System Login Role.");
+      setToastMsg("⚠️ Please select a Department to assign the role.");
       return;
     }
 
@@ -225,7 +211,7 @@ export default function StaffManagementPage() {
     return matchesSearch && matchesDept;
   });
 
-  const departments = ["all", "Reception", "Housekeeping", "Restaurant", "Inventory", "Finance", "Sales"];
+  const departments = ["all", "Reception", "Housekeeping", "Restaurant", "Finance", "Management", "Area Operations"];
 
   return (
     <div className="space-y-6">
@@ -443,20 +429,21 @@ export default function StaffManagementPage() {
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
-                    Department
+                    Department *
                   </label>
                   <select
+                    required
                     value={newStaff.department}
                     onChange={(e) => handleDepartmentChange(e.target.value as any)}
-                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded bg-white focus:outline-none focus:border-[#EC3013]"
+                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded bg-white font-medium text-[#111827] focus:outline-none focus:border-[#EC3013]"
                   >
                     <option value="">Select Department...</option>
                     <option value="Reception">Reception</option>
                     <option value="Housekeeping">Housekeeping</option>
                     <option value="Restaurant">Restaurant</option>
-                    <option value="Inventory">Inventory</option>
                     <option value="Finance">Finance</option>
-                    <option value="Sales">Sales</option>
+                    <option value="Management">Management</option>
+                    <option value="Area Operations">Area Operations</option>
                   </select>
                 </div>
               </div>
@@ -464,11 +451,12 @@ export default function StaffManagementPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
-                    Designation / Title
+                    Designation / Title *
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. Front Desk Officer"
+                    required
+                    placeholder="e.g. Front Desk Receptionist"
                     value={newStaff.role}
                     onChange={(e) => setNewStaff({ ...newStaff, role: e.target.value })}
                     className="w-full px-3 py-2 border border-[#D1D5DB] rounded focus:outline-none focus:border-[#EC3013]"
@@ -476,28 +464,33 @@ export default function StaffManagementPage() {
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
-                    System Login Role *
+                    System Login Role (1:1 Strict)
                   </label>
-                  <select
-                    value={newStaff.systemRole}
-                    onChange={(e) => setNewStaff({ ...newStaff, systemRole: e.target.value as UserRole })}
-                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded bg-white font-semibold text-[#111827] focus:outline-none focus:border-[#EC3013]"
-                  >
-                    {!newStaff.department ? (
-                      <option value="">Select Department first...</option>
-                    ) : (
-                      <>
-                        <option value="">Select System Role...</option>
-                        {DEPARTMENT_CONFIG[newStaff.department as StaffMember["department"]]?.allowedRoles.map((r) => (
-                          <option key={r.value} value={r.value}>
-                            {r.label}
-                          </option>
-                        ))}
-                      </>
-                    )}
-                  </select>
+                  {newStaff.department && DEPARTMENT_CONFIG[newStaff.department as StaffMember["department"]] ? (
+                    <div className="px-3 py-2 bg-[#F3F4F6] border border-[#E5E7EB] rounded text-[12px] font-semibold text-[#111827] flex items-center justify-between">
+                      <span className="truncate">
+                        {DEPARTMENT_CONFIG[newStaff.department as StaffMember["department"]].systemRoleLabel}
+                      </span>
+                      <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded shrink-0 ml-1.5 uppercase">
+                        1:1 Strict
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="px-3 py-2 bg-[#F9FAFB] border border-[#E5E7EB] rounded text-[12px] text-[#9CA3AF]">
+                      Auto-assigned by Department
+                    </div>
+                  )}
                 </div>
               </div>
+
+              {newStaff.department && DEPARTMENT_CONFIG[newStaff.department as StaffMember["department"]] && (
+                <div className="p-2.5 bg-gray-50 border border-gray-200 rounded text-[11px] text-[#4B5563] flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-[#EC3013] shrink-0" />
+                  <span>
+                    <strong>Module Access:</strong> {DEPARTMENT_CONFIG[newStaff.department as StaffMember["department"]].description}
+                  </span>
+                </div>
+              )}
 
               <div>
                 <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
