@@ -301,7 +301,14 @@ export const posApi = {
 
   createOrder: async (payload: any): Promise<any> => {
     const res = await api.post("/pos/orders", payload);
-    return (res as any)?.data || res;
+    const orderData = (res as any)?.data || res;
+    return {
+      ...(typeof orderData === "object" ? orderData : {}),
+      id: orderData?.id || (res as any)?.id || (res as any)?.data?.id,
+      kot: (res as any)?.kot || orderData?.kot || null,
+      data: orderData,
+      raw: res,
+    };
   },
 
   updateStatus: async (id: string, status: string): Promise<RestaurantOrder> => {

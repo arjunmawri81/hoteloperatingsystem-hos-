@@ -33,6 +33,14 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: envVars.FIREBASE_MEASUREMENT_ID || process.env.FIREBASE_MEASUREMENT_ID || "",
     NEXT_PUBLIC_API_URL: envVars.APP_URL ? `${envVars.APP_URL}/api` : (process.env.APP_URL ? `${process.env.APP_URL}/api` : "http://localhost:5000/api"),
   },
+  async rewrites() {
+    return [
+      {
+        source: "/api/:path*",
+        destination: "http://localhost:5000/api/:path*",
+      },
+    ];
+  },
 };
 
 export default nextConfig;
