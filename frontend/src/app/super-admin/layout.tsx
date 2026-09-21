@@ -20,12 +20,12 @@ export default function SuperAdminLayout({
 
   return (
     <RoleGuard allowedRoles={["super_admin"]} moduleName="Super Admin SaaS Platform">
-      <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] flex font-sans antialiased">
-        {/* Modern Sleek Dark Sidebar */}
-        <aside className="w-64 bg-[#0B132B] text-slate-300 flex flex-col justify-between shrink-0 min-h-screen border-r border-slate-800/80 shadow-2xl z-30 select-none">
+      <div className="h-screen bg-[#F8FAFC] text-[#0F172A] flex font-sans antialiased overflow-hidden">
+        {/* Modern Sleek Dark Sidebar (Fixed, Non-scrolling with page) */}
+        <aside className="w-64 bg-[#0B132B] text-slate-300 flex flex-col justify-between shrink-0 h-screen sticky top-0 border-r border-slate-800/80 shadow-2xl z-30 select-none overflow-hidden">
           <div className="flex flex-col flex-1 min-h-0">
             {/* Sidebar Brand Header */}
-            <div className="px-5 py-5 border-b border-slate-800/60 flex items-center gap-3.5 bg-[#080E1E]/50">
+            <div className="px-5 py-5 border-b border-slate-800/60 flex items-center gap-3.5 bg-[#080E1E]/50 shrink-0">
               <Link
                 href="/"
                 title="LuckNexa Home"
@@ -104,7 +104,7 @@ export default function SuperAdminLayout({
           </div>
 
           {/* Sidebar Footer Card */}
-          <div className="p-3.5 border-t border-slate-800/80 bg-[#080E1E]/60">
+          <div className="p-3.5 border-t border-slate-800/80 bg-[#080E1E]/60 shrink-0">
             <div className="bg-[#111C33]/80 border border-slate-800 rounded-xl p-3 flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shrink-0">
                 <ShieldCheck className="w-4 h-4" />
@@ -122,8 +122,8 @@ export default function SuperAdminLayout({
           </div>
         </aside>
 
-        {/* Main Content Area */}
-        <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        {/* Main Content Area (Scrolls independently) */}
+        <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
           {/* Top Header Bar */}
           <header className="h-14 bg-white border-b border-[#E5E7EB] px-6 flex items-center justify-between shrink-0 sticky top-0 z-20">
             {/* Breadcrumb */}
