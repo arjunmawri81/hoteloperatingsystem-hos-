@@ -132,6 +132,8 @@ export interface Reservation {
   roomType: string;
   checkIn: string;
   checkOut: string;
+  actualCheckIn?: string | Date;
+  actualCheckOut?: string | Date;
   status: "confirmed" | "checked_in" | "checked_out" | "cancelled" | string;
   totalAmount: number;
   paidAmount?: number;

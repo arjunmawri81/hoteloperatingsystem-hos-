@@ -238,6 +238,38 @@ export default function FrontDeskPage() {
   const arrivals = filtered.filter((r) => r.status === "confirmed" || r.status === "checked_in");
   const departures = filtered.filter((r) => r.status === "checked_in" || r.status === "checked_out");
 
+  // Helper for Date & Time display
+  const formatDateTimeDisplay = (
+    dateVal?: string | Date | null,
+    defaultTime = "12:00 PM",
+    isActual = false
+  ) => {
+    if (!dateVal) return { date: "-", time: defaultTime, full: `-` };
+    try {
+      const d = new Date(dateVal);
+      if (isNaN(d.getTime())) return { date: String(dateVal), time: defaultTime, full: `${dateVal} · ${defaultTime}` };
+
+      const dateStr = d.toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      });
+
+      const hasExplicitTime =
+        isActual ||
+        (typeof dateVal === "string" && (dateVal.includes("T") || dateVal.includes(":"))) ||
+        dateVal instanceof Date;
+
+      const timeStr = hasExplicitTime
+        ? d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })
+        : defaultTime;
+
+      return { date: dateStr, time: timeStr, full: `${dateStr} · ${timeStr}` };
+    } catch {
+      return { date: String(dateVal), time: defaultTime, full: `${dateVal} · ${defaultTime}` };
+    }
+  };
+
   return (
     <RoleGuard
       allowedRoles={["super_admin", "hotel_admin", "hotel_manager", "receptionist"]}
@@ -249,7 +281,7 @@ export default function FrontDeskPage() {
           <div>
             <h1 className="text-[26px] font-bold text-[#111827] tracking-tight">Front Desk Operations</h1>
             <p className="text-[13px] text-[#6B7280] mt-0.5">
-              Live guest arrivals, digital ID check-in, room swaps, stay extensions & folio settlement
+              Live guest arrivals, digital ID check-in, room swaps, stay extensions &amp; folio settlement
             </p>
           </div>
 
@@ -314,7 +346,7 @@ export default function FrontDeskPage() {
                   <tr className="border-b border-[#E5E7EB] text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider bg-white">
                     <th className="py-2.5 px-4 font-bold">GUEST</th>
                     <th className="py-2.5 px-4 font-bold">ROOM</th>
-                    <th className="py-2.5 px-4 font-bold">DATES</th>
+                    <th className="py-2.5 px-4 font-bold">DATES &amp; TIME</th>
                     <th className="py-2.5 px-4 text-right font-bold">ACTIONS</th>
                   </tr>
                 </thead>
@@ -329,6 +361,13 @@ export default function FrontDeskPage() {
                     arrivals.map((row) => {
                       const isCheckedIn = row.status === "checked_in";
                       const isPreChecked = (row as any).isPreCheckedIn;
+                      const checkInInfo = formatDateTimeDisplay(
+                        (row as any).actualCheckIn || row.checkIn,
+                        (row as any).estimatedArrivalTime || "02:00 PM",
+                        !!(row as any).actualCheckIn
+                      );
+                      const checkOutInfo = formatDateTimeDisplay(row.checkOut, "11:00 AM");
+
                       return (
                         <tr key={row.id} className="hover:bg-[#F9FAFB] transition-colors">
                           <td className="py-3 px-4 font-semibold text-[#111827]">
@@ -347,8 +386,23 @@ export default function FrontDeskPage() {
                           <td className="py-3 px-4 text-[#374151] font-mono font-bold">
                             {row.roomNumber}
                           </td>
-                          <td className="py-3 px-4 text-[#6B7280] text-[12px]">
-                            {row.checkIn} → {row.checkOut}
+                          <td className="py-3 px-4 text-[#374151] text-[11px]">
+                            <div className="space-y-0.5">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-bold text-emerald-700">IN:</span>
+                                <span className="font-semibold text-gray-800">{checkInInfo.date}</span>
+                                <span className="text-gray-500 font-mono bg-gray-100 px-1.5 py-0.2 rounded text-[10px] flex items-center gap-0.5">
+                                  <Clock className="w-2.5 h-2.5 text-emerald-600" /> {checkInInfo.time}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-bold text-gray-400">OUT:</span>
+                                <span className="text-gray-600">{checkOutInfo.date}</span>
+                                <span className="text-gray-400 font-mono text-[10px]">
+                                  {checkOutInfo.time}
+                                </span>
+                              </div>
+                            </div>
                           </td>
                           <td className="py-3 px-4 text-right">
                             {isCheckedIn ? (
@@ -419,11 +473,11 @@ export default function FrontDeskPage() {
               <div className="flex items-center gap-2">
                 <LogOut className="w-4 h-4 text-[#4B5563]" />
                 <h2 className="text-[14px] font-bold text-[#111827]">
-                  Departures & In-House ({departures.length})
+                  Departures &amp; In-House ({departures.length})
                 </h2>
               </div>
               <span className="text-[11px] font-semibold text-[#6B7280]">
-                {departures.filter((d) => d.status === "checked_out").length} settled & checked out
+                {departures.filter((d) => d.status === "checked_out").length} settled &amp; checked out
               </span>
             </div>
 
@@ -433,7 +487,7 @@ export default function FrontDeskPage() {
                   <tr className="border-b border-[#E5E7EB] text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider bg-white">
                     <th className="py-2.5 px-4 font-bold">GUEST</th>
                     <th className="py-2.5 px-4 font-bold">ROOM</th>
-                    <th className="py-2.5 px-4 font-bold">CHECK-OUT</th>
+                    <th className="py-2.5 px-4 font-bold">CHECK-OUT &amp; TIME</th>
                     <th className="py-2.5 px-4 text-right font-bold">ACTIONS</th>
                   </tr>
                 </thead>
@@ -447,6 +501,12 @@ export default function FrontDeskPage() {
                   ) : (
                     departures.map((row) => {
                       const isCheckedOut = row.status === "checked_out";
+                      const checkOutInfo = formatDateTimeDisplay(
+                        (row as any).actualCheckOut || row.checkOut,
+                        "11:00 AM",
+                        !!(row as any).actualCheckOut
+                      );
+
                       return (
                         <tr key={row.id} className="hover:bg-[#F9FAFB] transition-colors">
                           <td className="py-3 px-4 font-semibold text-[#111827]">
@@ -458,8 +518,13 @@ export default function FrontDeskPage() {
                           <td className="py-3 px-4 text-[#374151] font-mono font-bold">
                             {row.roomNumber}
                           </td>
-                          <td className="py-3 px-4 text-[#6B7280] text-[12px]">
-                            {row.checkOut}
+                          <td className="py-3 px-4 text-[#374151] text-[12px]">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-semibold text-gray-800">{checkOutInfo.date}</span>
+                              <span className="text-gray-600 font-mono bg-gray-100 px-1.5 py-0.2 rounded text-[11px] flex items-center gap-0.5">
+                                <Clock className="w-2.5 h-2.5 text-[#EC3013]" /> {checkOutInfo.time}
+                              </span>
+                            </div>
                           </td>
                           <td className="py-3 px-4 text-right">
                             {isCheckedOut ? (
@@ -483,7 +548,7 @@ export default function FrontDeskPage() {
                                 onClick={() => handleOpenFolio(row)}
                                 className="px-3.5 py-1 bg-white border border-[#D1D5DB] hover:bg-[#F9FAFB] text-[#111827] text-[12px] font-bold rounded shadow-xs transition-colors cursor-pointer flex items-center gap-1 ml-auto"
                               >
-                                <CreditCard className="w-3.5 h-3.5 text-[#EC3013]" /> Settle & Check-Out
+                                <CreditCard className="w-3.5 h-3.5 text-[#EC3013]" /> Settle &amp; Check-Out
                               </button>
                             )}
                           </td>
@@ -508,13 +573,31 @@ export default function FrontDeskPage() {
                 <X className="w-5 h-5" />
               </button>
               <h3 className="text-[18px] font-bold text-[#111827] flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-[#EC3013]" /> Guest Check-In & ID Verification
+                <ShieldCheck className="w-5 h-5 text-[#EC3013]" /> Guest Check-In &amp; ID Verification
               </h3>
               <p className="text-[12px] text-gray-500 mt-1">
                 Booking #{selectedResv.id} · {selectedResv.guestName} · Room {selectedResv.roomNumber}
               </p>
 
-              <form onSubmit={submitCheckIn} className="mt-5 space-y-4">
+              {/* Date & Time Schedule Card */}
+              <div className="mt-3 p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5 text-xs">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 flex items-center gap-1 font-semibold">
+                    <Clock className="w-3.5 h-3.5 text-emerald-600" /> Check-In Date &amp; Time:
+                  </span>
+                  <span className="font-bold text-emerald-800">
+                    {formatDateTimeDisplay(selectedResv.checkIn, "02:00 PM").date} · {new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-gray-500 pt-1 border-t border-slate-200/60">
+                  <span>Planned Check-Out:</span>
+                  <span className="font-semibold text-slate-700">
+                    {formatDateTimeDisplay(selectedResv.checkOut, "11:00 AM").full}
+                  </span>
+                </div>
+              </div>
+
+              <form onSubmit={submitCheckIn} className="mt-4 space-y-4">
                 <div>
                   <label className="block text-[12px] font-bold text-gray-700 mb-1">Government ID Type</label>
                   <select
@@ -784,7 +867,7 @@ export default function FrontDeskPage() {
               <div className="flex items-center justify-between border-b pb-3">
                 <div>
                   <h3 className="text-[18px] font-bold text-[#111827] flex items-center gap-2">
-                    <CreditCard className="w-5 h-5 text-emerald-600" /> Guest Folio & Settlement
+                    <CreditCard className="w-5 h-5 text-emerald-600" /> Guest Folio &amp; Settlement
                   </h3>
                   <p className="text-[12px] text-gray-500">
                     Room {selectedResv.roomNumber} · {selectedResv.guestName} (#{selectedResv.id})
@@ -792,10 +875,26 @@ export default function FrontDeskPage() {
                 </div>
                 <button
                   onClick={() => setPrintDocType("tax_invoice")}
-                  className="px-2.5 py-1 border border-gray-300 hover:bg-gray-50 rounded text-[11px] font-semibold flex items-center gap-1"
+                  className="px-2.5 py-1 border border-gray-300 hover:bg-gray-50 rounded text-[11px] font-semibold flex items-center gap-1 cursor-pointer"
                 >
                   <Printer className="w-3 h-3" /> Print GST Bill
                 </button>
+              </div>
+
+              {/* Stay Timeline & Time Stamps */}
+              <div className="mt-3 p-3 bg-slate-50 border border-slate-200 rounded-lg grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <span className="text-[10px] text-gray-500 font-bold block uppercase">Check-In</span>
+                  <span className="font-semibold text-gray-900">
+                    {formatDateTimeDisplay((selectedResv as any).actualCheckIn || selectedResv.checkIn, "02:00 PM", !!(selectedResv as any).actualCheckIn).full}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-gray-500 font-bold block uppercase">Check-Out (Settlement)</span>
+                  <span className="font-semibold text-[#EC3013]">
+                    {formatDateTimeDisplay(new Date(), "11:00 AM", true).full}
+                  </span>
+                </div>
               </div>
 
               {/* Folio Items List */}
@@ -944,8 +1043,8 @@ export default function FrontDeskPage() {
                   <div>
                     <span className="font-bold text-gray-500 block">STAY SPECIFICATIONS</span>
                     <p className="mt-0.5 font-bold">Room: <span className="font-mono">{selectedResv.roomNumber}</span> ({selectedResv.roomType})</p>
-                    <p>Check-In: {selectedResv.checkIn} (12:00 PM)</p>
-                    <p>Check-Out: {selectedResv.checkOut} (11:00 AM)</p>
+                    <p>Check-In: {formatDateTimeDisplay((selectedResv as any).actualCheckIn || selectedResv.checkIn, "02:00 PM", !!(selectedResv as any).actualCheckIn).full}</p>
+                    <p>Check-Out: {formatDateTimeDisplay((selectedResv as any).actualCheckOut || selectedResv.checkOut, "11:00 AM", !!(selectedResv as any).actualCheckOut).full}</p>
                     <p>Rate Plan: {(selectedResv as any).ratePlan || "European Plan (EP)"}</p>
                   </div>
                 </div>
