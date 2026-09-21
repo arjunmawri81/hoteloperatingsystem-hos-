@@ -67,7 +67,7 @@ export default function NativeSmartQRStudioPage() {
     setBadgeLabel(tbl.badgeLabel);
   };
 
-  const targetUrl = `${customOrigin || "http://localhost:3000"}/menu?table=${selectedTable.tableNumber}`;
+  const targetUrl = `${(customOrigin || "http://localhost:3000").replace(/\/$/, "")}/menu?table=${selectedTable.tableNumber}`;
   const qrCodeImgSrc = generateQrSvg(targetUrl, 260);
 
   const handleCopyLink = () => {
@@ -212,14 +212,14 @@ export default function NativeSmartQRStudioPage() {
             <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
               <div>
                 <h2 className="text-sm font-bold text-slate-900">
-                  2. Customize Table Standee Card
+                  2. Customize Table Standee Card &amp; QR Host
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  The text and details below will appear on the printed tent-card
+                  The text and host URL below will be embedded inside the QR code
                 </p>
               </div>
 
-              <div className="space-y-3 text-xs">
+              <div className="space-y-3.5 text-xs">
                 <div>
                   <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">
                     Restaurant / Hotel Brand Title:
@@ -245,9 +245,52 @@ export default function NativeSmartQRStudioPage() {
                   />
                 </div>
 
+                {/* Network / Mobile Scanning Host Setup */}
+                <div className="p-3.5 bg-amber-50/70 border border-amber-200 rounded-xl space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[11px] font-bold text-amber-900 uppercase">
+                      📱 QR Server Base URL (For Phone Scanning)
+                    </label>
+                    <span className="text-[10px] text-amber-700 font-semibold">
+                      Must be accessible from phone
+                    </span>
+                  </div>
+
+                  <input
+                    type="text"
+                    value={customOrigin}
+                    onChange={(e) => setCustomOrigin(e.target.value)}
+                    placeholder="e.g. http://10.18.242.58:3000 or https://your-hotel.com"
+                    className="w-full px-3 py-2 rounded-lg border border-amber-300 bg-white font-mono text-xs text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                  />
+
+                  <div className="flex items-center gap-2 pt-1 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => setCustomOrigin("http://10.18.242.58:3000")}
+                      className="px-2.5 py-1 text-[11px] font-bold bg-amber-200/80 hover:bg-amber-300 text-amber-900 rounded-lg transition"
+                    >
+                      📶 Use WiFi IP (10.18.242.58:3000)
+                    </button>
+                    {typeof window !== "undefined" && (
+                      <button
+                        type="button"
+                        onClick={() => setCustomOrigin(window.location.origin)}
+                        className="px-2.5 py-1 text-[11px] font-bold bg-white border border-amber-300 text-amber-900 rounded-lg hover:bg-amber-100 transition"
+                      >
+                        💻 Use Current Origin ({window.location.origin})
+                      </button>
+                    )}
+                  </div>
+
+                  <p className="text-[10px] text-amber-800 leading-relaxed pt-1">
+                    💡 <strong>Tip:</strong> Phone camera se scan karne ke liye dono devices (Phone aur Laptop) same WiFi se connect karein aur WiFi IP select karein.
+                  </p>
+                </div>
+
                 <div>
                   <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">
-                    Destination QR URL:
+                    Active QR Code Destination URL:
                   </label>
                   <div className="flex items-center gap-2">
                     <input

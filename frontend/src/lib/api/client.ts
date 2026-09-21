@@ -4,8 +4,17 @@
  * Supports hybrid live/mock mode with automatic fallback.
  */
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+export function getApiBaseUrl(): string {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  if (typeof window !== "undefined") {
+    const protocol = window.location.protocol;
+    const hostname = window.location.hostname;
+    return `${protocol}//${hostname}:5000/api`;
+  }
+  return "http://localhost:5000/api";
+}
 
 const TOKEN_KEY = "lucknexa_auth_token";
 const LEGACY_TOKEN_KEY = "hos_auth_token";
@@ -66,9 +75,10 @@ export async function apiClient<T = any>(
 ): Promise<T> {
   const { params, timeout = 10000, skipAuth = false, headers = {}, ...customConfig } = options;
 
+  const baseUrl = getApiBaseUrl();
   let url = endpoint.startsWith("http")
     ? endpoint
-    : `${API_BASE_URL.replace(/\/$/, "")}/${endpoint.replace(/^\//, "")}`;
+    : `${baseUrl.replace(/\/$/, "")}/${endpoint.replace(/^\//, "")}`;
 
   if (params) {
     const searchParams = new URLSearchParams();
