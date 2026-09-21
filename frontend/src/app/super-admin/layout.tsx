@@ -20,9 +20,9 @@ export default function SuperAdminLayout({
 
   return (
     <RoleGuard allowedRoles={["super_admin"]} moduleName="Super Admin SaaS Platform">
-      <div className="h-screen bg-[#F8FAFC] text-[#0F172A] flex font-sans antialiased overflow-hidden">
-        {/* Modern Sleek Dark Sidebar (Fixed, Non-scrolling with page) */}
-        <aside className="w-64 bg-[#0B132B] text-slate-300 flex flex-col justify-between shrink-0 h-screen sticky top-0 border-r border-slate-800/80 shadow-2xl z-30 select-none overflow-hidden">
+      <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] flex font-sans antialiased">
+        {/* Modern Sleek Dark Sidebar (Fixed to Viewport - Never scrolls with page) */}
+        <aside className="fixed left-0 top-0 bottom-0 w-64 h-screen bg-[#0B132B] text-slate-300 flex flex-col justify-between shrink-0 border-r border-slate-800/80 shadow-2xl z-30 select-none overflow-hidden">
           <div className="flex flex-col flex-1 min-h-0">
             {/* Sidebar Brand Header */}
             <div className="px-5 py-5 border-b border-slate-800/60 flex items-center gap-3.5 bg-[#080E1E]/50 shrink-0">
@@ -50,8 +50,8 @@ export default function SuperAdminLayout({
               </div>
             </div>
 
-            {/* Navigation Menu */}
-            <nav className="p-3.5 space-y-1.5 overflow-y-auto flex-1 custom-scrollbar">
+            {/* Navigation Menu with Isolated Internal Scroll */}
+            <nav className="p-3.5 space-y-1.5 overflow-y-auto flex-1 custom-scrollbar overscroll-contain">
               <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
                 Administration
               </div>
@@ -122,8 +122,8 @@ export default function SuperAdminLayout({
           </div>
         </aside>
 
-        {/* Main Content Area (Scrolls independently) */}
-        <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
+        {/* Main Content Area (Offset by ml-64 for fixed sidebar) */}
+        <div className="flex-1 flex flex-col min-w-0 ml-64 min-h-screen">
           {/* Top Header Bar */}
           <header className="h-14 bg-white border-b border-[#E5E7EB] px-6 flex items-center justify-between shrink-0 sticky top-0 z-20">
             {/* Breadcrumb */}
