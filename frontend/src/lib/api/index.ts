@@ -53,6 +53,16 @@ export const organizationsApi = {
     const res = await api.post("/organizations", payload);
     return (res as any)?.data || res;
   },
+
+  approve: async (id: string, remarks?: string): Promise<any> => {
+    const res = await api.patch(`/organizations/${id}/approve`, { remarks });
+    return (res as any)?.data || res;
+  },
+
+  reject: async (id: string, reason?: string): Promise<any> => {
+    const res = await api.patch(`/organizations/${id}/reject`, { reason });
+    return (res as any)?.data || res;
+  },
 };
 
 // -------------------------------------------------------------

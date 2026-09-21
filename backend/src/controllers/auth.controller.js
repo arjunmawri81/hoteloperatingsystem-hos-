@@ -71,6 +71,26 @@ class AuthController {
         await user.save();
       }
 
+      // If hotel_admin, check organization approval status
+      if (user.role === "hotel_admin" && user.orgId) {
+        const Organization = require("../models/Organization");
+        const org = await Organization.findOne({ id: user.orgId });
+        if (org && org.status === "pending_approval") {
+          return res.status(403).json({
+            success: false,
+            message: "Your organization registration is currently under review by Super Admin. You will receive access once your KYC documents are approved.",
+            status: "pending_approval",
+          });
+        }
+        if (org && org.status === "rejected") {
+          return res.status(403).json({
+            success: false,
+            message: `Your organization registration was rejected. Reason: ${org.kycDocuments?.rejectionReason || "Compliance requirements not met."}`,
+            status: "rejected",
+          });
+        }
+      }
+
       const tokenPayload = {
         id: user.id,
         email: user.email,
@@ -115,7 +135,7 @@ class AuthController {
   }
 
   static async register(req, res, next) {
-    const { orgName, orgCode, adminName, email, phone, password } = req.body;
+    const { orgName, orgCode, adminName, email, phone, password, kycDocuments } = req.body;
 
     try {
       const existing = await User.findOne({ email: email.toLowerCase() });
@@ -127,17 +147,22 @@ class AuthController {
         });
       }
 
-      const newOrgId = `org-${(orgCode || "ORG").toLowerCase()}-${Date.now()}`;
+      const formattedCode = (orgCode || orgName.replace(/[^a-zA-Z0-9]/g, "").slice(0, 4) || "ORG").toUpperCase();
+      const newOrgId = `org-${formattedCode.toLowerCase()}-${Date.now()}`;
+      const emailLower = email.toLowerCase().trim();
+
       const newOrg = new Organization({
         id: newOrgId,
         name: orgName,
-        code: orgCode || "ORG",
+        code: formattedCode,
         ownerName: adminName,
-        ownerEmail: email,
+        ownerEmail: emailLower,
+        ownerPhone: phone || "",
         hotelsCount: 1,
         activeRooms: 50,
         monthlyRevenue: 0,
-        status: "trial",
+        status: "pending_approval",
+        kycDocuments: kycDocuments || {},
         createdAt: new Date().toISOString().split("T")[0],
       });
       await newOrg.save();
@@ -145,8 +170,8 @@ class AuthController {
       const newUser = new User({
         id: `usr-${Date.now()}`,
         name: adminName,
-        email: email.toLowerCase(),
-        phone: phone,
+        email: emailLower,
+        phone: phone || "",
         role: "hotel_admin",
         orgId: newOrgId,
         orgName: orgName,
@@ -172,15 +197,20 @@ class AuthController {
         userId: newUser.id,
         userRole: newUser.role,
         orgId: newOrg.id,
-        action: "REGISTER_ORGANIZATION",
+        action: "REGISTER_ORGANIZATION_PENDING_APPROVAL",
         resource: "auth",
         resourceId: newUser.id,
+        details: { orgName, code: formattedCode, email: emailLower },
         ipAddress: req.ip || req.connection?.remoteAddress,
       });
 
       return res.status(201).json({
         success: true,
-        message: "Organization registered successfully",
+        message: "Organization registered successfully and submitted for Super Admin approval.",
+        data: {
+          organization: newOrg,
+          user: safeUser,
+        },
         token,
         user: safeUser,
       });

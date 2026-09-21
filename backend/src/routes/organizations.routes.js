@@ -40,4 +40,26 @@ router.post(
   OrganizationsController.create
 );
 
+/**
+ * PATCH /api/organizations/:id/approve
+ */
+router.patch(
+  "/:id/approve",
+  verifyToken,
+  identifyTenant,
+  requireRole(["super_admin"]),
+  OrganizationsController.approveOrganization
+);
+
+/**
+ * PATCH /api/organizations/:id/reject
+ */
+router.patch(
+  "/:id/reject",
+  verifyToken,
+  identifyTenant,
+  requireRole(["super_admin"]),
+  OrganizationsController.rejectOrganization
+);
+
 module.exports = router;

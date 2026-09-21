@@ -73,11 +73,26 @@ export interface Organization {
   code: string;
   ownerName: string;
   ownerEmail: string;
+  ownerPhone?: string;
   ownerPassword?: string;
   hotelsCount: number;
   activeRooms: number;
   monthlyRevenue: number;
-  status: "active" | "trial" | "suspended" | string;
+  status: "pending_approval" | "active" | "rejected" | "trial" | "suspended" | string;
+  kycDocuments?: {
+    gstin?: string;
+    panNumber?: string;
+    fssaiNumber?: string;
+    tradeLicenseNumber?: string;
+    gstCertificateUrl?: string;
+    panCardUrl?: string;
+    businessProofUrl?: string;
+    ownerIdUrl?: string;
+    approvalRemarks?: string;
+    approvedBy?: string;
+    approvedAt?: string | Date;
+    rejectionReason?: string;
+  };
   createdAt?: string;
 }
 
