@@ -160,8 +160,18 @@ function MenuContent() {
     return true;
   });
 
+  const getItemKey = (item: MenuItem) => {
+    return String(item._id || item.id || item.name || "").trim();
+  };
+
   const addToCart = (item: MenuItem) => {
-    const key = item._id || item.id || item.name;
+    const key = getItemKey(item);
+    if (!key) return;
+    try {
+      if (typeof navigator !== "undefined" && navigator.vibrate) {
+        navigator.vibrate(30);
+      }
+    } catch {}
     setCart((prev) => {
       const current = prev[key]?.quantity || 0;
       return { ...prev, [key]: { item, quantity: current + 1 } };
@@ -169,7 +179,8 @@ function MenuContent() {
   };
 
   const removeFromCart = (item: MenuItem) => {
-    const key = item._id || item.id || item.name;
+    const key = getItemKey(item);
+    if (!key) return;
     setCart((prev) => {
       const current = prev[key]?.quantity || 0;
       if (current <= 1) {
@@ -183,7 +194,7 @@ function MenuContent() {
 
   const totalItemsCount = Object.values(cart).reduce((sum, entry) => sum + entry.quantity, 0);
   const totalAmount = Object.values(cart).reduce(
-    (sum, entry) => sum + entry.item.price * entry.quantity,
+    (sum, entry) => sum + (Number(entry.item.price) || 0) * entry.quantity,
     0
   );
 
@@ -324,12 +335,28 @@ function MenuContent() {
             </div>
           </div>
 
-          {/* Table Indicator Badge */}
-          <div className="px-3 py-1.5 rounded-xl bg-neutral-900 text-white flex flex-col items-center">
-            <span className="text-[9px] font-bold text-amber-400 tracking-wider uppercase">
-              TABLE
-            </span>
-            <span className="text-xs font-black text-amber-300">{tableParam}</span>
+          <div className="flex items-center gap-2">
+            {/* Table Indicator Badge */}
+            <div className="px-3 py-1.5 rounded-xl bg-neutral-900 text-white flex flex-col items-center">
+              <span className="text-[9px] font-bold text-amber-400 tracking-wider uppercase">
+                TABLE
+              </span>
+              <span className="text-xs font-black text-amber-300">{tableParam}</span>
+            </div>
+
+            {/* Header Cart Badge Button */}
+            {totalItemsCount > 0 && (
+              <button
+                type="button"
+                onClick={() => setIsCartOpen(true)}
+                className="w-9 h-9 rounded-xl bg-orange-600 text-white flex items-center justify-center relative shadow-md shadow-orange-600/30 active:scale-95 transition"
+              >
+                <ShoppingBag className="w-4 h-4" />
+                <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-white">
+                  {totalItemsCount}
+                </span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -361,6 +388,7 @@ function MenuContent() {
           {categories.map((cat) => (
             <button
               key={cat}
+              type="button"
               onClick={() => setSelectedCategory(cat)}
               className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition ${
                 selectedCategory === cat
@@ -382,7 +410,7 @@ function MenuContent() {
           <div className="py-16 text-center text-slate-400 text-sm">No items in this category.</div>
         ) : (
           filteredItems.map((item) => {
-            const key = item._id || item.id || item.name;
+            const key = getItemKey(item);
             const currentQty = cart[key]?.quantity || 0;
 
             return (
@@ -439,25 +467,40 @@ function MenuContent() {
                 <div className="flex flex-col items-end justify-center shrink-0">
                   {currentQty === 0 ? (
                     <button
-                      onClick={() => addToCart(item)}
-                      className="px-4 py-1.5 rounded-xl border-2 border-orange-500 text-orange-600 hover:bg-orange-50 font-black text-xs transition shadow-sm cursor-pointer"
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        addToCart(item);
+                      }}
+                      className="px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 active:scale-95 text-white font-black text-xs transition shadow-sm cursor-pointer select-none touch-manipulation flex items-center gap-1.5"
                     >
-                      ADD +
+                      <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                      <span>ADD</span>
                     </button>
                   ) : (
-                    <div className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-xl p-1">
+                    <div className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-xl p-1 shadow-sm">
                       <button
-                        onClick={() => removeFromCart(item)}
-                        className="w-7 h-7 rounded-lg bg-white border border-orange-200 text-orange-700 flex items-center justify-center hover:bg-orange-100 transition"
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeFromCart(item);
+                        }}
+                        className="w-8 h-8 rounded-lg bg-white border border-orange-200 text-orange-700 flex items-center justify-center hover:bg-orange-100 active:scale-90 transition font-black text-sm"
                       >
-                        <Minus className="w-3 h-3" />
+                        <Minus className="w-3.5 h-3.5" />
                       </button>
-                      <span className="font-bold text-xs text-orange-950 px-1">{currentQty}</span>
+                      <span className="font-black text-xs text-orange-950 px-1 min-w-[16px] text-center">
+                        {currentQty}
+                      </span>
                       <button
-                        onClick={() => addToCart(item)}
-                        className="w-7 h-7 rounded-lg bg-orange-600 text-white flex items-center justify-center hover:bg-orange-500 transition"
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          addToCart(item);
+                        }}
+                        className="w-8 h-8 rounded-lg bg-orange-600 text-white flex items-center justify-center hover:bg-orange-500 active:scale-90 transition font-black text-sm shadow-xs"
                       >
-                        <Plus className="w-3 h-3" />
+                        <Plus className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   )}
@@ -470,7 +513,7 @@ function MenuContent() {
 
       {/* Floating Bottom Cart Bar */}
       {totalItemsCount > 0 && (
-        <div className="fixed bottom-3 inset-x-3 max-w-xl mx-auto z-40">
+        <div className="fixed bottom-3 inset-x-3 max-w-xl mx-auto z-40 animate-in slide-in-from-bottom-3 duration-200">
           <div className="bg-slate-900 text-white rounded-2xl p-3.5 shadow-2xl flex items-center justify-between border border-slate-700">
             <div>
               <span className="text-[11px] font-bold text-orange-400 block uppercase tracking-wider">
@@ -482,11 +525,12 @@ function MenuContent() {
             </div>
 
             <button
+              type="button"
               onClick={() => setIsCartOpen(true)}
-              className="px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-white text-xs font-black flex items-center gap-2 shadow-lg shadow-orange-900/50 transition active:scale-98"
+              className="px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-white text-xs font-black flex items-center gap-2 shadow-lg shadow-orange-900/50 transition active:scale-95 cursor-pointer"
             >
               <ShoppingBag className="w-4 h-4" />
-              View Cart & Order
+              <span>View Cart &amp; Order</span>
             </button>
           </div>
         </div>

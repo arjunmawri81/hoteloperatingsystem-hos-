@@ -20,6 +20,15 @@ if (fs.existsSync(envFilePath)) {
 }
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: [
+    "localhost",
+    "localhost:3000",
+    "127.0.0.1",
+    "127.0.0.1:3000",
+    "10.18.242.58",
+    "10.18.242.58:3000",
+    "0.0.0.0",
+  ],
   turbopack: {
     root: path.resolve(__dirname),
   },
