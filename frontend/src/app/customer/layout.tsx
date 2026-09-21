@@ -6,6 +6,15 @@ import { UserMenu } from "@/components/layout/UserMenu";
 import { GlobalSearchModal } from "@/components/layout/GlobalSearchModal";
 import { NotificationPopover } from "@/components/layout/NotificationPopover";
 import { GuestAIChatWidget } from "@/components/common/GuestAIChatWidget";
+import {
+  Compass,
+  CalendarDays,
+  BookOpen,
+  KeyRound,
+  UtensilsCrossed,
+  Sparkles,
+  HeartHandshake,
+} from "lucide-react";
 
 export default function CustomerLayout({
   children,
@@ -15,16 +24,16 @@ export default function CustomerLayout({
   const pathname = usePathname();
 
   const navItems = [
-    { name: "Hotel Discovery", href: "/customer" },
-    { name: "Booking", href: "/customer/booking" },
-    { name: "My Bookings", href: "/customer/my-bookings" },
-    { name: "Digital Pre-Check-In", href: "/customer/pre-checkin" },
-    { name: "In-Stay Room Services", href: "/customer/stay-services" },
-    { name: "✨ 24/7 AI Concierge", href: "/customer/ai-concierge" },
+    { name: "Hotel Discovery", href: "/customer", icon: Compass },
+    { name: "Room Booking", href: "/customer/booking", icon: CalendarDays },
+    { name: "My Bookings", href: "/customer/my-bookings", icon: BookOpen },
+    { name: "Digital Pre-Check-In", href: "/customer/pre-checkin", icon: KeyRound },
+    { name: "In-Stay Room Services", href: "/customer/stay-services", icon: UtensilsCrossed },
+    { name: "✨ 24/7 AI Concierge", href: "/customer/ai-concierge", icon: Sparkles },
   ];
 
   const getCurrentTitle = () => {
-    if (pathname.includes("/booking")) return "Booking";
+    if (pathname.includes("/booking")) return "Room Booking";
     if (pathname.includes("/my-bookings")) return "My Bookings";
     if (pathname.includes("/pre-checkin")) return "Digital Pre-Check-In";
     if (pathname.includes("/stay-services")) return "In-Stay Room Services";
@@ -33,71 +42,100 @@ export default function CustomerLayout({
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] text-[#111827] flex font-sans antialiased selection:bg-red-500 selection:text-white relative">
-      {/* Left Sidebar */}
-      <aside className="w-60 bg-white border-r border-[#E5E7EB] flex flex-col justify-between shrink-0 min-h-screen">
-        <div>
-          {/* Sidebar Top Title */}
-          <div className="px-5 py-4 border-b border-[#F3F4F6] flex items-center gap-3">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] flex font-sans antialiased relative">
+      {/* Modern Sleek Dark Sidebar (Fixed to Viewport - Never scrolls with page) */}
+      <aside className="fixed left-0 top-0 bottom-0 w-64 h-screen bg-[#0B132B] text-slate-300 flex flex-col justify-between shrink-0 border-r border-slate-800/80 shadow-2xl z-30 select-none overflow-hidden">
+        <div className="flex flex-col flex-1 min-h-0">
+          {/* Sidebar Brand Header */}
+          <div className="px-5 py-5 border-b border-slate-800/60 flex items-center gap-3.5 bg-[#080E1E]/50 shrink-0">
             <Link
               href="/"
               title="LuckNexa Home"
-              className="w-9 h-9 rounded-xl overflow-hidden shrink-0 shadow-sm border border-slate-700/30 bg-[#090D16] flex items-center justify-center p-0.5 hover:scale-105 transition-transform"
+              className="w-10 h-10 rounded-xl overflow-hidden shrink-0 shadow-md border border-cyan-500/20 bg-gradient-to-br from-[#0e1e38] to-[#0a1020] flex items-center justify-center p-1 hover:scale-105 transition-all group"
             >
               <img
                 src="/lucknexa-icon.png"
                 alt="LuckNexa"
-                className="w-full h-full object-contain"
+                className="w-full h-full object-contain filter drop-shadow-[0_0_8px_rgba(56,189,248,0.4)]"
               />
             </Link>
-            <div>
-              <h2 className="text-[12px] font-extrabold text-[#111827] uppercase tracking-wider">
-                LuckNexa
-              </h2>
-              <p className="text-[10px] text-[#6B7280] font-medium">Guest Booking Portal</p>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <h2 className="text-[15px] font-black text-white tracking-tight uppercase">
+                  LuckNexa
+                </h2>
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+              </div>
+              <p className="text-[11px] text-slate-400 font-medium truncate">
+                Guest Experience Portal
+              </p>
             </div>
           </div>
 
-          {/* Navigation Menu */}
-          <nav className="p-3 space-y-1">
+          {/* Navigation Menu with Isolated Internal Scroll */}
+          <nav className="p-3.5 space-y-1.5 overflow-y-auto flex-1 custom-scrollbar overscroll-contain">
+            <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              Guest Services
+            </div>
             {navItems.map((item) => {
               const isActive =
                 item.href === "/customer"
                   ? pathname === "/customer"
                   : pathname.startsWith(item.href);
 
+              const Icon = item.icon;
+
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`block px-3 py-2 text-[13px] font-semibold rounded transition-colors ${
+                  className={`group flex items-center justify-between px-3.5 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 ${
                     isActive
-                      ? "text-[#111827] bg-[#F3F4F6] border-l-2 border-[#EC3013]"
-                      : item.href === "/customer/ai-concierge"
-                      ? "text-purple-700 bg-purple-50/70 hover:bg-purple-100 font-bold border border-purple-200/60"
-                      : "text-[#4B5563] hover:text-[#111827] hover:bg-[#F9FAFB]"
+                      ? "bg-[#16233B] text-white font-semibold shadow-inner border border-cyan-500/20 relative"
+                      : "text-slate-400 hover:text-slate-100 hover:bg-[#111C33]/70"
                   }`}
                 >
-                  {item.name}
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Icon
+                      className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                        isActive
+                          ? "text-cyan-400 drop-shadow-[0_0_6px_rgba(56,189,248,0.5)]"
+                          : "text-slate-400 group-hover:text-slate-200"
+                      }`}
+                    />
+                    <span className="truncate">{item.name}</span>
+                  </div>
+
+                  {isActive && (
+                    <span className="w-1.5 h-4 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(56,189,248,0.8)]" />
+                  )}
                 </Link>
               );
             })}
           </nav>
         </div>
 
-        {/* Sidebar Footer */}
-        <div className="px-6 py-5 border-t border-[#E5E7EB]">
-          <div className="text-[12px] font-bold text-[#111827]">
-            LuckNexa Direct Booking
-          </div>
-          <div className="text-[11px] text-[#9CA3AF] mt-0.5">
-            LuckNexa Hotel Operating System
+        {/* Sidebar Footer Card */}
+        <div className="p-3.5 border-t border-slate-800/80 bg-[#080E1E]/60 shrink-0">
+          <div className="bg-[#111C33]/80 border border-slate-800 rounded-xl p-3 flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shrink-0">
+              <HeartHandshake className="w-4 h-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-[12px] font-bold text-white truncate">
+                Direct Guest Portal
+              </div>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
+                <span className="text-[10px] text-slate-400 font-medium">Guest Stay Active</span>
+              </div>
+            </div>
           </div>
         </div>
       </aside>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+      {/* Main Content Area (Offset by ml-64 for fixed sidebar) */}
+      <div className="flex-1 flex flex-col min-w-0 ml-64 min-h-screen">
         {/* Top Header Bar */}
         <header className="h-14 bg-white border-b border-[#E5E7EB] px-6 flex items-center justify-between shrink-0 sticky top-0 z-20">
           {/* Breadcrumb */}
