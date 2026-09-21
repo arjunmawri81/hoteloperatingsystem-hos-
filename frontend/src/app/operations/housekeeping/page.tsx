@@ -273,6 +273,11 @@ export default function HousekeepingPage() {
                             <UserCheck className="w-3.5 h-3.5 text-[#9CA3AF]" />
                             <span>Cleaner: {t.assignedTo || "Unassigned"}</span>
                           </div>
+                          {t.notes && (
+                            <div className="p-2 bg-amber-50 border border-amber-200/90 rounded text-[11px] text-amber-900 font-medium">
+                              📝 <span className="font-semibold">{t.notes}</span>
+                            </div>
+                          )}
                           {t.lastCleaned && (
                             <div className="text-[11px] text-[#9CA3AF]">
                               Status: {t.lastCleaned}

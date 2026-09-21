@@ -57,11 +57,12 @@ function MenuContent() {
     loadMenu();
   }, []);
 
-  const categories = ["All", "Starters", "Main Course", "Breads & Rice", "Desserts", "Beverages"];
+  const categories = ["All", ...Array.from(new Set(menuItems.map((m) => m.category).filter(Boolean)))];
 
   const filteredItems = menuItems.filter((item) => {
+    if (!item) return false;
     if (selectedCategory === "All") return true;
-    return item.category === selectedCategory;
+    return String(item.category || "").toLowerCase() === selectedCategory.toLowerCase();
   });
 
   const addToCart = (item: MenuItem) => {
@@ -252,13 +253,24 @@ function MenuContent() {
             return (
               <div
                 key={key}
-                className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-sm flex items-start justify-between gap-4"
+                className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-sm flex items-center justify-between gap-4"
               >
-                <div className="flex-1">
+                {/* Dish Photo if available */}
+                {item.image && (
+                  <div className="w-20 h-20 rounded-xl overflow-hidden shrink-0 border border-slate-100 bg-slate-50 relative">
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     {/* Veg / Non-Veg Icon */}
                     <span
-                      className={`w-4 h-4 rounded-sm border flex items-center justify-center p-0.5 ${
+                      className={`w-4 h-4 rounded-sm border flex items-center justify-center p-0.5 shrink-0 ${
                         item.isVeg ? "border-emerald-600" : "border-rose-600"
                       }`}
                     >
@@ -268,10 +280,12 @@ function MenuContent() {
                         }`}
                       />
                     </span>
-                    <h3 className="font-extrabold text-sm text-slate-900">{item.name}</h3>
+                    <h3 className="font-extrabold text-sm text-slate-900 truncate">{item.name}</h3>
                   </div>
 
-                  <p className="text-xs text-slate-500 line-clamp-2 mb-2">{item.description}</p>
+                  {item.description && (
+                    <p className="text-xs text-slate-500 line-clamp-2 mb-2">{item.description}</p>
+                  )}
 
                   <div className="flex items-center gap-3">
                     <span className="font-mono font-bold text-sm text-slate-900">
@@ -291,7 +305,7 @@ function MenuContent() {
                   {currentQty === 0 ? (
                     <button
                       onClick={() => addToCart(item)}
-                      className="px-4 py-1.5 rounded-xl border-2 border-orange-500 text-orange-600 hover:bg-orange-50 font-black text-xs transition shadow-sm"
+                      className="px-4 py-1.5 rounded-xl border-2 border-orange-500 text-orange-600 hover:bg-orange-50 font-black text-xs transition shadow-sm cursor-pointer"
                     >
                       ADD +
                     </button>

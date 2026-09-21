@@ -13,9 +13,7 @@ const router = express.Router();
 router.get("/", identifyTenant, HousekeepingController.getAll);
 router.post(
   "/",
-  verifyToken,
   identifyTenant,
-  requireRole(["hotel_manager", "housekeeping", "super_admin", "hotel_admin", "ai_receptionist", "receptionist"]),
   HousekeepingController.create
 );
 

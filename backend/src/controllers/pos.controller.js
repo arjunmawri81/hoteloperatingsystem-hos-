@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const PosService = require("../services/pos.service");
 const RestaurantTable = require("../models/RestaurantTable");
 const KOT = require("../models/KOT");
@@ -19,22 +20,22 @@ const DEFAULT_TABLES = [
 ];
 
 const DEFAULT_MENU_ITEMS = [
-  { name: "Paneer Tikka Angara", category: "Starters", price: 380, description: "Cottage cheese marinated with tandoori spices & charred in clay oven", isVeg: true, prepTimeMinutes: 15 },
-  { name: "Murgh Malai Tikka", category: "Starters", price: 460, description: "Tender chicken morsels with cardamom, cream & cheese", isVeg: false, prepTimeMinutes: 18 },
-  { name: "Crispy Corn & Water Chestnut", category: "Starters", price: 320, description: "Wok tossed golden corn with scallions & cracked pepper", isVeg: true, prepTimeMinutes: 12 },
-  { name: "Dal Makhani Heritage", category: "Main Course", price: 390, description: "Slow cooked black lentils overnight with churned butter & cream", isVeg: true, prepTimeMinutes: 10 },
-  { name: "Butter Chicken Delhi Style", category: "Main Course", price: 540, description: "Smoked tandoori chicken simmered in rich satin tomato gravy", isVeg: false, prepTimeMinutes: 20 },
-  { name: "Paneer Lababdar", category: "Main Course", price: 420, description: "Paneer cubes in rich spiced onion-tomato and cashew gravy", isVeg: true, prepTimeMinutes: 15 },
-  { name: "Dum Gosht Awadhi Biryani", category: "Main Course", price: 620, description: "Fragrant basmati rice layered with spiced mutton & saffron", isVeg: false, prepTimeMinutes: 22 },
-  { name: "Subz Handi Biryani", category: "Main Course", price: 440, description: "Seasonal garden vegetables cooked in fragrant dum rice", isVeg: true, prepTimeMinutes: 18 },
-  { name: "Garlic Butter Naan", category: "Breads & Rice", price: 95, description: "Clay oven leavened bread brushed with garlic butter", isVeg: true, prepTimeMinutes: 8 },
-  { name: "Laccha Paratha", category: "Breads & Rice", price: 85, description: "Multi-layered crispy whole wheat bread with ghee", isVeg: true, prepTimeMinutes: 8 },
-  { name: "Jeera Basmati Rice", category: "Breads & Rice", price: 180, description: "Steamed aged basmati rice tempered with roasted cumin", isVeg: true, prepTimeMinutes: 6 },
-  { name: "Classic Tiramisu", category: "Desserts", price: 320, description: "Espresso soaked savoiardi biscuits with mascarpone cream", isVeg: true, prepTimeMinutes: 5 },
-  { name: "Gulab Jamun with Rabdi", category: "Desserts", price: 260, description: "Warm khoya dumplings topped with thickened saffron milk", isVeg: true, prepTimeMinutes: 5 },
-  { name: "Fresh Mint Mojito", category: "Beverages", price: 210, description: "Crushed mint leaves, fresh lime juice & sparkling soda", isVeg: true, prepTimeMinutes: 5 },
-  { name: "Mango Lassi Royal", category: "Beverages", price: 180, description: "Chilled yogurt smoothie with Alphonso mango pulp & pistachios", isVeg: true, prepTimeMinutes: 5 },
-  { name: "Masala Chai Pot", category: "Beverages", price: 140, description: "Brewed Assam tea leaves with aromatic whole spices", isVeg: true, prepTimeMinutes: 8 },
+  { name: "Paneer Tikka Angara", category: "Starters", price: 380, description: "Cottage cheese marinated with tandoori spices & charred in clay oven", image: "https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?auto=format&fit=crop&w=600&q=80", isVeg: true, prepTimeMinutes: 15 },
+  { name: "Murgh Malai Tikka", category: "Starters", price: 460, description: "Tender chicken morsels with cardamom, cream & cheese", image: "https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?auto=format&fit=crop&w=600&q=80", isVeg: false, prepTimeMinutes: 18 },
+  { name: "Crispy Corn & Water Chestnut", category: "Starters", price: 320, description: "Wok tossed golden corn with scallions & cracked pepper", image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80", isVeg: true, prepTimeMinutes: 12 },
+  { name: "Dal Makhani Heritage", category: "Main Course", price: 390, description: "Slow cooked black lentils overnight with churned butter & cream", image: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=600&q=80", isVeg: true, prepTimeMinutes: 10 },
+  { name: "Butter Chicken Delhi Style", category: "Main Course", price: 540, description: "Smoked tandoori chicken simmered in rich satin tomato gravy", image: "https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?auto=format&fit=crop&w=600&q=80", isVeg: false, prepTimeMinutes: 20 },
+  { name: "Paneer Lababdar", category: "Main Course", price: 420, description: "Paneer cubes in rich spiced onion-tomato and cashew gravy", image: "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?auto=format&fit=crop&w=600&q=80", isVeg: true, prepTimeMinutes: 15 },
+  { name: "Dum Gosht Awadhi Biryani", category: "Main Course", price: 620, description: "Fragrant basmati rice layered with spiced mutton & saffron", image: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80", isVeg: false, prepTimeMinutes: 22 },
+  { name: "Subz Handi Biryani", category: "Main Course", price: 440, description: "Seasonal garden vegetables cooked in fragrant dum rice", image: "https://images.unsplash.com/photo-1589302168068-964664d93dc0?auto=format&fit=crop&w=600&q=80", isVeg: true, prepTimeMinutes: 18 },
+  { name: "Garlic Butter Naan", category: "Breads & Rice", price: 95, description: "Clay oven leavened bread brushed with garlic butter", image: "https://images.unsplash.com/photo-1626074353765-517a681e40be?auto=format&fit=crop&w=600&q=80", isVeg: true, prepTimeMinutes: 8 },
+  { name: "Laccha Paratha", category: "Breads & Rice", price: 85, description: "Multi-layered crispy whole wheat bread with ghee", image: "https://images.unsplash.com/photo-1505253758473-96b7015fcd40?auto=format&fit=crop&w=600&q=80", isVeg: true, prepTimeMinutes: 8 },
+  { name: "Jeera Basmati Rice", category: "Breads & Rice", price: 180, description: "Steamed aged basmati rice tempered with roasted cumin", image: "https://images.unsplash.com/photo-1516714435131-44d6b64dc6a2?auto=format&fit=crop&w=600&q=80", isVeg: true, prepTimeMinutes: 6 },
+  { name: "Classic Tiramisu", category: "Desserts", price: 320, description: "Espresso soaked savoiardi biscuits with mascarpone cream", image: "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?auto=format&fit=crop&w=600&q=80", isVeg: true, prepTimeMinutes: 5 },
+  { name: "Gulab Jamun with Rabdi", category: "Desserts", price: 260, description: "Warm khoya dumplings topped with thickened saffron milk", image: "https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?auto=format&fit=crop&w=600&q=80", isVeg: true, prepTimeMinutes: 5 },
+  { name: "Fresh Mint Mojito", category: "Beverages", price: 210, description: "Crushed mint leaves, fresh lime juice & sparkling soda", image: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=600&q=80", isVeg: true, prepTimeMinutes: 5 },
+  { name: "Mango Lassi Royal", category: "Beverages", price: 180, description: "Chilled yogurt smoothie with Alphonso mango pulp & pistachios", image: "https://images.unsplash.com/photo-1553530666-ba11a7da3888?auto=format&fit=crop&w=600&q=80", isVeg: true, prepTimeMinutes: 5 },
+  { name: "Masala Chai Pot", category: "Beverages", price: 140, description: "Brewed Assam tea leaves with aromatic whole spices", image: "https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=600&q=80", isVeg: true, prepTimeMinutes: 8 },
 ];
 
 class PosController {
@@ -269,10 +270,25 @@ class PosController {
   // --- Menu Management ---
   static async getMenu(req, res) {
     try {
-      let items = await MenuItem.find().sort({ category: 1, name: 1 });
+      let items = await MenuItem.find().sort({ createdAt: -1 });
       if (items.length === 0) {
         await MenuItem.insertMany(DEFAULT_MENU_ITEMS);
-        items = await MenuItem.find().sort({ category: 1, name: 1 });
+        items = await MenuItem.find().sort({ createdAt: -1 });
+      } else {
+        // Backfill missing images for default items if any
+        const updates = [];
+        for (const item of items) {
+          if (!item.image) {
+            const def = DEFAULT_MENU_ITEMS.find((d) => d.name.toLowerCase() === item.name.toLowerCase());
+            if (def && def.image) {
+              item.image = def.image;
+              updates.push(MenuItem.updateOne({ _id: item._id }, { $set: { image: def.image } }));
+            }
+          }
+        }
+        if (updates.length > 0) {
+          await Promise.all(updates);
+        }
       }
       res.json({ success: true, count: items.length, data: items });
     } catch (err) {
@@ -292,7 +308,11 @@ class PosController {
   static async updateMenuItem(req, res) {
     try {
       const { id } = req.params;
-      const item = await MenuItem.findByIdAndUpdate(id, req.body, { new: true });
+      const filter = mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { $or: [{ _id: id }, { id }] };
+      const item = await MenuItem.findOneAndUpdate(filter, req.body, { new: true });
+      if (!item) {
+        return res.status(404).json({ success: false, message: "Menu item not found" });
+      }
       res.json({ success: true, data: item });
     } catch (err) {
       res.status(400).json({ success: false, message: err.message });
@@ -302,8 +322,12 @@ class PosController {
   static async deleteMenuItem(req, res) {
     try {
       const { id } = req.params;
-      await MenuItem.findByIdAndDelete(id);
-      res.json({ success: true, message: "Menu item deleted" });
+      const filter = mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { $or: [{ _id: id }, { id }] };
+      const item = await MenuItem.findOneAndDelete(filter);
+      if (!item) {
+        return res.status(404).json({ success: false, message: "Menu item not found" });
+      }
+      res.json({ success: true, message: "Menu item deleted", data: item });
     } catch (err) {
       res.status(400).json({ success: false, message: err.message });
     }

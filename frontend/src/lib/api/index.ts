@@ -342,8 +342,10 @@ export const posApi = {
   // Menu Management
   getMenu: async (): Promise<any[]> => {
     try {
-      const res = await api.get("/pos/menu");
-      return (res as any)?.data || [];
+      const res = await api.get<any>("/pos/menu");
+      if (Array.isArray(res)) return res;
+      if (Array.isArray((res as any)?.data)) return (res as any).data;
+      return [];
     } catch {
       return [];
     }

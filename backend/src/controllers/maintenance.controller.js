@@ -17,13 +17,21 @@ exports.createMaintenanceRequest = async (req, res) => {
   try {
     const count = await MaintenanceRequest.countDocuments();
     const ticketId = `MNT-${2000 + count + 1}`;
+    const desc = req.body.issueDescription || req.body.description || "Issue reported by guest";
+    const priority = req.body.priority === "urgent" ? "critical" : req.body.priority || "high";
+
     const request = await MaintenanceRequest.create({
       ...req.body,
+      issueDescription: desc,
+      priority,
       ticketId,
     });
 
-    if (req.body.roomNumber && req.body.priority === "critical") {
-      await Room.findOneAndUpdate({ number: req.body.roomNumber }, { status: "maintenance" });
+    if (req.body.roomNumber && (priority === "critical" || priority === "urgent")) {
+      await Room.findOneAndUpdate(
+        { number: { $in: [req.body.roomNumber, `Room ${req.body.roomNumber}`] } },
+        { status: "maintenance" }
+      );
     }
 
     res.status(201).json({ success: true, data: request });

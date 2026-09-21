@@ -180,6 +180,9 @@ export default function BanquetManagementPage() {
           capacity: 200,
           layout: "Round Table",
           basePricePerDay: 50000,
+          areaSqFt: 4500,
+          dimension: "80ft x 55ft",
+          image: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=800&q=80",
           facilities: "Central AC, Stage, Projector, Sound System, Valet Parking",
           status: "available",
         });

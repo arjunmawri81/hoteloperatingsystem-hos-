@@ -208,6 +208,7 @@ export interface MenuItem {
   category: "Starters" | "Main Course" | "Breads & Rice" | "Desserts" | "Beverages" | string;
   price: number;
   description?: string;
+  image?: string;
   isVeg: boolean;
   isAvailable: boolean;
   prepTimeMinutes?: number;

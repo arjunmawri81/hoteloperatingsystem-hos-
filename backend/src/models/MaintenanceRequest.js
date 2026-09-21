@@ -7,16 +7,14 @@ const MaintenanceRequestSchema = new mongoose.Schema(
     roomNumber: { type: String, required: true },
     category: {
       type: String,
-      enum: ["Air Conditioning (HVAC)", "Plumbing / Water", "Electrical & Lighting", "Carpentry / Furniture", "WiFi & TV", "General"],
       default: "General",
     },
-    issueDescription: { type: String, required: true },
-    reportedBy: { type: String, default: "Housekeeping Staff" },
+    issueDescription: { type: String, default: "" },
+    reportedBy: { type: String, default: "In-Stay Guest" },
     assignedTo: { type: String, default: "Maintenance Team" },
     priority: {
       type: String,
-      enum: ["low", "medium", "high", "critical"],
-      default: "medium",
+      default: "high",
     },
     status: {
       type: String,
