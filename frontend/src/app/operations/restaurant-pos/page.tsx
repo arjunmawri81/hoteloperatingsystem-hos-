@@ -44,6 +44,35 @@ const FOOD_PRESET_IMAGES = [
   { label: "Crispy Starter", url: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80" },
 ];
 
+function formatOrderItemsSummary(items: any): string {
+  if (!items) return "No items";
+  if (typeof items === "string") return items;
+  if (Array.isArray(items)) {
+    return items
+      .map((it: any) => {
+        if (!it) return "";
+        if (typeof it === "string") return it;
+        if (typeof it === "object") {
+          const qty = it.quantity || it.qty || 1;
+          const name =
+            it.name ||
+            it.title ||
+            it.itemName ||
+            (typeof it.item === "object" ? it.item?.name : it.item) ||
+            "Dish";
+          return `${qty > 1 ? `${qty}x ` : ""}${name}`;
+        }
+        return String(it);
+      })
+      .filter(Boolean)
+      .join(", ");
+  }
+  if (typeof items === "object") {
+    return items.name || items.title || "Dish";
+  }
+  return String(items);
+}
+
 export default function RestaurantPOSPage() {
   const [orders, setOrders] = useState<RestaurantOrder[]>([]);
   const [tables, setTables] = useState<RestaurantTable[]>([]);
@@ -775,8 +804,8 @@ export default function RestaurantPOSPage() {
                             )}
                           </td>
                           <td className="py-3 px-4 text-[#4B5563]">
-                            <div className="truncate max-w-[200px]">
-                              {Array.isArray(ord.items) ? ord.items.join(", ") : ord.items}
+                            <div className="truncate max-w-[240px]" title={formatOrderItemsSummary(ord.items)}>
+                              {formatOrderItemsSummary(ord.items)}
                             </div>
                             <div className="text-[11px] font-bold text-[#111827] mt-0.5">
                               ₹{ord.total}
@@ -1130,12 +1159,16 @@ export default function RestaurantPOSPage() {
                   <span>ITEM</span>
                   <span>QTY</span>
                 </div>
-                {(Array.isArray(printKotOrder.items) ? printKotOrder.items : [printKotOrder.items]).map((item: any, idx: number) => (
-                  <div key={idx} className="flex justify-between font-semibold">
-                    <span>{typeof item === "string" ? item : item.name || "Item"}</span>
-                    <span>x1</span>
-                  </div>
-                ))}
+                {(Array.isArray(printKotOrder.items) ? printKotOrder.items : [printKotOrder.items]).map((item: any, idx: number) => {
+                  const name = typeof item === "string" ? item : item.name || item.title || item.itemName || "Item";
+                  const qty = typeof item === "object" ? (item.quantity || item.qty || 1) : 1;
+                  return (
+                    <div key={idx} className="flex justify-between font-semibold">
+                      <span>{name}</span>
+                      <span>x{qty}</span>
+                    </div>
+                  );
+                })}
               </div>
 
               <div className="text-center pt-1 print:hidden">
