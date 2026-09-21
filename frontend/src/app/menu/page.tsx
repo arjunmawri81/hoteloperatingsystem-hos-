@@ -19,13 +19,106 @@ import {
   AlertCircle,
 } from "lucide-react";
 
+const DEFAULT_MENU_ITEMS: MenuItem[] = [
+  {
+    _id: "m1",
+    name: "Paneer Tikka Angara",
+    category: "Starters",
+    price: 380,
+    description: "Cottage cheese charred with aromatic spices in clay tandoor",
+    image: "https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?auto=format&fit=crop&w=600&q=80",
+    isVeg: true,
+    isAvailable: true,
+    prepTimeMinutes: 15,
+  },
+  {
+    _id: "m2",
+    name: "Murgh Malai Tikka",
+    category: "Starters",
+    price: 460,
+    description: "Tender chicken morsels marinated in fresh cream & royal cheese",
+    image: "https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?auto=format&fit=crop&w=600&q=80",
+    isVeg: false,
+    isAvailable: true,
+    prepTimeMinutes: 18,
+  },
+  {
+    _id: "m3",
+    name: "Dal Makhani Heritage",
+    category: "Main Course",
+    price: 390,
+    description: "Slow-cooked black lentils simmered overnight with churned butter",
+    image: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=600&q=80",
+    isVeg: true,
+    isAvailable: true,
+    prepTimeMinutes: 10,
+  },
+  {
+    _id: "m4",
+    name: "Butter Chicken Delhi Style",
+    category: "Main Course",
+    price: 540,
+    description: "Tandoori smoked chicken steeped in silky tomato-cashew gravy",
+    image: "https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?auto=format&fit=crop&w=600&q=80",
+    isVeg: false,
+    isAvailable: true,
+    prepTimeMinutes: 20,
+  },
+  {
+    _id: "m5",
+    name: "Dum Gosht Awadhi Biryani",
+    category: "Main Course",
+    price: 620,
+    description: "Long-grain aged basmati rice layered with spiced tender mutton & saffron",
+    image: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+    isVeg: false,
+    isAvailable: true,
+    prepTimeMinutes: 22,
+  },
+  {
+    _id: "m6",
+    name: "Garlic Butter Naan",
+    category: "Breads & Rice",
+    price: 95,
+    description: "Clay oven leavened artisan bread brushed with roasted garlic & butter",
+    image: "https://images.unsplash.com/photo-1626074353765-517a681e40be?auto=format&fit=crop&w=600&q=80",
+    isVeg: true,
+    isAvailable: true,
+    prepTimeMinutes: 8,
+  },
+  {
+    _id: "m7",
+    name: "Classic Tiramisu",
+    category: "Desserts",
+    price: 320,
+    description: "Espresso soaked ladyfingers layered with rich mascarpone cream",
+    image: "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?auto=format&fit=crop&w=600&q=80",
+    isVeg: true,
+    isAvailable: true,
+    prepTimeMinutes: 5,
+  },
+  {
+    _id: "m8",
+    name: "Fresh Mint Mojito",
+    category: "Beverages",
+    price: 210,
+    description: "Crushed farm mint, zesty lime & chilled sparkling soda",
+    image: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=600&q=80",
+    isVeg: true,
+    isAvailable: true,
+    prepTimeMinutes: 5,
+  },
+];
+
 function MenuContent() {
   const searchParams = useSearchParams();
   const tableParam = searchParams.get("table") || "T-05";
 
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>(DEFAULT_MENU_ITEMS);
+  const [isLoading, setIsLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [vegOnlyFilter, setVegOnlyFilter] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [cart, setCart] = useState<{ [id: string]: { item: MenuItem; quantity: number } }>({});
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [cookingNotes, setCookingNotes] = useState("");
@@ -37,21 +130,11 @@ function MenuContent() {
     async function loadMenu() {
       try {
         const data = await posApi.getMenu();
-        setMenuItems(data);
+        if (Array.isArray(data) && data.length > 0) {
+          setMenuItems(data);
+        }
       } catch {
-        // Fallback default mock items if backend offline
-        setMenuItems([
-          { name: "Paneer Tikka Angara", category: "Starters", price: 380, description: "Cottage cheese charred with spices in tandoor", isVeg: true, isAvailable: true, prepTimeMinutes: 15 },
-          { name: "Murgh Malai Tikka", category: "Starters", price: 460, description: "Tender chicken morsels with cream & cheese", isVeg: false, isAvailable: true, prepTimeMinutes: 18 },
-          { name: "Dal Makhani Heritage", category: "Main Course", price: 390, description: "Slow cooked black lentils with churned butter", isVeg: true, isAvailable: true, prepTimeMinutes: 10 },
-          { name: "Butter Chicken Delhi Style", category: "Main Course", price: 540, description: "Smoked chicken in rich satin tomato gravy", isVeg: false, isAvailable: true, prepTimeMinutes: 20 },
-          { name: "Garlic Butter Naan", category: "Breads & Rice", price: 95, description: "Clay oven leavened bread brushed with garlic butter", isVeg: true, isAvailable: true, prepTimeMinutes: 8 },
-          { name: "Dum Gosht Awadhi Biryani", category: "Main Course", price: 620, description: "Fragrant rice layered with spiced mutton & saffron", isVeg: false, isAvailable: true, prepTimeMinutes: 22 },
-          { name: "Classic Tiramisu", category: "Desserts", price: 320, description: "Espresso soaked biscuits with mascarpone cream", isVeg: true, isAvailable: true, prepTimeMinutes: 5 },
-          { name: "Fresh Mint Mojito", category: "Beverages", price: 210, description: "Crushed mint, fresh lime & sparkling soda", isVeg: true, isAvailable: true, prepTimeMinutes: 5 },
-        ]);
-      } finally {
-        setIsLoading(false);
+        // Keeps DEFAULT_MENU_ITEMS
       }
     }
     loadMenu();
@@ -61,8 +144,20 @@ function MenuContent() {
 
   const filteredItems = menuItems.filter((item) => {
     if (!item) return false;
-    if (selectedCategory === "All") return true;
-    return String(item.category || "").toLowerCase() === selectedCategory.toLowerCase();
+    if (selectedCategory !== "All" && String(item.category || "").toLowerCase() !== selectedCategory.toLowerCase()) {
+      return false;
+    }
+    if (vegOnlyFilter && !item.isVeg) {
+      return false;
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      return (
+        item.name?.toLowerCase().includes(q) ||
+        item.description?.toLowerCase().includes(q)
+      );
+    }
+    return true;
   });
 
   const addToCart = (item: MenuItem) => {
@@ -170,7 +265,7 @@ function MenuContent() {
           <div className="space-y-3 text-xs text-left mb-6">
             <div className="flex items-center gap-3 text-emerald-400">
               <CheckCircle2 className="w-4 h-4" />
-              <span>Order Confirmed & Ticket Printed</span>
+              <span>Order Confirmed &amp; Ticket Printed</span>
             </div>
             <div className="flex items-center gap-3 text-orange-400 font-medium animate-pulse">
               <Flame className="w-4 h-4" />
@@ -213,7 +308,7 @@ function MenuContent() {
           </div>
 
           {/* Table Indicator Badge */}
-          <div className="px-3 py-1 rounded-xl bg-neutral-900 text-white flex flex-col items-center">
+          <div className="px-3 py-1.5 rounded-xl bg-neutral-900 text-white flex flex-col items-center">
             <span className="text-[9px] font-bold text-amber-400 tracking-wider uppercase">
               TABLE
             </span>
@@ -221,8 +316,31 @@ function MenuContent() {
           </div>
         </div>
 
+        {/* Search & Veg Filter Bar */}
+        <div className="max-w-xl mx-auto px-4 py-2 flex items-center gap-2 border-t border-slate-100 bg-slate-50/70">
+          <input
+            type="text"
+            placeholder="Search dishes (e.g. Tikka, Biryani)..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-1 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+          />
+          <button
+            type="button"
+            onClick={() => setVegOnlyFilter(!vegOnlyFilter)}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition flex items-center gap-1.5 shrink-0 ${
+              vegOnlyFilter
+                ? "bg-emerald-600 text-white border-emerald-600 shadow-xs"
+                : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100"
+            }`}
+          >
+            <span className={`w-2 h-2 rounded-full ${vegOnlyFilter ? "bg-white" : "bg-emerald-600"}`} />
+            Veg Only
+          </button>
+        </div>
+
         {/* Category Scroll Bar */}
-        <div className="max-w-xl mx-auto px-4 py-2 flex items-center gap-2 overflow-x-auto no-scrollbar border-t border-slate-100">
+        <div className="max-w-xl mx-auto px-4 py-2 flex items-center gap-2 overflow-x-auto no-scrollbar border-t border-slate-100 bg-white">
           {categories.map((cat) => (
             <button
               key={cat}
