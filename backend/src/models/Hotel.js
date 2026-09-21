@@ -47,6 +47,34 @@ const HotelSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    images: {
+      front: { type: String, default: "" },
+      lobby: { type: String, default: "" },
+      room: { type: String, default: "" },
+      washroom: { type: String, default: "" },
+    },
+    legalKyc: {
+      gstin: { type: String, default: "" },
+      tradeLicense: { type: String, default: "" },
+      fireSafetyNoc: { type: String, default: "" },
+    },
+    locationDetails: {
+      address: { type: String, default: "" },
+      landmark: { type: String, default: "" },
+      pincode: { type: String, default: "" },
+      mapUrl: { type: String, default: "" },
+    },
+    policies: {
+      checkInTime: { type: String, default: "12:00 PM" },
+      checkOutTime: { type: String, default: "11:00 AM" },
+      category: { type: String, default: "3-Star Hotel" },
+      amenities: { type: [String], default: [] },
+    },
+    verificationStatus: {
+      type: String,
+      enum: ["verified", "pending_review", "rejected"],
+      default: "verified",
+    },
     status: {
       type: String,
       enum: ["open", "maintenance", "closed"],

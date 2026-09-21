@@ -15,20 +15,46 @@ const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:3000";
 // Middlewares
 app.use(
   cors({
-    origin: ["http://localhost:3000", "http://localhost:3001", CLIENT_URL],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (curl, postman, SSR) or any local dev origin
+      if (!origin || origin.startsWith("http://localhost:") || origin.startsWith("http://127.0.0.1:") || origin === CLIENT_URL) {
+        return callback(null, true);
+      }
+      return callback(null, true);
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "Accept"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "Accept",
+      "Origin",
+      "X-Requested-With",
+      "x-org-id",
+      "x-tenant-id",
+      "x-hotel-id",
+      "x-hotel-name",
+      "x-request-id",
+    ],
   })
 );
+app.options("*", cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
+
+// Standardized Request ID Generator (PDF Sec 20)
+app.use((req, res, next) => {
+  req.requestId = `REQ-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`;
+  res.setHeader("X-Request-Id", req.requestId);
+  next();
+});
 
 // Health check
 app.get("/api/health", (req, res) => {
   res.status(200).json({
     status: "healthy",
+    requestId: req.requestId,
     timestamp: new Date().toISOString(),
   });
 });
@@ -40,30 +66,46 @@ app.use("/api", apiRoutes);
 app.use((req, res) => {
   res.status(404).json({
     success: false,
-    message: `Endpoint not found: [${req.method}] ${req.originalUrl}`,
+    error: {
+      code: "ENDPOINT_NOT_FOUND",
+      message: `Endpoint not found: [${req.method}] ${req.originalUrl}`,
+    },
+    requestId: req.requestId,
   });
 });
 
-// Global Error Handler
+// Global Error Handler (PDF Sec 20 standardized format)
 app.use((err, req, res, next) => {
-  console.error("Unhandled Server Error:", err);
-  res.status(err.status || 500).json({
+  console.error(`[${req.requestId}] Unhandled Server Error:`, err);
+  const statusCode = err.status || 500;
+  const errorCode = err.code || (statusCode === 404 ? "NOT_FOUND" : statusCode === 401 ? "UNAUTHORIZED" : "INTERNAL_SERVER_ERROR");
+
+  res.status(statusCode).json({
     success: false,
-    message: err.message || "Internal Server Error",
-    error: process.env.NODE_ENV === "development" ? err.stack : undefined,
+    error: {
+      code: errorCode,
+      message: err.message || "Internal Server Error",
+    },
+    requestId: req.requestId || `REQ-${Date.now().toString().slice(-6)}`,
   });
 });
 
 // Start Server
 const startServer = async () => {
   try {
-    await connectDB();
+    const dbConn = await connectDB();
     initFirebase();
 
-    const userCount = await User.countDocuments();
-    if (userCount === 0) {
-      console.log("No users found in database. Seeding initial data...");
-      await seedDatabase();
+    if (dbConn) {
+      try {
+        const userCount = await User.countDocuments();
+        if (userCount === 0) {
+          console.log("No users found in database. Seeding initial data...");
+          await seedDatabase();
+        }
+      } catch (seedErr) {
+        console.warn("Seeding check skipped:", seedErr.message);
+      }
     }
 
     app.listen(PORT, () => {
@@ -81,3 +123,4 @@ const startServer = async () => {
 startServer();
 
 module.exports = app;
+// Reloaded with new MongoDB Atlas cluster

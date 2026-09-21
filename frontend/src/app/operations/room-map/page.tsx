@@ -116,9 +116,18 @@ export default function RoomMapPage() {
   const loadData = async () => {
     setIsLoading(true);
     try {
+      const roomParams: any = {};
+      const hotelParams: any = {};
+      if (user?.hotelId) roomParams.hotelId = user.hotelId;
+      if (user?.hotelName) roomParams.hotelName = user.hotelName;
+      if (user?.orgId) {
+        roomParams.orgId = user.orgId;
+        hotelParams.orgId = user.orgId;
+      }
+
       const [roomsData, hotelsData] = await Promise.all([
-        roomsApi.getAll(),
-        hotelsApi.getAll(),
+        roomsApi.getAll(Object.keys(roomParams).length > 0 ? roomParams : undefined),
+        hotelsApi.getAll(Object.keys(hotelParams).length > 0 ? hotelParams : undefined),
       ]);
       setRooms(roomsData);
       setHotels(hotelsData);
@@ -151,7 +160,7 @@ export default function RoomMapPage() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [user?.hotelId, user?.orgId]);
 
   const handleStatusChange = async (newStatus: Room["status"]) => {
     if (!selectedRoom) return;

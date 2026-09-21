@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { housekeepingApi, roomsApi } from "@/lib/api";
 import { HousekeepingTask } from "@/types";
-import { Sparkles, CheckCircle2, Plus, X, RefreshCw, UserCheck, BedDouble } from "lucide-react";
+import { Sparkles, CheckCircle2, Plus, X, RefreshCw, UserCheck, BedDouble, ClipboardCheck, CheckCheck, AlertTriangle } from "lucide-react";
 import { RoleGuard } from "@/components/layout/RoleGuard";
 
 export default function HousekeepingPage() {
@@ -13,6 +13,23 @@ export default function HousekeepingPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Checklist & Supervisor Inspection States (PDF Sec 16.5, 16.6)
+  const [checklistTask, setChecklistTask] = useState<any | null>(null);
+  const [checklistModalOpen, setChecklistModalOpen] = useState(false);
+  const [activeChecklist, setActiveChecklist] = useState<Array<{ item: string; completed: boolean }>>([
+    { item: "Linen & Bedsheet Replacement", completed: true },
+    { item: "Bathroom Sanitization & Dry", completed: false },
+    { item: "Fresh Towels & Bath Mats Restocked", completed: false },
+    { item: "Toiletries & Drinking Water Restocked", completed: false },
+    { item: "Floor Vacuumed & Mopped", completed: false },
+    { item: "Trash Bins Cleared & Disinfected", completed: false },
+  ]);
+
+  const [inspectTask, setInspectTask] = useState<any | null>(null);
+  const [inspectModalOpen, setInspectModalOpen] = useState(false);
+  const [inspectRemarks, setInspectRemarks] = useState("");
+
   const [newTask, setNewTask] = useState({
     roomNumber: "",
     assignedTo: "",
@@ -66,6 +83,56 @@ export default function HousekeepingPage() {
     } catch (e: any) {
       console.error("Failed to move housekeeping task:", e);
       setToastMsg(`❌ Error updating status: ${e?.message || "Server error"}`);
+    }
+  };
+
+  const openChecklistModal = (task: any) => {
+    setChecklistTask(task);
+    if (task.checklist && task.checklist.length > 0) {
+      setActiveChecklist(task.checklist);
+    }
+    setChecklistModalOpen(true);
+  };
+
+  const toggleChecklistItem = async (idx: number) => {
+    const updated = [...activeChecklist];
+    updated[idx].completed = !updated[idx].completed;
+    setActiveChecklist(updated);
+
+    if (checklistTask) {
+      try {
+        await housekeepingApi.updateChecklist(checklistTask.id, {
+          itemIndex: idx,
+          completed: updated[idx].completed,
+        });
+      } catch (err) {
+        console.error("Checklist update failed:", err);
+      }
+    }
+  };
+
+  const openInspectionModal = (task: any) => {
+    setInspectTask(task);
+    setInspectRemarks("");
+    setInspectModalOpen(true);
+  };
+
+  const submitInspection = async (status: "passed" | "failed") => {
+    if (!inspectTask) return;
+    try {
+      await housekeepingApi.inspect(inspectTask.id, {
+        status,
+        remarks: inspectRemarks,
+      });
+      setToastMsg(
+        status === "passed"
+          ? `✅ Room ${inspectTask.roomNumber} passed inspection and marked Clean & Available!`
+          : `⚠️ Room ${inspectTask.roomNumber} failed inspection, marked Dirty for re-cleaning.`
+      );
+      setInspectModalOpen(false);
+      loadData();
+    } catch (err: any) {
+      setToastMsg(`❌ Inspection error: ${err?.message || "Failed"}`);
     }
   };
 
@@ -211,6 +278,24 @@ export default function HousekeepingPage() {
                               Status: {t.lastCleaned}
                             </div>
                           )}
+                        </div>
+
+                        {/* Checklist & Inspection Quick Action Buttons (PDF Sec 16.5, 16.6) */}
+                        <div className="pt-2 flex items-center gap-1.5">
+                          <button
+                            onClick={() => openChecklistModal(t)}
+                            className="flex-1 flex items-center justify-center gap-1 py-1 text-[11px] font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded border border-blue-200 transition-colors"
+                          >
+                            <ClipboardCheck className="w-3.5 h-3.5" />
+                            <span>Checklist</span>
+                          </button>
+                          <button
+                            onClick={() => openInspectionModal(t)}
+                            className="flex-1 flex items-center justify-center gap-1 py-1 text-[11px] font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 rounded border border-purple-200 transition-colors"
+                          >
+                            <CheckCheck className="w-3.5 h-3.5" />
+                            <span>Inspect</span>
+                          </button>
                         </div>
 
                         {/* Transition Action Buttons */}
@@ -366,6 +451,139 @@ export default function HousekeepingPage() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* ----------------- CHECKLIST MODAL (PDF Sec 16.5) ----------------- */}
+        {checklistModalOpen && checklistTask && (
+          <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-150">
+            <div className="bg-white rounded-xl border border-[#E5E7EB] shadow-2xl max-w-md w-full p-6 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-[#E5E7EB]">
+                <div className="flex items-center gap-2">
+                  <ClipboardCheck className="w-5 h-5 text-blue-600" />
+                  <div>
+                    <h3 className="text-[16px] font-bold text-[#111827]">
+                      Room {checklistTask.roomNumber} Cleaning Checklist
+                    </h3>
+                    <p className="text-[11px] text-gray-500">Cleaner: {checklistTask.assignedTo || "Staff"}</p>
+                  </div>
+                </div>
+                <button onClick={() => setChecklistModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="space-y-1">
+                <div className="flex justify-between text-[11px] font-bold text-gray-600">
+                  <span>Task Progress</span>
+                  <span>
+                    {activeChecklist.filter((c) => c.completed).length} / {activeChecklist.length} Completed
+                  </span>
+                </div>
+                <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                  <div
+                    className="bg-blue-600 h-2 transition-all duration-300 rounded-full"
+                    style={{
+                      width: `${(activeChecklist.filter((c) => c.completed).length / activeChecklist.length) * 100}%`,
+                    }}
+                  ></div>
+                </div>
+              </div>
+
+              {/* Checklist Items */}
+              <div className="space-y-2 py-2">
+                {activeChecklist.map((item, idx) => (
+                  <label
+                    key={idx}
+                    onClick={() => toggleChecklistItem(idx)}
+                    className={`flex items-center gap-3 p-2.5 rounded-lg border cursor-pointer transition-colors ${
+                      item.completed
+                        ? "bg-blue-50/60 border-blue-200 text-blue-900"
+                        : "bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={item.completed}
+                      onChange={() => {}} // Handled by label click
+                      className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 pointer-events-none"
+                    />
+                    <span className={`text-[13px] ${item.completed ? "line-through text-gray-500" : "font-medium"}`}>
+                      {item.item}
+                    </span>
+                  </label>
+                ))}
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t">
+                <button
+                  onClick={() => setChecklistModalOpen(false)}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded text-[13px] shadow-xs cursor-pointer"
+                >
+                  Save & Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ----------------- SUPERVISOR INSPECTION MODAL (PDF Sec 16.6) ----------------- */}
+        {inspectModalOpen && inspectTask && (
+          <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-150">
+            <div className="bg-white rounded-xl border border-[#E5E7EB] shadow-2xl max-w-md w-full p-6 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-[#E5E7EB]">
+                <div className="flex items-center gap-2">
+                  <CheckCheck className="w-5 h-5 text-purple-600" />
+                  <div>
+                    <h3 className="text-[16px] font-bold text-[#111827]">
+                      Supervisor Room Inspection
+                    </h3>
+                    <p className="text-[11px] text-gray-500">Verifying Room {inspectTask.roomNumber} Quality Standards</p>
+                  </div>
+                </div>
+                <button onClick={() => setInspectModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div>
+                <label className="block text-[12px] font-bold text-gray-700 mb-1">
+                  Supervisor Notes / Remarks
+                </label>
+                <textarea
+                  rows={3}
+                  value={inspectRemarks}
+                  onChange={(e) => setInspectRemarks(e.target.value)}
+                  placeholder="e.g. Linen crisp, all amenities placed properly. Room is spotless."
+                  className="w-full p-2.5 border border-gray-300 rounded text-[13px] focus:outline-none focus:border-purple-600"
+                ></textarea>
+              </div>
+
+              <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg text-[12px] text-purple-900 flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
+                <span>
+                  <strong>Passing</strong> the inspection will immediately mark the room <strong>Clean & Ready</strong> for front-desk check-in.
+                </span>
+              </div>
+
+              <div className="flex justify-between gap-3 pt-3 border-t">
+                <button
+                  type="button"
+                  onClick={() => submitInspection("failed")}
+                  className="px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold rounded text-[12px] transition-colors"
+                >
+                  Fail (Requires Re-cleaning)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => submitInspection("passed")}
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded text-[12px] shadow-sm transition-colors"
+                >
+                  Approve & Make Ready
+                </button>
+              </div>
             </div>
           </div>
         )}

@@ -118,10 +118,10 @@ export default function HotelAdminRoomsPage() {
     if (isAuthLoading) return;
     setIsLoading(true);
     try {
-      const effectiveOrgId = user?.orgId || "org-1";
+      const effectiveOrgId = user?.orgId;
       const [roomsData, hotelsData] = await Promise.all([
-        roomsApi.getAll({ orgId: effectiveOrgId }),
-        hotelsApi.getAll({ orgId: effectiveOrgId }),
+        roomsApi.getAll(effectiveOrgId ? { orgId: effectiveOrgId } : undefined),
+        hotelsApi.getAll(effectiveOrgId ? { orgId: effectiveOrgId } : undefined),
       ]);
 
       setRooms(roomsData);
@@ -247,7 +247,7 @@ export default function HotelAdminRoomsPage() {
 
     setIsSubmitting(true);
     try {
-      const effectiveOrgId = user?.orgId || "org-1";
+      const effectiveOrgId = user?.orgId;
       const selectedHotel = hotels.find((h) => h.id === createHotelId);
 
       const formattedRooms = validRows.map((r) => ({
@@ -258,7 +258,7 @@ export default function HotelAdminRoomsPage() {
         status: r.status || "available",
         hotelId: createHotelId || selectedHotel?.id || "hotel-101",
         hotelName: selectedHotel?.name || createHotelName || "Main Property",
-        orgId: effectiveOrgId,
+        ...(effectiveOrgId ? { orgId: effectiveOrgId } : {}),
       }));
 
       await roomsApi.createBulk({
@@ -286,13 +286,13 @@ export default function HotelAdminRoomsPage() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const effectiveOrgId = user?.orgId || "org-1";
+      const effectiveOrgId = user?.orgId;
       const selectedHotel = hotels.find((h) => h.id === batchForm.hotelId);
 
       const res = await roomsApi.batchGenerate({
         hotelId: batchForm.hotelId || selectedHotel?.id || "hotel-101",
         hotelName: selectedHotel?.name || batchForm.hotelName || "Main Property",
-        orgId: effectiveOrgId,
+        ...(effectiveOrgId ? { orgId: effectiveOrgId } : {}),
         totalRooms: Number(batchForm.totalRooms) || 12,
         floors: Number(batchForm.floors) || 2,
         defaultRate: Number(batchForm.defaultRate) || 180,
@@ -674,7 +674,7 @@ export default function HotelAdminRoomsPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3.5">
                     {floorRooms.map((room) => (
                       <div
-                        key={room.number}
+                        key={`${room._id || room.hotelId || room.hotelName || "h"}-${room.number}`}
                         className={`p-3.5 rounded-lg border-2 text-left transition-all flex flex-col justify-between shadow-2xs hover:shadow-md ${getStatusColor(
                           room.status
                         )}`}

@@ -32,4 +32,14 @@ router.patch(
   HousekeepingController.updateStatus
 );
 
+/**
+ * PATCH /api/housekeeping/:id/checklist
+ */
+router.patch("/:id/checklist", identifyTenant, HousekeepingController.updateChecklist);
+
+/**
+ * POST /api/housekeeping/:id/inspect
+ */
+router.post("/:id/inspect", identifyTenant, HousekeepingController.inspectTask);
+
 module.exports = router;

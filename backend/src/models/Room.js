@@ -5,7 +5,6 @@ const RoomSchema = new mongoose.Schema(
     number: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
     },
     floor: {
@@ -17,10 +16,28 @@ const RoomSchema = new mongoose.Schema(
       required: true,
       default: "Standard Room",
     },
+    building: {
+      type: String,
+      default: "Main Wing",
+    },
     status: {
       type: String,
-      enum: ["available", "occupied", "dirty", "out_of_order"],
+      enum: [
+        "available",
+        "occupied",
+        "reserved",
+        "dirty",
+        "cleaning",
+        "clean",
+        "inspected",
+        "out_of_order",
+        "maintenance",
+      ],
       default: "available",
+    },
+    lastInspectedBy: {
+      type: String,
+      default: null,
     },
     guest: {
       type: String,
@@ -51,5 +68,7 @@ const RoomSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+RoomSchema.index({ hotelId: 1, number: 1 }, { unique: true });
 
 module.exports = mongoose.model("Room", RoomSchema);

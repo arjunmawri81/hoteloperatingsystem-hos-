@@ -49,8 +49,8 @@ export default function AreaManagementPage() {
     if (isAuthLoading) return;
     setIsLoading(true);
     try {
-      const effectiveOrgId = user?.orgId || "org-1";
-      const res = await areasApi.getAll({ orgId: effectiveOrgId });
+      const effectiveOrgId = user?.orgId;
+      const res = await areasApi.getAll(effectiveOrgId ? { orgId: effectiveOrgId } : undefined);
       setAreas(res);
     } catch (e) {
       console.error("Failed to load areas:", e);
@@ -71,9 +71,9 @@ export default function AreaManagementPage() {
     if (!newArea.name.trim() || !newArea.manager.trim()) return;
 
     try {
-      const effectiveOrgId = user?.orgId || "org-1";
+      const effectiveOrgId = user?.orgId;
       const created = await areasApi.create({
-        orgId: effectiveOrgId,
+        ...(effectiveOrgId ? { orgId: effectiveOrgId } : {}),
         name: newArea.name.trim(),
         region: newArea.region.trim() || "General Zone",
         manager: newArea.manager.trim(),

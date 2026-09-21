@@ -3,10 +3,42 @@ const AuditService = require("../services/audit.service");
 
 class HotelsController {
   static async getAll(req, res, next) {
-    const { orgId, region, status } = req.query;
+    const { orgId, region, status, hotelId } = req.query;
     const filter = {};
 
-    if (orgId) filter.orgId = orgId;
+    const userRole = req.user?.role || req.tenant?.role;
+    let targetOrgId = req.user?.orgId || req.tenant?.orgId;
+    if (userRole === "super_admin") {
+      targetOrgId = orgId || req.tenant?.orgId || null;
+    } else if (!targetOrgId && orgId && orgId !== "all" && orgId !== "org-1") {
+      targetOrgId = orgId;
+    }
+
+    const targetHotelId = hotelId || req.tenant?.hotelId || req.user?.hotelId;
+
+    if (userRole === "super_admin" && !targetOrgId && !targetHotelId) {
+      // Super admin sees all properties if no filter requested
+    } else if (targetOrgId && targetOrgId !== "all") {
+      filter.orgId = targetOrgId;
+
+      if (userRole === "area_manager") {
+        const assignedNames = req.user?.assignedHotelNames || [];
+        if (assignedNames.length > 0) {
+          filter.name = { $in: assignedNames };
+        }
+      } else if (
+        ["hotel_manager", "receptionist", "housekeeping", "restaurant_staff", "kitchen_staff", "finance"].includes(userRole)
+      ) {
+        if (targetHotelId) {
+          filter.id = targetHotelId;
+        } else if (req.user?.hotelName) {
+          filter.name = new RegExp(`^${req.user.hotelName.trim()}$`, "i");
+        }
+      }
+    } else if (userRole && userRole !== "super_admin" && userRole !== "customer") {
+      return res.status(200).json({ success: true, count: 0, data: [] });
+    }
+
     if (region) filter.region = new RegExp(region, "i");
     if (status) filter.status = status;
 
@@ -41,7 +73,20 @@ class HotelsController {
   }
 
   static async create(req, res, next) {
-    const { name, city, region, totalRooms, managerName, phone, orgId } = req.body;
+    const {
+      name,
+      city,
+      region,
+      totalRooms,
+      managerName,
+      phone,
+      orgId,
+      images,
+      legalKyc,
+      locationDetails,
+      policies,
+      verificationStatus,
+    } = req.body;
 
     try {
       const newHotel = new Hotel({
@@ -56,6 +101,16 @@ class HotelsController {
         rating: 5.0,
         managerName: managerName || "General Manager",
         phone: phone || "+91 90000 00000",
+        images: images || {},
+        legalKyc: legalKyc || {},
+        locationDetails: locationDetails || {},
+        policies: policies || {
+          checkInTime: "12:00 PM",
+          checkOutTime: "11:00 AM",
+          category: "3-Star Hotel",
+          amenities: ["Free High-Speed Wi-Fi", "Air Conditioning (AC)", "24/7 Power Backup"],
+        },
+        verificationStatus: verificationStatus || "verified",
         status: "open",
       });
 

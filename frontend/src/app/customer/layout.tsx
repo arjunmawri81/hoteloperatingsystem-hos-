@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { UserMenu } from "@/components/layout/UserMenu";
 import { GlobalSearchModal } from "@/components/layout/GlobalSearchModal";
 import { NotificationPopover } from "@/components/layout/NotificationPopover";
+import { GuestAIChatWidget } from "@/components/common/GuestAIChatWidget";
 
 export default function CustomerLayout({
   children,
@@ -17,16 +18,22 @@ export default function CustomerLayout({
     { name: "Hotel Discovery", href: "/customer" },
     { name: "Booking", href: "/customer/booking" },
     { name: "My Bookings", href: "/customer/my-bookings" },
+    { name: "Digital Pre-Check-In", href: "/customer/pre-checkin" },
+    { name: "In-Stay Room Services", href: "/customer/stay-services" },
+    { name: "✨ 24/7 AI Concierge", href: "/customer/ai-concierge" },
   ];
 
   const getCurrentTitle = () => {
     if (pathname.includes("/booking")) return "Booking";
     if (pathname.includes("/my-bookings")) return "My Bookings";
+    if (pathname.includes("/pre-checkin")) return "Digital Pre-Check-In";
+    if (pathname.includes("/stay-services")) return "In-Stay Room Services";
+    if (pathname.includes("/ai-concierge")) return "24/7 AI Concierge Desk";
     return "Hotel Discovery";
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] text-[#111827] flex font-sans antialiased selection:bg-red-500 selection:text-white">
+    <div className="min-h-screen bg-[#FAFAFA] text-[#111827] flex font-sans antialiased selection:bg-red-500 selection:text-white relative">
       {/* Left Sidebar */}
       <aside className="w-60 bg-white border-r border-[#E5E7EB] flex flex-col justify-between shrink-0 min-h-screen">
         <div>
@@ -66,6 +73,8 @@ export default function CustomerLayout({
                   className={`block px-3 py-2 text-[13px] font-semibold rounded transition-colors ${
                     isActive
                       ? "text-[#111827] bg-[#F3F4F6] border-l-2 border-[#EC3013]"
+                      : item.href === "/customer/ai-concierge"
+                      ? "text-purple-700 bg-purple-50/70 hover:bg-purple-100 font-bold border border-purple-200/60"
                       : "text-[#4B5563] hover:text-[#111827] hover:bg-[#F9FAFB]"
                   }`}
                 >
@@ -110,6 +119,9 @@ export default function CustomerLayout({
         {/* Page Content Body */}
         <main className="flex-1 p-6 sm:p-8">{children}</main>
       </div>
+
+      {/* 24/7 Floating AI Guest Concierge Widget */}
+      <GuestAIChatWidget />
     </div>
   );
 }

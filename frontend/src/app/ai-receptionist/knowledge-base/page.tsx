@@ -49,7 +49,7 @@ const INITIAL_ARTICLES: Article[] = [
     id: "kb-5",
     category: "Parking",
     question: "Is valet parking available?",
-    answer: "Secure on-site valet parking is available for $25 per vehicle per night with unlimited in-and-out privileges.",
+    answer: "Secure on-site valet parking is available for ₹250 per vehicle per night with unlimited in-and-out privileges.",
     updated: "Jul 22, 2026",
     status: "draft",
   },

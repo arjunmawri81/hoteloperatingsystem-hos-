@@ -24,7 +24,7 @@ const LeadSchema = new mongoose.Schema(
     },
     source: {
       type: String,
-      enum: ["Website", "WhatsApp", "AI Phone Call", "Social", "Direct Enquiry"],
+      enum: ["Website", "WhatsApp", "AI Phone Call", "Social", "Direct Enquiry", "OTA", "Channel Manager"],
       default: "Website",
     },
     requirement: {

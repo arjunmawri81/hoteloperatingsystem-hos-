@@ -7,11 +7,13 @@ const {
   batchGenerateRooms,
   updateRoomStatus,
   deleteRoom,
+  getTapeChart,
 } = require("../controllers/rooms.controller");
 const { verifyToken } = require("../middleware/auth");
 const { identifyTenant } = require("../middleware/tenant");
 const { requireRole } = require("../middleware/rbac");
 
+router.get("/tape-chart", identifyTenant, getTapeChart);
 router.get("/", identifyTenant, getAllRooms);
 
 router.post(

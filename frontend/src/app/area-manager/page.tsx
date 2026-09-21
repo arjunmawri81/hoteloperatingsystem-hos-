@@ -1,66 +1,137 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { CheckCircle2, XCircle, ArrowRight, ShieldAlert, Check } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { CheckCircle2, XCircle, ArrowRight, ShieldAlert, Check, ShieldCheck, Plus, X, AlertTriangle } from "lucide-react";
+
+import { api } from "@/lib/api";
 
 export default function AreaManagerDashboardPage() {
-  const [stats] = useState([
+  const { user } = useAuth();
+  const [hotels, setHotels] = useState<any[]>([]);
+  const [rooms, setRooms] = useState<any[]>([]);
+  const [reservations, setReservations] = useState<any[]>([]);
+  const [approvals, setApprovals] = useState<any[]>([]);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newRequest, setNewRequest] = useState({
+    title: "Special 15% Group Booking Discount",
+    details: "Discount requested for booking 4 Deluxe rooms for wedding guests.",
+    type: "discount",
+    amount: 3000,
+    requestedBy: "Front Desk Staff",
+  });
+
+  const loadData = async () => {
+    try {
+      const [apprRes, hotelsRes, roomsRes, resRes] = await Promise.all([
+        api.get<any>("/approvals").catch(() => ({ data: [] })),
+        api.get<any>("/hotels").catch(() => ({ data: [] })),
+        api.get<any>("/rooms").catch(() => ({ data: [] })),
+        api.get<any>("/reservations").catch(() => ({ data: [] })),
+      ]);
+
+      setApprovals(apprRes?.data || (Array.isArray(apprRes) ? apprRes : []));
+      setHotels(hotelsRes?.data || (Array.isArray(hotelsRes) ? hotelsRes : []));
+      setRooms(roomsRes?.data || (Array.isArray(roomsRes) ? roomsRes : []));
+      setReservations(resRes?.data || (Array.isArray(resRes) ? resRes : []));
+    } catch (e) {
+      console.error("Failed to load area manager data:", e);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  // Isolate hotels: strictly show only the hotels assigned to this Area Manager
+  const userAssignedNames = (user as any)?.assignedHotelNames;
+  const assignedHotels = (Array.isArray(userAssignedNames) && userAssignedNames.length > 0)
+    ? hotels.filter((h) => userAssignedNames.includes(h.name))
+    : user?.hotelName
+    ? hotels.filter(
+        (h) =>
+          h.name.toLowerCase() === (user.hotelName || "").toLowerCase() ||
+          h.id === user.hotelId
+      )
+    : user?.role === "area_manager"
+    ? [] // Area Manager with no assigned hotel sees 0 properties
+    : hotels;
+
+  const currentHotel = assignedHotels[0] || null;
+  const hotelNamesSummary = assignedHotels.map((h) => h.name).join(", ") || "No Assigned Property";
+  const hotelName = hotelNamesSummary;
+  const regionName = currentHotel?.region ? currentHotel.region.toUpperCase() : "CLUSTER";
+
+  // Cluster-scoped rooms, occupancy & reservations
+  const clusterRooms = rooms.filter((r: any) =>
+    assignedHotels.some(
+      (h) =>
+        (r.hotelName && r.hotelName.toLowerCase() === h.name.toLowerCase()) ||
+        (r.hotelId && (r.hotelId === h.id || r.hotelId === h._id))
+    )
+  );
+  const clusterOccupied = clusterRooms.filter((r: any) => r.status === "occupied").length;
+  const clusterOccupancyRate = clusterRooms.length > 0
+    ? ((clusterOccupied / clusterRooms.length) * 100).toFixed(1) + "%"
+    : "0.0%";
+
+  const clusterReservations = reservations.filter((r: any) =>
+    assignedHotels.some(
+      (h) =>
+        (r.hotelName && r.hotelName.toLowerCase() === h.name.toLowerCase()) ||
+        (r.hotelId && (r.hotelId === h.id || r.hotelId === h._id))
+    )
+  );
+  const clusterArrivalsCount = clusterReservations.length;
+
+  const openApprovalsCount = assignedHotels.length > 0
+    ? approvals.filter((a) => a.status === "pending" && assignedHotels.some((h) => a.hotelId === h.id || a.hotelName === h.name)).length
+    : 0;
+
+  const stats = [
     {
       title: "ASSIGNED HOTELS",
-      value: "2",
-      subtext: "North Area",
+      value: String(assignedHotels.length),
+      subtext: assignedHotels.length > 0 ? hotelNamesSummary : "No property assigned yet",
       link: "/area-manager/comparison",
     },
     {
       title: "OCCUPANCY",
-      value: "81%",
-      subtext: "regional average",
+      value: clusterOccupancyRate,
+      subtext: assignedHotels.length > 0 ? "cluster occupancy" : "No active property",
       link: "/area-manager/comparison",
     },
     {
-      title: "TODAY'S ARRIVALS",
-      value: "12",
-      subtext: "across area properties",
-      link: "/operations/front-desk",
+      title: "PROPERTY RESERVATIONS",
+      value: String(clusterArrivalsCount),
+      subtext: "across assigned cluster",
+      link: "/operations/reservations",
     },
     {
       title: "OPEN APPROVALS",
-      value: "3",
+      value: String(openApprovalsCount),
       subtext: "pending your decision",
       link: "#approvals",
     },
-  ]);
+  ];
 
-  const [approvals, setApprovals] = useState([
-    {
-      id: "app-1",
-      title: "Discount request — 15% off group booking",
-      details: "Meridian Downtown · Requested by R. Sharma (Front Desk)",
-      status: "pending",
-    },
-    {
-      id: "app-2",
-      title: "Refund request — Booking #RES-10311",
-      details: "Meridian Airport · ₹7,500 refund for early cancellation",
-      status: "pending",
-    },
-    {
-      id: "app-3",
-      title: "Emergency Linen Stock Purchase",
-      details: "Meridian Downtown · Housekeeping (₹12,000)",
-      status: "pending",
-    },
-  ]);
-
-  const [toastMsg, setToastMsg] = useState<string | null>(null);
-
-  const handleAction = (id: string, action: "Approved" | "Rejected") => {
-    setApprovals(
-      approvals.map((a) => (a.id === id ? { ...a, status: action } : a))
-    );
-    setToastMsg(`Request ${id} marked as ${action}`);
-    setTimeout(() => setToastMsg(null), 3500);
+  const handleAction = async (id: string, action: "Approved" | "Rejected") => {
+    try {
+      await fetch(`http://localhost:5000/api/approvals/${id}/action`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: action.toLowerCase(), decisionBy: "Area Manager (Arjun)" }),
+      });
+      setApprovals(
+        approvals.map((a) => (a._id === id || a.id === id ? { ...a, status: action.toLowerCase() } : a))
+      );
+      setToastMsg(`Request successfully marked as ${action}`);
+      setTimeout(() => setToastMsg(null), 3500);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   return (
@@ -72,7 +143,7 @@ export default function AreaManagerDashboardPage() {
             Area Manager Dashboard
           </h1>
           <p className="text-[13px] text-[#6B7280] mt-0.5">
-            North Area Region — cluster oversight &amp; property approval management
+            {hotelName} ({regionName}) — cluster oversight &amp; property approval management
           </p>
         </div>
 
@@ -117,63 +188,195 @@ export default function AreaManagerDashboardPage() {
       {/* Approval Center Section */}
       <div id="approvals" className="space-y-4 pt-2">
         <div className="flex items-center justify-between">
-          <h2 className="text-[15px] font-bold text-[#111827]">
-            Pending Manager Approvals ({approvals.filter((a) => a.status === "pending").length})
-          </h2>
-          <span className="text-[12px] text-[#6B7280]">Real-time queue</span>
+          <div>
+            <h2 className="text-[15px] font-bold text-[#111827]">
+              Pending Approvals for {hotelName} ({approvals.filter((a) => a.status === "pending").length})
+            </h2>
+            <span className="text-[12px] text-[#6B7280]">Real-time operational queue</span>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#EC3013] hover:bg-[#D62839] text-white text-[12px] font-bold rounded shadow-xs transition-colors cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Submit Approval Request</span>
+          </button>
         </div>
 
         <div className="space-y-3">
-          {approvals.map((item) => {
-            const isPending = item.status === "pending";
-
-            return (
-              <div
-                key={item.id}
-                className="bg-white p-5 rounded-lg border border-[#E5E7EB] hover:border-[#D1D5DB] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all"
-              >
-                <div>
-                  <div className="text-[14px] font-bold text-[#111827]">
-                    {item.title}
-                  </div>
-                  <div className="text-[12px] text-[#6B7280] mt-1">
-                    {item.details}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 shrink-0">
-                  {isPending ? (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => handleAction(item.id, "Rejected")}
-                        className="px-4 py-1.5 border border-[#D1D5DB] hover:bg-red-50 hover:text-red-700 text-[#374151] text-[12px] font-bold rounded transition-colors cursor-pointer"
-                      >
-                        Reject
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleAction(item.id, "Approved")}
-                        className="px-4 py-1.5 bg-[#EC3013] hover:bg-[#D62839] text-white text-[12px] font-bold rounded shadow-xs transition-colors cursor-pointer"
-                      >
-                        Approve
-                      </button>
-                    </>
-                  ) : item.status === "Approved" ? (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded border border-emerald-200">
-                      <Check className="w-3.5 h-3.5" /> Approved
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-red-700 bg-red-50 px-3 py-1 rounded border border-red-200">
-                      <XCircle className="w-3.5 h-3.5" /> Rejected
-                    </span>
-                  )}
-                </div>
+          {approvals.length === 0 ? (
+            <div className="bg-white p-8 rounded-lg border border-[#E5E7EB] text-center">
+              <ShieldCheck className="w-10 h-10 text-emerald-500 mx-auto mb-2" />
+              <div className="text-[15px] font-bold text-[#111827]">No Pending Approvals for {hotelName}</div>
+              <div className="text-[13px] text-[#6B7280] max-w-md mx-auto mt-1">
+                All operational requests for your assigned property are resolved. Click "Submit Approval Request" to log a real discount or maintenance authorization.
               </div>
-            );
-          })}
+            </div>
+          ) : (
+            approvals.map((item) => {
+              const isPending = item.status === "pending";
+
+              return (
+                <div
+                  key={item._id || item.id}
+                  className="bg-white p-5 rounded-lg border border-[#E5E7EB] hover:border-[#D1D5DB] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all"
+                >
+                  <div>
+                    <div className="text-[14px] font-bold text-[#111827]">
+                      {item.title}
+                    </div>
+                    <div className="text-[12px] text-[#6B7280] mt-1">
+                      {item.details} {item.amount ? `· Value: ₹${item.amount.toLocaleString()}` : ""}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 shrink-0">
+                    {isPending ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => handleAction(item._id || item.id, "Rejected")}
+                          className="px-4 py-1.5 border border-[#D1D5DB] hover:bg-red-50 hover:text-red-700 text-[#374151] text-[12px] font-bold rounded transition-colors cursor-pointer"
+                        >
+                          Reject
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleAction(item._id || item.id, "Approved")}
+                          className="px-4 py-1.5 bg-[#EC3013] hover:bg-[#D62839] text-white text-[12px] font-bold rounded shadow-xs transition-colors cursor-pointer"
+                        >
+                          Approve
+                        </button>
+                      </>
+                    ) : item.status?.toLowerCase() === "approved" ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded border border-emerald-200">
+                        <Check className="w-3.5 h-3.5" /> Approved
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-700 bg-rose-50 px-3 py-1 rounded border border-rose-200">
+                        <XCircle className="w-3.5 h-3.5" /> Rejected
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
+
+      {/* New Approval Request Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="bg-white rounded-lg border border-[#E5E7EB] shadow-2xl max-w-md w-full p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#E5E7EB]">
+              <div>
+                <h3 className="text-[16px] font-bold text-[#111827]">New Operational Approval</h3>
+                <p className="text-[12px] text-[#6B7280]">For assigned property: {hotelName}</p>
+              </div>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="p-1 text-[#9CA3AF] hover:text-[#111827] rounded"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                try {
+                  const res = await fetch("http://localhost:5000/api/approvals", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      ...newRequest,
+                      hotelId: currentHotel?.id || "hotel-1788857668065",
+                      hotelName,
+                      amount: Number(newRequest.amount) || 0,
+                    }),
+                  });
+                  if (res.ok) {
+                    const json = await res.json();
+                    setApprovals([json.data, ...approvals]);
+                    setIsModalOpen(false);
+                    setToastMsg(`✅ Real approval request submitted for ${hotelName}!`);
+                    setTimeout(() => setToastMsg(null), 3500);
+                  }
+                } catch (err) {
+                  console.error(err);
+                }
+              }}
+              className="space-y-3 text-[13px]"
+            >
+              <div>
+                <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">Request Title</label>
+                <input
+                  type="text"
+                  required
+                  value={newRequest.title}
+                  onChange={(e) => setNewRequest({ ...newRequest, title: e.target.value })}
+                  className="w-full px-3 py-2 border border-[#D1D5DB] rounded"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">Request Type</label>
+                <select
+                  value={newRequest.type}
+                  onChange={(e) => setNewRequest({ ...newRequest, type: e.target.value })}
+                  className="w-full px-3 py-2 border border-[#D1D5DB] rounded bg-white"
+                >
+                  <option value="discount">Discount Authorization</option>
+                  <option value="refund">Guest Refund Authorization</option>
+                  <option value="maintenance">Emergency Maintenance Repair</option>
+                  <option value="purchase_order">Bulk Purchase Order PO</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">Value Amount (₹)</label>
+                <input
+                  type="number"
+                  required
+                  value={newRequest.amount}
+                  onChange={(e) => setNewRequest({ ...newRequest, amount: Number(e.target.value) })}
+                  className="w-full px-3 py-2 border border-[#D1D5DB] rounded"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">Justification Details</label>
+                <textarea
+                  rows={2}
+                  required
+                  value={newRequest.details}
+                  onChange={(e) => setNewRequest({ ...newRequest, details: e.target.value })}
+                  className="w-full px-3 py-2 border border-[#D1D5DB] rounded"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-[#E5E7EB]">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2 border border-[#D1D5DB] rounded text-[#374151] font-semibold hover:bg-[#F3F4F6]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-[#EC3013] hover:bg-[#D62839] text-white font-bold rounded shadow-xs"
+                >
+                  Submit for Approval
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

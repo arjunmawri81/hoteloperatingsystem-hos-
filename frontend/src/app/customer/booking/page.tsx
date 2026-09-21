@@ -1,19 +1,29 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { reservationsApi } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 import { Check, ShieldCheck, BedDouble, Calendar, ArrowRight, Loader2 } from "lucide-react";
 
 function BookingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialHotel = searchParams.get("hotelName") || "Meridian Downtown";
+  const { user } = useAuth();
+  const initialHotel = searchParams.get("hotelName") || "Taj Palace New Delhi";
 
   const [selectedRoom, setSelectedRoom] = useState("Deluxe Room");
-  const [guestName, setGuestName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
+  const [guestName, setGuestName] = useState(user?.name || "");
+  const [phone, setPhone] = useState(user?.phone || "");
+  const [email, setEmail] = useState(user?.email || "");
+
+  useEffect(() => {
+    if (user) {
+      if (!guestName && user.name) setGuestName(user.name);
+      if (!email && user.email) setEmail(user.email);
+      if (!phone && user.phone) setPhone(user.phone);
+    }
+  }, [user]);
   const [checkIn, setCheckIn] = useState(new Date().toISOString().split("T")[0]);
   const [checkOut, setCheckOut] = useState(
     new Date(Date.now() + 86400000 * 3).toISOString().split("T")[0]
@@ -29,22 +39,25 @@ function BookingContent() {
       price: "₹2,500/night",
       rawPrice: 2500,
       roomNumber: "102",
+      image: "https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=600&q=80",
     },
     {
       id: "Deluxe Room",
       name: "Deluxe Room",
-      details: "River view · 34 m² · King bed · Balcony · 2 guests",
-      price: "₹3,500/night",
-      rawPrice: 3500,
+      details: "Garden & Pool view · 36 m² · King bed · Balcony · 2 guests",
+      price: "₹4,500/night",
+      rawPrice: 4500,
       roomNumber: "204",
+      image: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=600&q=80",
     },
     {
       id: "Executive Suite",
       name: "Executive Suite",
-      details: "Panoramic view · 52 m² · Living area · 3 guests",
-      price: "₹5,500/night",
-      rawPrice: 5500,
+      details: "Panoramic view · 55 m² · Living area · Jacuzzi · 3 guests",
+      price: "₹7,500/night",
+      rawPrice: 7500,
       roomNumber: "304",
+      image: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=600&q=80",
     },
   ];
 
@@ -65,11 +78,13 @@ function BookingContent() {
     setError(null);
 
     try {
+      const hotelIdParam = searchParams.get("hotelId");
       const reservation = await reservationsApi.create({
         guestName,
-        guestEmail: email || "guest@meridianhotels.com",
+        guestEmail: email || "guest@lucknexa.com",
         guestPhone: phone,
         hotelName: initialHotel,
+        hotelId: hotelIdParam || undefined,
         roomType: currentRoom.name,
         roomNumber: currentRoom.roomNumber,
         checkIn,
@@ -135,29 +150,38 @@ function BookingContent() {
                   <div
                     key={room.id}
                     onClick={() => setSelectedRoom(room.id)}
-                    className={`p-5 rounded-lg border-2 transition-all cursor-pointer flex items-center justify-between ${
+                    className={`p-3.5 sm:p-4 rounded-xl border-2 transition-all cursor-pointer flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
                       isSelected
                         ? "border-[#EC3013] bg-[#FFF5F5] shadow-xs"
                         : "border-[#E5E7EB] bg-white hover:border-[#D1D5DB]"
                     }`}
                   >
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[15px] font-bold text-[#111827]">
-                          {room.name}
-                        </span>
-                        {isSelected && (
-                          <span className="text-[10px] font-bold text-[#EC3013] bg-red-100 px-2 py-0.5 rounded">
-                            Selected
-                          </span>
-                        )}
+                    <div className="flex items-center gap-3.5 w-full sm:w-auto">
+                      <div className="w-20 h-16 sm:w-24 sm:h-18 rounded-lg overflow-hidden shrink-0 border border-slate-200">
+                        <img
+                          src={room.image}
+                          alt={room.name}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
-                      <div className="text-[12px] text-[#6B7280] mt-1">
-                        {room.details}
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[15px] font-bold text-[#111827]">
+                            {room.name}
+                          </span>
+                          {isSelected && (
+                            <span className="text-[10px] font-bold text-[#EC3013] bg-red-100 px-2 py-0.5 rounded">
+                              Selected
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[12px] text-[#6B7280] mt-1">
+                          {room.details}
+                        </div>
                       </div>
                     </div>
 
-                    <div className="text-right">
+                    <div className="text-right shrink-0 self-end sm:self-center">
                       <div className="text-[16px] font-black text-[#111827]">
                         {room.price}
                       </div>

@@ -45,7 +45,7 @@ export default function SuperAdminLayout({
               </div>
             </div>
 
-            {/* Navigation Menu */}
+            {/* Navigation Menu (Platform Level Only) */}
             <nav className="p-3 space-y-1">
               <Link
                 href="/super-admin"
@@ -55,7 +55,7 @@ export default function SuperAdminLayout({
                     : "text-[#4B5563] hover:text-[#111827] hover:bg-[#F9FAFB]"
                 }`}
               >
-                Dashboard
+                Platform Dashboard
               </Link>
               <Link
                 href="/super-admin/organizations"
@@ -65,7 +65,7 @@ export default function SuperAdminLayout({
                     : "text-[#4B5563] hover:text-[#111827] hover:bg-[#F9FAFB]"
                 }`}
               >
-                Organizations
+                Organizations &amp; Tenants
               </Link>
             </nav>
           </div>

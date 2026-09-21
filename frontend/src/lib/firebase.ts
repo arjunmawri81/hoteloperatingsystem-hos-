@@ -20,9 +20,15 @@ export const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "",
 };
 
-// Initialize Firebase (SSR Safe)
+// Initialize Firebase (SSR & Build Safe)
 export const firebaseApp =
-  getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+  getApps().length > 0
+    ? getApp()
+    : initializeApp(
+        firebaseConfig.apiKey
+          ? firebaseConfig
+          : { ...firebaseConfig, apiKey: "AIzaSyDummyKeyForSSGBuildSafety12345" }
+      );
 
 export const firebaseAuth = getAuth(firebaseApp);
 

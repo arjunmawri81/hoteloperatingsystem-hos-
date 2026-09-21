@@ -13,7 +13,18 @@ interface StaffMember {
   email: string;
   phone: string;
   hotel: string;
-  department: "Reception" | "Housekeeping" | "Restaurant" | "Finance" | "Management" | "Area Operations";
+  department:
+    | "Reception"
+    | "Cash Counter"
+    | "Housekeeping"
+    | "Restaurant"
+    | "Kitchen"
+    | "Inventory"
+    | "Banquet & Events"
+    | "Channel Manager"
+    | "Finance"
+    | "Management"
+    | "Area Operations";
   role: string;
   systemRole?: string;
   status: "active" | "inactive";
@@ -32,19 +43,49 @@ const DEPARTMENT_CONFIG: Record<
     systemRole: "receptionist",
     systemRoleLabel: "Receptionist (/operations/front-desk)",
     defaultDesignation: "Front Desk Receptionist",
-    description: "Front Desk PMS, Reservations, Room Map, & Guest CRM",
+    description: "Front Desk PMS, 3-Step Walk-In, Room Map, & WhatsApp Web Check-In",
+  },
+  "Cash Counter": {
+    systemRole: "finance",
+    systemRoleLabel: "Front Office Cashier (/operations/cash-counter)",
+    defaultDesignation: "Front Office Cashier",
+    description: "Cash Counter, Shift Opening Float, Denomination Counter & Shortage Audit",
   },
   Housekeeping: {
     systemRole: "housekeeping",
     systemRoleLabel: "Housekeeping Staff (/operations/housekeeping)",
     defaultDesignation: "Housekeeping Attendant",
-    description: "Room Cleaning Kanban, Room Map, & Housekeeping Inventory",
+    description: "Room Cleaning Kanban, Room Map Status, & Linen Verification",
   },
   Restaurant: {
     systemRole: "restaurant_staff",
-    systemRoleLabel: "Restaurant POS Staff (/operations/restaurant-pos)",
-    defaultDesignation: "Restaurant POS Staff",
-    description: "Table Orders, POS Billing, & Kitchen Inventory",
+    systemRoleLabel: "Restaurant POS Waiter (/operations/restaurant-pos)",
+    defaultDesignation: "Restaurant POS Staff / Waiter",
+    description: "Dine-in Tables, Table Transfer, 86 Out-of-Stock, & Room Folio Billing",
+  },
+  Kitchen: {
+    systemRole: "kitchen_staff",
+    systemRoleLabel: "Kitchen Chef / Cook (/operations/kitchen-kds)",
+    defaultDesignation: "Head Chef / Kitchen Cook",
+    description: "Kitchen Order Tickets (KOT) Display Screen & Cooking Status",
+  },
+  Inventory: {
+    systemRole: "inventory_staff",
+    systemRoleLabel: "Storekeeper / Inventory Executive (/operations/inventory)",
+    defaultDesignation: "Storekeeper / Inventory Executive",
+    description: "Departmental Stores, GRN Purchase Inward with GSTIN, & Staff Stock Issues",
+  },
+  "Banquet & Events": {
+    systemRole: "banquet_staff",
+    systemRoleLabel: "Banquet & Events Manager (/operations/banquet)",
+    defaultDesignation: "Banquet Sales & Event Manager",
+    description: "Ballrooms, Corporate Events, Packages, & Advance Booking Contracts",
+  },
+  "Channel Manager": {
+    systemRole: "channel_manager",
+    systemRoleLabel: "Revenue & Channel Manager (/operations/channel-manager)",
+    defaultDesignation: "Revenue & Channel Manager",
+    description: "OTA Two-Way Sync (MakeMyTrip, Booking.com), Rate Multipliers & Stop Sell",
   },
   Finance: {
     systemRole: "finance",
@@ -82,6 +123,7 @@ export default function StaffManagementPage() {
     email: string;
     phone: string;
     hotel: string;
+    assignedHotels: string[];
     department: StaffMember["department"] | "";
     role: string;
     systemRole: UserRole | "";
@@ -91,6 +133,7 @@ export default function StaffManagementPage() {
     email: "",
     phone: "",
     hotel: "",
+    assignedHotels: [],
     department: "",
     role: "",
     systemRole: "",
@@ -125,10 +168,10 @@ export default function StaffManagementPage() {
     if (isAuthLoading) return;
     setIsLoading(true);
     try {
-      const effectiveOrgId = user?.orgId || "org-1";
+      const effectiveOrgId = user?.orgId;
       const [staffData, hotelsData] = await Promise.all([
-        staffApi.getAll({ orgId: effectiveOrgId }),
-        hotelsApi.getAll({ orgId: effectiveOrgId }),
+        staffApi.getAll(effectiveOrgId ? { orgId: effectiveOrgId } : undefined),
+        hotelsApi.getAll(effectiveOrgId ? { orgId: effectiveOrgId } : undefined),
       ]);
       setStaffList(staffData);
       setOrgHotels(hotelsData);
@@ -165,13 +208,14 @@ export default function StaffManagementPage() {
     }
 
     try {
-      const effectiveOrgId = user?.orgId || "org-1";
+      const effectiveOrgId = user?.orgId;
       const created = await staffApi.create({
-        orgId: effectiveOrgId,
+        ...(effectiveOrgId ? { orgId: effectiveOrgId } : {}),
         name: newStaff.name.trim(),
         email: newStaff.email.toLowerCase().trim(),
         phone: newStaff.phone.trim() || "+91 98000 00000",
-        hotel: newStaff.hotel || (orgHotels[0]?.name || "Main Property"),
+        hotel: newStaff.assignedHotels.length > 0 ? newStaff.assignedHotels.join(", ") : newStaff.hotel || (orgHotels[0]?.name || "Main Property"),
+        assignedHotelNames: newStaff.assignedHotels,
         department: (newStaff.department || "Reception") as any,
         role: newStaff.role.trim() || newStaff.systemRole,
         systemRole: newStaff.systemRole,
@@ -189,6 +233,7 @@ export default function StaffManagementPage() {
         email: "",
         phone: "",
         hotel: "",
+        assignedHotels: [],
         department: "",
         role: "",
         systemRole: "",
@@ -211,7 +256,20 @@ export default function StaffManagementPage() {
     return matchesSearch && matchesDept;
   });
 
-  const departments = ["all", "Reception", "Housekeeping", "Restaurant", "Finance", "Management", "Area Operations"];
+  const departments = [
+    "all",
+    "Reception",
+    "Cash Counter",
+    "Housekeeping",
+    "Restaurant",
+    "Kitchen",
+    "Inventory",
+    "Banquet & Events",
+    "Channel Manager",
+    "Finance",
+    "Management",
+    "Area Operations",
+  ];
 
   return (
     <div className="space-y-6">
@@ -404,29 +462,7 @@ export default function StaffManagementPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
-                    Assigned Property
-                  </label>
-                  <select
-                    value={newStaff.hotel}
-                    onChange={(e) => setNewStaff({ ...newStaff, hotel: e.target.value })}
-                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded bg-white"
-                  >
-                    <option value="">Select Property...</option>
-                    {orgHotels.map((h) => (
-                      <option key={h.id} value={h.name}>
-                        {h.name}
-                      </option>
-                    ))}
-                    {orgHotels.length === 0 && (
-                      <option value="Head Office / Central Operations">
-                        Head Office / Central Operations
-                      </option>
-                    )}
-                  </select>
-                </div>
+              <div className={newStaff.systemRole === "area_manager" ? "space-y-1" : "grid grid-cols-2 gap-3"}>
                 <div>
                   <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
                     Department *
@@ -438,15 +474,89 @@ export default function StaffManagementPage() {
                     className="w-full px-3 py-2 border border-[#D1D5DB] rounded bg-white font-medium text-[#111827] focus:outline-none focus:border-[#EC3013]"
                   >
                     <option value="">Select Department...</option>
-                    <option value="Reception">Reception (Receptionist)</option>
-                    <option value="Housekeeping">Housekeeping (Housekeeping Staff)</option>
-                    <option value="Restaurant">Restaurant (Restaurant POS Staff)</option>
-                    <option value="Finance">Finance (Accounts & Billing)</option>
-                    <option value="Management">Management (Hotel Manager)</option>
-                    <option value="Area Operations">Area Operations (Area Manager)</option>
+                    <option value="Reception">Reception (Front Desk, 3-Step Walk-In &amp; Web Check-In)</option>
+                    <option value="Cash Counter">Cash Counter (Front Office Cashier &amp; Shift Reconciliation)</option>
+                    <option value="Housekeeping">Housekeeping (Room Cleaning &amp; Room Map Status)</option>
+                    <option value="Restaurant">Restaurant (Dining POS, Table Transfer &amp; Room Folio)</option>
+                    <option value="Kitchen">Kitchen (Cook / Chef - Kitchen KDS Screen)</option>
+                    <option value="Inventory">Inventory &amp; Store (Storekeeper - GRN &amp; Stock Issues)</option>
+                    <option value="Banquet & Events">Banquet &amp; Events (Ballroom &amp; Event Sales Manager)</option>
+                    <option value="Channel Manager">Channel Manager (Revenue Manager - MakeMyTrip &amp; OTAs)</option>
+                    <option value="Finance">Finance (Accounts, Billing &amp; Invoices)</option>
+                    <option value="Management">Management (Hotel General Manager - Full Operations PMS)</option>
+                    <option value="Area Operations">Area Operations (Multi-Hotel Regional Manager)</option>
                   </select>
                 </div>
+
+                {newStaff.systemRole !== "area_manager" && (
+                  <div>
+                    <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
+                      Assigned Property
+                    </label>
+                    <select
+                      value={newStaff.hotel}
+                      onChange={(e) => setNewStaff({ ...newStaff, hotel: e.target.value })}
+                      className="w-full px-3 py-2 border border-[#D1D5DB] rounded bg-white"
+                    >
+                      <option value="">Select Property...</option>
+                      {orgHotels.map((h) => (
+                        <option key={h.id} value={h.name}>
+                          {h.name}
+                        </option>
+                      ))}
+                      {orgHotels.length === 0 && (
+                        <option value="Head Office / Central Operations">
+                          Head Office / Central Operations
+                        </option>
+                      )}
+                    </select>
+                  </div>
+                )}
               </div>
+
+              {newStaff.systemRole === "area_manager" && (
+                <div className="p-3 bg-[#F9FAFB] rounded border border-[#E5E7EB] space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[11px] font-bold text-[#111827] uppercase">
+                      Assign Hotels to this Area Manager ({newStaff.assignedHotels.length} selected) *
+                    </label>
+                    <span className="text-[10px] text-[#6B7280]">Multi-property cluster</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 max-h-36 overflow-y-auto pt-1">
+                    {orgHotels.map((h) => {
+                      const isChecked = newStaff.assignedHotels.includes(h.name);
+                      return (
+                        <label
+                          key={h.id}
+                          className={`flex items-center gap-2 p-2 rounded border text-[12px] font-medium cursor-pointer transition-colors ${
+                            isChecked
+                              ? "bg-red-50 border-[#EC3013] text-[#EC3013]"
+                              : "bg-white border-[#E5E7EB] text-[#374151] hover:bg-[#F3F4F6]"
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={(e) => {
+                              const current = newStaff.assignedHotels || [];
+                              const updated = e.target.checked
+                                ? [...current, h.name]
+                                : current.filter((x) => x !== h.name);
+                              setNewStaff({
+                                ...newStaff,
+                                assignedHotels: updated,
+                                hotel: updated.join(", "),
+                              });
+                            }}
+                            className="rounded text-[#EC3013] focus:ring-[#EC3013]"
+                          />
+                          <span className="truncate">{h.name} {h.region ? `(${h.region})` : ""}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-3">
                 <div>

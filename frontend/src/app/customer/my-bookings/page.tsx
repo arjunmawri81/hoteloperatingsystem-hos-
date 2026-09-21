@@ -4,32 +4,50 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { reservationsApi } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 import { Reservation } from "@/types";
-import { CheckCircle2, UserCheck, XCircle, ArrowRight, RefreshCw, BedDouble } from "lucide-react";
+import { CheckCircle2, UserCheck, XCircle, ArrowRight, RefreshCw, BedDouble, Search, Mail } from "lucide-react";
 
 function MyBookingsContent() {
   const searchParams = useSearchParams();
   const newlyBookedId = searchParams.get("booked");
+  const { user } = useAuth();
 
   const [bookings, setBookings] = useState<Reservation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [emailFilter, setEmailFilter] = useState("");
 
-  const loadBookings = async () => {
+  const loadBookings = async (overrideEmail?: string) => {
     setIsLoading(true);
     try {
-      const data = await reservationsApi.getAll();
+      const emailToUse = overrideEmail !== undefined ? overrideEmail : (emailFilter || user?.email || "");
+      const params: any = {};
+      if (emailToUse) {
+        params.guestEmail = emailToUse;
+      }
+      const data = await reservationsApi.getAll(params);
       setBookings(data);
     } catch (e) {
       console.error(e);
+      setBookings([]);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    loadBookings();
-  }, []);
+    const initialEmail = user?.email || "";
+    if (initialEmail && !emailFilter) {
+      setEmailFilter(initialEmail);
+    }
+    loadBookings(initialEmail);
+  }, [user?.email]);
+
+  const handleSearchByEmail = (e: React.FormEvent) => {
+    e.preventDefault();
+    loadBookings(emailFilter);
+  };
 
   const handleDigitalCheckIn = async (id: string, guestName: string) => {
     try {
@@ -69,7 +87,7 @@ function MyBookingsContent() {
 
         <div className="flex items-center gap-3">
           <button
-            onClick={loadBookings}
+            onClick={() => loadBookings()}
             title="Refresh"
             className="p-2 bg-white border border-[#D1D5DB] hover:bg-[#F9FAFB] rounded text-[#4B5563]"
           >
@@ -107,6 +125,27 @@ function MyBookingsContent() {
         </div>
       )}
 
+      {/* Email / Phone Lookup Filter */}
+      <form onSubmit={handleSearchByEmail} className="bg-white p-4 rounded-xl border border-[#E5E7EB] shadow-xs flex flex-col sm:flex-row items-center gap-3">
+        <div className="relative flex-1 w-full">
+          <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search by your Email or Guest Name (e.g. guest@lucknexa.com)..."
+            value={emailFilter}
+            onChange={(e) => setEmailFilter(e.target.value)}
+            className="w-full pl-9 pr-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-[#EC3013]"
+          />
+        </div>
+        <button
+          type="submit"
+          className="w-full sm:w-auto px-5 py-2 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+        >
+          <Search className="w-3.5 h-3.5" />
+          <span>Find My Bookings</span>
+        </button>
+      </form>
+
       {/* Bookings List */}
       <div className="space-y-4">
         {bookings.length === 0 ? (
@@ -132,22 +171,31 @@ function MyBookingsContent() {
                 key={b.id}
                 className="bg-white p-6 rounded-lg border border-[#E5E7EB] hover:border-[#D1D5DB] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all"
               >
-                <div>
-                  <div className="flex items-center gap-2.5">
-                    <h2 className="text-[17px] font-bold text-[#111827]">
-                      {b.hotelName || "Meridian Downtown"}
-                    </h2>
-                    <span className="font-mono text-[11px] font-bold text-[#9CA3AF] bg-[#F3F4F6] px-2 py-0.5 rounded">
-                      {b.id}
-                    </span>
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden shrink-0 border border-slate-200 bg-slate-100 hidden sm:block">
+                    <img
+                      src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=400&q=80"
+                      alt={b.hotelName}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
+                  <div>
+                    <div className="flex items-center gap-2.5">
+                      <h2 className="text-[17px] font-bold text-[#111827]">
+                        {b.hotelName || "Meridian Downtown"}
+                      </h2>
+                      <span className="font-mono text-[11px] font-bold text-[#9CA3AF] bg-[#F3F4F6] px-2 py-0.5 rounded">
+                        {b.id}
+                      </span>
+                    </div>
 
-                  <div className="text-[13px] text-[#4B5563] mt-1">
-                    <span>{b.roomType} · Room {b.roomNumber}</span>
-                  </div>
+                    <div className="text-[13px] text-[#4B5563] mt-1">
+                      <span>{b.roomType} · Room {b.roomNumber}</span>
+                    </div>
 
-                  <div className="text-[12px] text-[#6B7280] mt-1">
-                    📅 {b.checkIn} → {b.checkOut} · Total: <span className="font-bold text-[#111827]">₹{b.totalAmount?.toLocaleString?.("en-IN") || b.totalAmount}</span>
+                    <div className="text-[12px] text-[#6B7280] mt-1">
+                      📅 {b.checkIn} → {b.checkOut} · Total: <span className="font-bold text-[#111827]">₹{b.totalAmount?.toLocaleString?.("en-IN") || b.totalAmount}</span>
+                    </div>
                   </div>
                 </div>
 

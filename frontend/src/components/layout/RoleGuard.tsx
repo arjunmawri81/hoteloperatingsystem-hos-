@@ -51,6 +51,8 @@ export function RoleGuard({
           return "Housekeeping";
         case "restaurant_staff":
           return "Restaurant POS";
+        case "kitchen_staff":
+          return "Kitchen Staff / Chef";
         case "finance":
           return "Finance & Accounting";
         case "customer":

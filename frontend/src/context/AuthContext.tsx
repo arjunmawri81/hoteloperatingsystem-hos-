@@ -43,7 +43,11 @@ export const ROLE_ROUTE_MAP: Record<UserRole, string> = {
   receptionist: "/operations/front-desk",
   housekeeping: "/operations/housekeeping",
   restaurant_staff: "/operations/restaurant-pos",
+  kitchen_staff: "/operations/kitchen-kds",
   finance: "/operations/billing",
+  inventory_staff: "/operations/inventory",
+  banquet_staff: "/operations/banquet",
+  channel_manager: "/operations/channel-manager",
   customer: "/customer",
   ai_receptionist: "/ai-receptionist",
 };
@@ -70,23 +74,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setApiModeState(storedMode);
       }
 
-      if (storedUserJson) {
+      if (storedUserJson && storedToken && !storedToken.startsWith("mock_jwt_token_hotel_admin_")) {
         const parsedUser = JSON.parse(storedUserJson);
         setUser(parsedUser);
-        const activeToken =
-          storedToken ||
-          `mock_jwt_token_${parsedUser.role || "hotel_admin"}_${Date.now()}`;
-        setToken(activeToken);
-        setStoredToken(activeToken);
-        sessionStorage.setItem(USER_STORAGE_KEY, storedUserJson);
+        setToken(storedToken);
       } else {
-        const defaultUser = MOCK_USERS.hotel_admin;
-        const defaultToken = `mock_jwt_token_hotel_admin_${Date.now()}`;
-        setUser(defaultUser);
-        setToken(defaultToken);
-        setStoredToken(defaultToken);
-        sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(defaultUser));
-        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(defaultUser));
+        // Clear any old mock user so user sees sign-in / sign-up screen
+        setUser(null);
+        setToken(null);
+        sessionStorage.removeItem(USER_STORAGE_KEY);
+        localStorage.removeItem(USER_STORAGE_KEY);
       }
     } catch (e) {
       console.error("Failed to restore session from storage", e);

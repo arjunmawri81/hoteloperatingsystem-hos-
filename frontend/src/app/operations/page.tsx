@@ -20,12 +20,30 @@ export default function OperationsDashboardPage() {
     if (isAuthLoading) return;
     setIsLoading(true);
     try {
-      const effectiveOrgId = user?.orgId || "org-1";
+      const effectiveOrgId = user?.orgId;
+      const resvParams: any = {};
+      const roomParams: any = {};
+      const taskParams: any = {};
+
+      if (user?.hotelId) {
+        resvParams.hotelId = user.hotelId;
+        roomParams.hotelId = user.hotelId;
+        taskParams.hotelId = user.hotelId;
+      }
+      if (user?.hotelName) {
+        resvParams.hotelName = user.hotelName;
+      }
+      if (user?.orgId) {
+        resvParams.orgId = user.orgId;
+        roomParams.orgId = user.orgId;
+        taskParams.orgId = user.orgId;
+      }
+
       const [resData, taskData, hotelsData, roomsData] = await Promise.all([
-        reservationsApi.getAll(),
-        housekeepingApi.getAll(),
-        hotelsApi.getAll({ orgId: effectiveOrgId }),
-        roomsApi.getAll(),
+        reservationsApi.getAll(resvParams),
+        housekeepingApi.getAll(taskParams),
+        hotelsApi.getAll(effectiveOrgId ? { orgId: effectiveOrgId } : undefined),
+        roomsApi.getAll(roomParams),
       ]);
       setReservations(resData);
       setTasks(taskData);
@@ -46,7 +64,7 @@ export default function OperationsDashboardPage() {
     if (!isAuthLoading) {
       loadData();
     }
-  }, [user?.orgId, isAuthLoading]);
+  }, [user?.orgId, user?.hotelId, user?.hotelName, isAuthLoading]);
 
   const assignedHotel = hotels.find((h) => h.id === user?.hotelId) || hotels[0] || null;
   const propertyName = user?.hotelName || assignedHotel?.name || user?.orgName || "Hotel Property";
@@ -91,7 +109,7 @@ export default function OperationsDashboardPage() {
 
   return (
     <RoleGuard
-      allowedRoles={["super_admin", "hotel_admin", "hotel_manager", "receptionist", "finance"]}
+      allowedRoles={["super_admin", "hotel_admin", "hotel_manager", "finance"]}
       moduleName="Operations Dashboard"
     >
       <div className="space-y-8">

@@ -43,8 +43,16 @@ export function UserMenu() {
         return "Receptionist";
       case "housekeeping":
         return "Housekeeping";
-      case "restaurant_staff":
-        return "Restaurant POS";
+      case "kitchen_staff":
+        return "Kitchen Staff";
+      case "inventory_staff":
+        return "Inventory Executive";
+      case "banquet_staff":
+        return "Banquet Manager";
+      case "channel_manager":
+        return "Channel Manager";
+      case "finance":
+        return "Finance & Cashier";
       case "customer":
         return "Customer";
       case "ai_receptionist":
@@ -102,34 +110,6 @@ export function UserMenu() {
             </div>
           </div>
 
-          {/* Workspace Switcher (Strictly for Hotel Admin) */}
-          {user?.role === "hotel_admin" && (
-            <div className="px-2 py-2 border-b border-[#F3F4F6]">
-              <p className="px-2 pb-1.5 text-[10px] font-bold uppercase tracking-wider text-[#9CA3AF]">
-                Switch Workspace
-              </p>
-              <div className="space-y-0.5">
-                <a
-                  href="/hotel-admin"
-                  className="flex items-center justify-between px-2.5 py-1.5 rounded text-[12px] font-medium text-[#374151] hover:bg-[#F3F4F6] hover:text-[#111827] transition-colors"
-                >
-                  <span>🏢 Hotel Admin (Portfolio)</span>
-                </a>
-                <a
-                  href="/operations"
-                  className="flex items-center justify-between px-2.5 py-1.5 rounded text-[12px] font-medium text-[#374151] hover:bg-[#F3F4F6] hover:text-[#111827] transition-colors"
-                >
-                  <span>🛎️ Hotel Operations (PMS)</span>
-                </a>
-                <a
-                  href="/customer"
-                  className="flex items-center justify-between px-2.5 py-1.5 rounded text-[12px] font-medium text-[#374151] hover:bg-[#F3F4F6] hover:text-[#111827] transition-colors"
-                >
-                  <span>✨ Guest Booking Portal</span>
-                </a>
-              </div>
-            </div>
-          )}
 
           {/* Logout Action */}
           <div className="pt-1.5 px-1.5">

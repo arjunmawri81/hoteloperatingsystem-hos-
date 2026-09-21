@@ -7,6 +7,22 @@ const RestaurantOrderSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    orgId: {
+      type: String,
+      default: "",
+    },
+    hotelId: {
+      type: String,
+      default: "",
+    },
+    hotelName: {
+      type: String,
+      default: "",
+    },
+    guestName: {
+      type: String,
+      default: "",
+    },
     tableNumber: {
       type: String,
       default: "T-01",
@@ -16,7 +32,7 @@ const RestaurantOrderSchema = new mongoose.Schema(
     },
     items: [
       {
-        type: String,
+        type: mongoose.Schema.Types.Mixed,
       },
     ],
     total: {
@@ -25,7 +41,7 @@ const RestaurantOrderSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["cooking", "preparing", "ready", "served", "paid", "charged_to_room"],
+      enum: ["cooking", "preparing", "ready", "served", "paid", "billed", "charged_to_room", "cancelled"],
       default: "cooking",
     },
     time: {

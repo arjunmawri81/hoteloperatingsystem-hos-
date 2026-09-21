@@ -55,7 +55,7 @@ export default function AreaManagerLayout({
                     : "text-[#4B5563] hover:text-[#111827] hover:bg-[#F9FAFB]"
                 }`}
               >
-                Dashboard
+                Area Dashboard
               </Link>
               <Link
                 href="/area-manager/comparison"

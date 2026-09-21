@@ -2,10 +2,13 @@ const Lead = require("../models/Lead");
 
 exports.getAllLeads = async (req, res, next) => {
   try {
-    const { stage, search } = req.query;
+    const { stage, search, hotelId } = req.query;
     const filter = {};
     if (stage && stage !== "all") {
       filter.stage = stage;
+    }
+    if (hotelId && hotelId !== "all") {
+      filter.hotelId = hotelId;
     }
     if (search) {
       filter.$or = [
@@ -17,7 +20,8 @@ exports.getAllLeads = async (req, res, next) => {
     }
     const leads = await Lead.find(filter).sort({ createdAt: -1 });
 
-    const allLeads = await Lead.find({});
+    const metricFilter = (hotelId && hotelId !== "all") ? { hotelId } : {};
+    const allLeads = await Lead.find(metricFilter);
     const totalPipeline = allLeads.reduce((acc, l) => (l.stage !== "Lost" ? acc + (l.budget || 0) : acc), 0);
     const convertedTotal = allLeads.filter((l) => l.stage === "Converted").reduce((acc, l) => acc + (l.budget || 0), 0);
     const aiQualifiedCount = allLeads.filter((l) => l.stage === "AI Qualified" || l.stage === "Proposal").length;
@@ -40,7 +44,7 @@ exports.getAllLeads = async (req, res, next) => {
 
 exports.createLead = async (req, res, next) => {
   try {
-    const { name, phone, email, source, requirement, budget, stage, aiSummary, nextFollowUp } = req.body;
+    const { name, phone, email, source, requirement, budget, stage, aiSummary, nextFollowUp, hotelId } = req.body;
     const id = `lead-${Date.now().toString().slice(-4)}`;
 
     const newLead = await Lead.create({
@@ -54,6 +58,7 @@ exports.createLead = async (req, res, next) => {
       stage: stage || "New",
       aiSummary: aiSummary || "Lead captured and assigned to sales team.",
       nextFollowUp: nextFollowUp || "Tomorrow, 10:00 AM",
+      hotelId: hotelId || (req.user && req.user.hotelId) || "hotel-taj-delhi",
     });
     res.status(201).json({ success: true, data: newLead });
   } catch (error) {

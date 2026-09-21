@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 import { UserMenu } from "@/components/layout/UserMenu";
 import { GlobalSearchModal } from "@/components/layout/GlobalSearchModal";
 import { NotificationPopover } from "@/components/layout/NotificationPopover";
@@ -14,6 +15,24 @@ export default function AIReceptionistLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const { user } = useAuth();
+
+  const userRole = user?.role || "receptionist";
+
+  const getReturnRoute = () => {
+    switch (userRole) {
+      case "super_admin":
+        return { label: "Super Admin Platform", href: "/super-admin" };
+      case "hotel_admin":
+        return { label: "Hotel Admin Panel", href: "/hotel-admin" };
+      case "area_manager":
+        return { label: "Area Manager Cluster", href: "/area-manager" };
+      default:
+        return { label: "Front Desk Operations", href: "/operations/front-desk" };
+    }
+  };
+
+  const returnRoute = getReturnRoute();
 
   const navItems = [
     { name: "Live Conversation", href: "/ai-receptionist" },
@@ -79,6 +98,16 @@ export default function AIReceptionistLayout({
                 </Link>
               );
             })}
+
+            <div className="pt-4 mt-4 border-t border-[#F3F4F6]">
+              <Link
+                href={returnRoute.href}
+                className="flex items-center gap-2 px-3 py-2 text-[12px] font-bold text-[#EC3013] hover:text-white hover:bg-[#EC3013] rounded-lg transition-all border border-red-200 bg-red-50/50 shadow-xs"
+              >
+                <span>←</span>
+                <span>{returnRoute.label}</span>
+              </Link>
+            </div>
           </nav>
         </div>
 
@@ -99,6 +128,13 @@ export default function AIReceptionistLayout({
         <header className="h-14 bg-white border-b border-[#E5E7EB] px-6 flex items-center justify-between shrink-0 sticky top-0 z-20">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-[13px] text-[#4B5563]">
+            <Link
+              href={returnRoute.href}
+              className="font-medium text-[#EC3013] hover:underline flex items-center gap-1"
+            >
+              <span>← {returnRoute.label}</span>
+            </Link>
+            <span className="text-[#9CA3AF]">/</span>
             <span>AI Receptionist</span>
             <span className="text-[#9CA3AF]">&gt;</span>
             <span className="font-semibold text-[#111827]">{getCurrentTitle()}</span>

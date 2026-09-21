@@ -3,7 +3,19 @@
 import { useState, useEffect, useRef } from "react";
 import { aiApi } from "@/lib/api";
 import { AIConversation } from "@/types";
-import { Send, Bot, User, AlertCircle, RefreshCw, CheckCircle2, ShieldAlert } from "lucide-react";
+import {
+  Send,
+  Bot,
+  User,
+  AlertCircle,
+  RefreshCw,
+  CheckCircle2,
+  ShieldAlert,
+  BookOpen,
+  Plus,
+  Trash2,
+  Sparkles,
+} from "lucide-react";
 
 interface ChatMessage {
   id: string;
@@ -12,13 +24,31 @@ interface ChatMessage {
   timestamp: string;
 }
 
+interface AIKnowledgeItem {
+  _id: string;
+  category: string;
+  question: string;
+  answer: string;
+  keywords: string[];
+}
+
 export default function AIReceptionistPage() {
+  const [activeTab, setActiveTab] = useState<"chat" | "knowledge">("chat");
   const [conversations, setConversations] = useState<AIConversation[]>([]);
   const [activeConvId, setActiveConvId] = useState<string>("conv-1");
   const [isLoading, setIsLoading] = useState(true);
   const [inputMessage, setInputMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  // Knowledge Base State
+  const [knowledgeList, setKnowledgeList] = useState<AIKnowledgeItem[]>([]);
+  const [newKb, setNewKb] = useState({
+    category: "Amenities & Facilities",
+    question: "",
+    answer: "",
+    keywords: "",
+  });
 
   // Chat message map
   const [messagesMap, setMessagesMap] = useState<Record<string, ChatMessage[]>>({
@@ -55,18 +85,22 @@ export default function AIReceptionistPage() {
     }
   };
 
+  const loadKnowledge = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/ai/knowledge");
+      if (res.ok) {
+        const json = await res.json();
+        setKnowledgeList(json.data || []);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   useEffect(() => {
     loadConversations();
+    loadKnowledge();
   }, []);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messagesMap, activeConvId]);
-
-  const activeMessages = messagesMap[activeConvId] || [
-    { id: "m-1", sender: "guest", text: "Hello, I have a question about my stay.", timestamp: "Just now" },
-    { id: "m-2", sender: "ai", text: "Hello! I am Aura, your AI Concierge. How may I assist you today?", timestamp: "Just now" },
-  ];
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,6 +108,7 @@ export default function AIReceptionistPage() {
 
     const userText = inputMessage.trim();
     setInputMessage("");
+    setIsSending(true);
 
     const nowTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     const userMsg: ChatMessage = {
@@ -83,18 +118,29 @@ export default function AIReceptionistPage() {
       timestamp: nowTime,
     };
 
-    // Append user message immediately
-    const updated = [...activeMessages, userMsg];
+    const currentMessages = messagesMap[activeConvId] || [];
+    const updated = [...currentMessages, userMsg];
     setMessagesMap({ ...messagesMap, [activeConvId]: updated });
-    setIsSending(true);
 
     try {
-      const res = await aiApi.sendMessage(activeConvId, userText);
+      // Query backend AI chat engine with live tool-calling
+      const res = await fetch("http://localhost:5000/api/ai/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: userText, hotelId: "hotel-101" }),
+      });
+
+      let replyText = "I have acknowledged your request.";
+      if (res.ok) {
+        const data = await res.json();
+        replyText = data.reply || replyText;
+      }
+
       const aiReply: ChatMessage = {
         id: `m-${Date.now() + 1}`,
         sender: "ai",
-        text: res.reply || `Aura AI: I have recorded your request "${userText}". Our front desk team has been notified.`,
-        timestamp: res.timestamp || nowTime,
+        text: replyText,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
 
       setMessagesMap({
@@ -108,174 +154,295 @@ export default function AIReceptionistPage() {
     }
   };
 
-  const handleEscalate = () => {
-    setToastMsg("🚨 Conversation escalated to Hotel Front Desk Manager on duty.");
-    setTimeout(() => setToastMsg(null), 4000);
+  const handleEscalate = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/ai/escalate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          guestName: activeConversation?.guestName || "Guest",
+          roomNumber: (activeConversation as any)?.roomNumber || "Online AI Chat",
+          reason: "Guest requested immediate human assistance from AI Receptionist.",
+        }),
+      });
+      if (res.ok) {
+        setToastMsg("🚨 Conversation escalated to Hotel Front Desk Manager on duty (Ticket Created).");
+        setTimeout(() => setToastMsg(null), 4000);
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
+  const handleAddKnowledge = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch("http://localhost:5000/api/ai/knowledge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...newKb,
+          keywords: newKb.keywords.split(",").map((s) => s.trim()),
+        }),
+      });
+      if (res.ok) {
+        setToastMsg("Knowledge item added to AI database!");
+        setNewKb({ category: "Amenities & Facilities", question: "", answer: "", keywords: "" });
+        loadKnowledge();
+        setTimeout(() => setToastMsg(null), 3000);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleDeleteKnowledge = async (id: string) => {
+    try {
+      await fetch(`http://localhost:5000/api/ai/knowledge/${id}`, { method: "DELETE" });
+      setKnowledgeList(knowledgeList.filter((k) => k._id !== id));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const activeConversation = conversations.find((c) => c.id === activeConvId);
+  const activeMessages = messagesMap[activeConvId] || [];
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-sans">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-[26px] font-bold text-[#111827] tracking-tight">
-            AI Receptionist Console
-          </h1>
+          <div className="flex items-center gap-2">
+            <span className="bg-purple-100 text-purple-800 text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+              24/7 Autonomous AI Agent
+            </span>
+            <h1 className="text-[26px] font-bold text-[#111827] tracking-tight">
+              AI Receptionist &amp; Concierge Suite
+            </h1>
+          </div>
           <p className="text-[13px] text-[#6B7280] mt-0.5">
-            24/7 autonomous guest concierge, multi-channel messaging &amp; escalations
+            24/7 autonomous guest concierge, live database tool calling, knowledge base &amp; escalations.
           </p>
         </div>
 
-        <button
-          onClick={loadConversations}
-          title="Refresh"
-          className="p-2 bg-white border border-[#D1D5DB] hover:bg-[#F9FAFB] rounded text-[#4B5563] self-start"
-        >
-          <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin text-[#EC3013]" : ""}`} />
-        </button>
+        {/* View Switcher */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setActiveTab("chat")}
+            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${
+              activeTab === "chat" ? "bg-slate-900 text-white" : "bg-white text-slate-600 border"
+            }`}
+          >
+            Live Concierge Console
+          </button>
+          <button
+            onClick={() => setActiveTab("knowledge")}
+            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${
+              activeTab === "knowledge" ? "bg-slate-900 text-white" : "bg-white text-slate-600 border"
+            }`}
+          >
+            AI Knowledge Base ({knowledgeList.length})
+          </button>
+        </div>
       </div>
 
       {/* Toast Notice */}
       {toastMsg && (
-        <div className="bg-amber-50 border border-amber-300 text-amber-900 text-[13px] px-4 py-2.5 rounded flex items-center gap-2 animate-in fade-in duration-200">
-          <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0" />
+        <div className="bg-amber-50 border border-amber-300 text-amber-900 text-[13px] px-4 py-2.5 rounded-xl flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
           <span>{toastMsg}</span>
         </div>
       )}
 
-      {/* Chat Container Window */}
-      <div className="bg-white border border-[#E5E7EB] rounded-lg shadow-xs overflow-hidden grid grid-cols-1 md:grid-cols-12 h-[560px]">
-        {/* Left: Conversations List (4 cols) */}
-        <div className="md:col-span-4 border-r border-[#E5E7EB] flex flex-col h-full bg-[#FAFAFA]">
-          <div className="p-3.5 border-b border-[#E5E7EB] bg-white font-bold text-[13px] text-[#111827]">
-            Guest Conversations
+      {activeTab === "chat" ? (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Left: Conversations list */}
+          <div className="bg-white border rounded-2xl p-4 shadow-sm space-y-2">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+              Guest Channels (WhatsApp / Web)
+            </h2>
+            {conversations.map((c) => (
+              <div
+                key={c.id}
+                onClick={() => setActiveConvId(c.id)}
+                className={`p-3 rounded-xl cursor-pointer border transition-all ${
+                  activeConvId === c.id
+                    ? "bg-slate-900 text-white border-slate-900"
+                    : "bg-slate-50 text-slate-700 border-slate-100 hover:bg-slate-100"
+                }`}
+              >
+                <div className="flex justify-between items-center text-xs font-bold">
+                  <span>{c.guestName}</span>
+                  <span className="text-[10px] opacity-70 uppercase">{c.channel}</span>
+                </div>
+                <p className="text-[11px] truncate mt-1 opacity-80">{c.lastMessage}</p>
+              </div>
+            ))}
           </div>
 
-          <div className="flex-1 overflow-y-auto divide-y divide-[#E5E7EB]">
-            {conversations.length === 0 ? (
-              <div className="p-6 text-center text-[#9CA3AF] text-[12px]">
-                No conversations found
+          {/* Right: Active Chat Window */}
+          <div className="md:col-span-2 bg-white border rounded-2xl p-5 shadow-sm flex flex-col justify-between h-[520px]">
+            <div>
+              <div className="flex items-center justify-between pb-3 border-b">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">
+                    {activeConversation?.guestName || "Guest"}
+                  </h3>
+                  <p className="text-[11px] text-slate-400">
+                    Room {(activeConversation as any)?.roomNumber || "Online"} · Tool-Augmented Active AI Agent
+                  </p>
+                </div>
+                <button
+                  onClick={handleEscalate}
+                  className="bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-colors"
+                >
+                  <ShieldAlert className="w-3.5 h-3.5" />
+                  Escalate to Human
+                </button>
               </div>
-            ) : (
-              conversations.map((c) => {
-                const isActive = c.id === activeConvId;
-                return (
+
+              {/* Messages viewport */}
+              <div className="overflow-y-auto space-y-3 py-4 max-h-[380px]">
+                {activeMessages.map((m) => (
                   <div
-                    key={c.id}
-                    onClick={() => setActiveConvId(c.id)}
-                    className={`p-3.5 cursor-pointer transition-colors ${
-                      isActive ? "bg-white border-l-4 border-[#EC3013]" : "hover:bg-[#F3F4F6]"
-                    }`}
+                    key={m.id}
+                    className={`flex ${m.sender === "guest" ? "justify-end" : "justify-start"}`}
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-[13px] text-[#111827]">
-                        {c.guestName}
+                    <div
+                      className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-xs ${
+                        m.sender === "guest"
+                          ? "bg-blue-600 text-white"
+                          : "bg-slate-100 text-slate-800"
+                      }`}
+                    >
+                      <p className="whitespace-pre-line">{m.text}</p>
+                      <span className="text-[10px] block mt-1 opacity-60 text-right">
+                        {m.timestamp}
                       </span>
-                      <span className="text-[10px] text-[#9CA3AF]">{c.timestamp}</span>
-                    </div>
-
-                    <div className="text-[12px] text-[#6B7280] truncate mt-1">
-                      {c.lastMessage}
-                    </div>
-
-                    <div className="flex items-center gap-1.5 mt-2">
-                      <span className="text-[10px] font-semibold text-[#4B5563] bg-[#E5E7EB] px-1.5 py-0.5 rounded capitalize">
-                        {c.channel}
-                      </span>
-                      {c.status === "escalated" && (
-                        <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
-                          Escalated
-                        </span>
-                      )}
                     </div>
                   </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-
-        {/* Right: Active Chat View (8 cols) */}
-        <div className="md:col-span-8 flex flex-col h-full bg-white">
-          {/* Chat Header */}
-          <div className="p-3.5 border-b border-[#E5E7EB] bg-[#F9FAFB] flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-[#EC3013] text-white flex items-center justify-center">
-                <Bot className="w-4 h-4" />
-              </div>
-              <div>
-                <div className="text-[13px] font-bold text-[#111827]">
-                  {conversations.find((c) => c.id === activeConvId)?.guestName || "Guest Conversation"}
-                </div>
-                <div className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>Aura AI Assistant Active</span>
-                </div>
+                ))}
+                <div ref={messagesEndRef} />
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={handleEscalate}
-              className="px-3 py-1.5 border border-[#D1D5DB] hover:bg-amber-50 hover:text-amber-800 text-[#4B5563] text-[12px] font-semibold rounded transition-colors"
-            >
-              Escalate to Front Desk
-            </button>
+            {/* Input Bar */}
+            <form onSubmit={handleSendMessage} className="flex gap-2 pt-3 border-t">
+              <input
+                type="text"
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                placeholder="Ask about live availability, booking #RES-10293, or hotel policies..."
+                className="flex-1 px-4 py-2 border rounded-xl text-xs"
+              />
+              <button
+                type="submit"
+                disabled={isSending}
+                className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5"
+              >
+                <Send className="w-3.5 h-3.5" />
+                Send
+              </button>
+            </form>
           </div>
-
-          {/* Messages Stream */}
-          <div className="flex-1 p-5 overflow-y-auto space-y-3.5 bg-[#FAFAFA]/50">
-            {activeMessages.map((m) => {
-              const isGuest = m.sender === "guest";
-              return (
-                <div
-                  key={m.id}
-                  className={`flex flex-col max-w-[75%] ${
-                    isGuest ? "items-start" : "items-end ml-auto"
-                  }`}
-                >
-                  <div
-                    className={`p-3.5 rounded-lg text-[13px] leading-relaxed shadow-2xs ${
-                      isGuest
-                        ? "bg-white text-[#111827] border border-[#E5E7EB] rounded-bl-xs"
-                        : "bg-[#EC3013] text-white rounded-br-xs font-medium"
-                    }`}
-                  >
-                    {m.text}
-                  </div>
-                  <span className="text-[10px] text-[#9CA3AF] mt-1 px-1">{m.timestamp}</span>
-                </div>
-              );
-            })}
-            {isSending && (
-              <div className="flex items-center gap-1.5 text-[12px] text-[#6B7280] p-2">
-                <Bot className="w-3.5 h-3.5 text-[#EC3013] animate-spin" />
-                <span>Aura AI is responding...</span>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Input Box */}
-          <form onSubmit={handleSendMessage} className="p-3 border-t border-[#E5E7EB] bg-white flex items-center gap-2">
-            <input
-              type="text"
-              placeholder="Ask Aura or send guest message..."
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              className="flex-1 px-3.5 py-2 border border-[#D1D5DB] rounded text-[13px] text-[#111827] focus:outline-none focus:border-[#EC3013]"
-            />
-            <button
-              type="submit"
-              disabled={isSending || !inputMessage.trim()}
-              className="px-4 py-2 bg-[#EC3013] hover:bg-[#D62839] disabled:opacity-50 text-white font-bold text-[13px] rounded shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
-            >
-              <Send className="w-3.5 h-3.5" />
-              <span>Send</span>
-            </button>
-          </form>
         </div>
-      </div>
+      ) : (
+        /* Knowledge Base Management */
+        <div className="space-y-6">
+          <div className="bg-white p-5 rounded-2xl border shadow-sm">
+            <h2 className="text-base font-black text-slate-900">Add Knowledge Base Q&amp;A</h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              The AI Receptionist automatically references these answers during guest chats and phone calls.
+            </p>
+
+            <form onSubmit={handleAddKnowledge} className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Category</label>
+                <select
+                  value={newKb.category}
+                  onChange={(e) => setNewKb({ ...newKb, category: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-xl"
+                >
+                  <option value="Check-in / Check-out">Check-in / Check-out</option>
+                  <option value="Amenities & Facilities">Amenities &amp; Facilities</option>
+                  <option value="Restaurant & Dining">Restaurant &amp; Dining</option>
+                  <option value="Policies & Rules">Policies &amp; Rules</option>
+                  <option value="Local Attractions">Local Attractions</option>
+                </select>
+              </div>
+              <div className="sm:col-span-2">
+                <label className="font-bold text-slate-700 block mb-1">Guest Question</label>
+                <input
+                  type="text"
+                  required
+                  value={newKb.question}
+                  onChange={(e) => setNewKb({ ...newKb, question: e.target.value })}
+                  placeholder="e.g. Is airport shuttle service available?"
+                  className="w-full px-3 py-2 border rounded-xl"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="font-bold text-slate-700 block mb-1">AI Official Answer</label>
+                <textarea
+                  required
+                  rows={2}
+                  value={newKb.answer}
+                  onChange={(e) => setNewKb({ ...newKb, answer: e.target.value })}
+                  placeholder="Provide precise hotel information..."
+                  className="w-full px-3 py-2 border rounded-xl"
+                />
+              </div>
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Keywords (comma-separated)</label>
+                <input
+                  type="text"
+                  value={newKb.keywords}
+                  onChange={(e) => setNewKb({ ...newKb, keywords: e.target.value })}
+                  placeholder="airport, shuttle, cab, pickup"
+                  className="w-full px-3 py-2 border rounded-xl mb-2"
+                />
+                <button
+                  type="submit"
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 rounded-xl flex items-center justify-center gap-1"
+                >
+                  <Plus className="w-4 h-4" /> Save to AI
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {knowledgeList.map((item) => (
+              <div key={item._id} className="bg-white p-5 rounded-2xl border shadow-sm flex flex-col justify-between">
+                <div>
+                  <div className="flex justify-between items-center">
+                    <span className="bg-purple-50 text-purple-700 font-bold text-[10px] px-2 py-0.5 rounded-full uppercase">
+                      {item.category}
+                    </span>
+                    <button
+                      onClick={() => handleDeleteKnowledge(item._id)}
+                      className="text-slate-400 hover:text-rose-600"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <h3 className="font-bold text-slate-900 text-sm mt-2">{item.question}</h3>
+                  <p className="text-xs text-slate-600 mt-1">{item.answer}</p>
+                </div>
+
+                <div className="mt-4 pt-3 border-t flex flex-wrap gap-1">
+                  {item.keywords.map((kw, idx) => (
+                    <span key={idx} className="bg-slate-100 text-slate-500 text-[10px] px-2 py-0.5 rounded">
+                      #{kw}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

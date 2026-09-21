@@ -41,12 +41,12 @@ export default function HotelAdminDashboardPage() {
     if (isAuthLoading) return;
     setIsLoading(true);
     try {
-      const effectiveOrgId = user?.orgId || "org-987123-1788542768377";
+      const effectiveOrgId = user?.orgId;
       const [allHotels, invRes, allReservations, allGuests] = await Promise.all([
-        hotelsApi.getAll({ orgId: effectiveOrgId }),
-        invoicesApi.getAll({ orgId: effectiveOrgId }),
-        reservationsApi.getAll(),
-        guestsApi.getAll(),
+        hotelsApi.getAll(effectiveOrgId ? { orgId: effectiveOrgId } : undefined),
+        invoicesApi.getAll(effectiveOrgId ? { orgId: effectiveOrgId } : undefined),
+        reservationsApi.getAll(effectiveOrgId ? { orgId: effectiveOrgId } : undefined),
+        guestsApi.getAll(effectiveOrgId ? { orgId: effectiveOrgId } : undefined),
       ]);
       setHotels(allHotels);
       const invoiceData = invRes?.data ? invRes.data : (Array.isArray(invRes) ? invRes : []);

@@ -71,12 +71,52 @@ const SEARCH_ITEMS: SearchResult[] = [
   { id: "cust-3", category: "Customer", title: "My Bookings", subtitle: "View active reservations and guest stay receipts", href: "/customer/my-bookings", icon: Users },
 ];
 
+import { searchApi } from "@/lib/api";
+
 export function GlobalSearchModal() {
   const router = useRouter();
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [liveResults, setLiveResults] = useState<{
+    reservations: any[];
+    rooms: any[];
+    guests: any[];
+    invoices: any[];
+    leads: any[];
+  }>({
+    reservations: [],
+    rooms: [],
+    guests: [],
+    invoices: [],
+    leads: [],
+  });
+  const [isSearchingLive, setIsSearchingLive] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Debounced search to /api/search?q=...
+  useEffect(() => {
+    if (!query.trim() || query.trim().length < 2) {
+      setLiveResults({ reservations: [], rooms: [], guests: [], invoices: [], leads: [] });
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsSearchingLive(true);
+      try {
+        const res = await searchApi.query(query.trim());
+        if (res?.data) {
+          setLiveResults(res.data);
+        }
+      } catch (err) {
+        console.error("Live search error:", err);
+      } finally {
+        setIsSearchingLive(false);
+      }
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [query]);
 
   // Toggle on Ctrl+K / Cmd+K
   useEffect(() => {
@@ -98,6 +138,7 @@ export function GlobalSearchModal() {
       setTimeout(() => inputRef.current?.focus(), 50);
     } else {
       setQuery("");
+      setLiveResults({ reservations: [], rooms: [], guests: [], invoices: [], leads: [] });
     }
   }, [isOpen]);
 
@@ -170,8 +211,100 @@ export function GlobalSearchModal() {
             </div>
 
             {/* Results List */}
-            <div className="flex-1 overflow-y-auto p-2 divide-y divide-[#F3F4F6]">
-              {filtered.length === 0 ? (
+            <div className="flex-1 overflow-y-auto p-2 divide-y divide-[#F3F4F6] space-y-2">
+              {/* LIVE DATABASE MATCHES (PDF Sec 30) */}
+              {(liveResults.reservations.length > 0 ||
+                liveResults.rooms.length > 0 ||
+                liveResults.guests.length > 0 ||
+                liveResults.invoices.length > 0 ||
+                liveResults.leads.length > 0) && (
+                <div className="p-2 space-y-3 bg-gray-50/70 rounded-lg mb-2">
+                  <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider px-1">
+                    Live Operational Records Match
+                  </div>
+
+                  {/* Reservations */}
+                  {liveResults.reservations.map((r: any) => (
+                    <div
+                      key={r.id}
+                      onClick={() => handleSelect("/operations/front-desk")}
+                      className="p-2 bg-white rounded-lg border border-gray-200 hover:border-[#EC3013] cursor-pointer flex justify-between items-center text-xs shadow-2xs"
+                    >
+                      <div>
+                        <span className="font-bold text-gray-900">{r.guestName}</span>
+                        <span className="text-gray-500 text-[11px] ml-2">
+                          #{r.id} · Room {r.roomNumber} ({r.roomType})
+                        </span>
+                      </div>
+                      <span className="font-bold text-[10px] px-2 py-0.5 rounded bg-blue-50 text-blue-700">
+                        {r.status}
+                      </span>
+                    </div>
+                  ))}
+
+                  {/* Rooms */}
+                  {liveResults.rooms.map((rm: any) => (
+                    <div
+                      key={rm.number}
+                      onClick={() => handleSelect("/operations/room-map")}
+                      className="p-2 bg-white rounded-lg border border-gray-200 hover:border-[#EC3013] cursor-pointer flex justify-between items-center text-xs shadow-2xs"
+                    >
+                      <div className="font-bold text-gray-900">
+                        Room {rm.number} ({rm.type})
+                      </div>
+                      <span
+                        className={`font-bold text-[10px] px-2 py-0.5 rounded ${
+                          rm.status === "available"
+                            ? "bg-emerald-50 text-emerald-700"
+                            : rm.status === "occupied"
+                            ? "bg-blue-50 text-blue-700"
+                            : "bg-amber-50 text-amber-700"
+                        }`}
+                      >
+                        {rm.status}
+                      </span>
+                    </div>
+                  ))}
+
+                  {/* Guests */}
+                  {liveResults.guests.map((g: any) => (
+                    <div
+                      key={g.id || g.name}
+                      onClick={() => handleSelect("/operations/guests")}
+                      className="p-2 bg-white rounded-lg border border-gray-200 hover:border-[#EC3013] cursor-pointer flex justify-between items-center text-xs shadow-2xs"
+                    >
+                      <div>
+                        <span className="font-bold text-gray-900">{g.name}</span>
+                        <span className="text-gray-500 text-[11px] ml-2">{g.phone || g.email}</span>
+                      </div>
+                      <span className="font-bold text-[10px] px-2 py-0.5 rounded bg-purple-50 text-purple-700">
+                        {g.vipStatus ? "VIP Guest" : "Guest Profile"}
+                      </span>
+                    </div>
+                  ))}
+
+                  {/* Invoices */}
+                  {liveResults.invoices.map((inv: any) => (
+                    <div
+                      key={inv.invoiceNumber}
+                      onClick={() => handleSelect("/operations/billing")}
+                      className="p-2 bg-white rounded-lg border border-gray-200 hover:border-[#EC3013] cursor-pointer flex justify-between items-center text-xs shadow-2xs"
+                    >
+                      <div>
+                        <span className="font-bold text-gray-900">{inv.invoiceNumber}</span>
+                        <span className="text-gray-500 text-[11px] ml-2">{inv.guestName}</span>
+                      </div>
+                      <span className="font-bold text-gray-900">₹{inv.totalAmount}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* NAVIGATION PAGES RESULTS */}
+              {filtered.length === 0 &&
+              liveResults.reservations.length === 0 &&
+              liveResults.rooms.length === 0 &&
+              liveResults.guests.length === 0 ? (
                 <div className="py-12 text-center text-[#9CA3AF] text-[13px]">
                   No results found for &ldquo;<span className="font-semibold text-[#111827]">{query}</span>&rdquo;
                 </div>

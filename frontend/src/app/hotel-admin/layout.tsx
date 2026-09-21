@@ -19,11 +19,12 @@ export default function HotelAdminLayout({
 
   const navItems = [
     { name: "Dashboard", href: "/hotel-admin" },
-    { name: "Hotels", href: "/hotel-admin/hotels" },
+    { name: "Hotels & Properties", href: "/hotel-admin/hotels" },
     { name: "Room Map & Units", href: "/hotel-admin/rooms" },
     { name: "Billing & Transactions", href: "/hotel-admin/billing" },
     { name: "Area Management", href: "/hotel-admin/areas" },
     { name: "Staff & Roles", href: "/hotel-admin/staff" },
+    { name: "Chain Leads & Pipeline", href: "/hotel-admin/leads" },
   ];
 
   const getCurrentTitle = () => {
@@ -32,6 +33,7 @@ export default function HotelAdminLayout({
     if (pathname.includes("/billing")) return "Billing & Transactions";
     if (pathname.includes("/areas")) return "Area Management";
     if (pathname.includes("/staff")) return "Staff & Roles";
+    if (pathname.includes("/leads")) return "Chain Leads & Sales Performance";
     return "Hotel Admin Dashboard";
   };
 
@@ -74,11 +76,10 @@ export default function HotelAdminLayout({
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`block px-3 py-2 text-[13px] font-semibold rounded transition-colors ${
-                      isActive
+                    className={`block px-3 py-2 text-[13px] font-semibold rounded transition-colors ${isActive
                         ? "text-[#111827] bg-[#F3F4F6] border-l-2 border-[#EC3013]"
                         : "text-[#4B5563] hover:text-[#111827] hover:bg-[#F9FAFB]"
-                    }`}
+                      }`}
                   >
                     {item.name}
                   </Link>

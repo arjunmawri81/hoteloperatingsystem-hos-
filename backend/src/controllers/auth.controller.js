@@ -36,13 +36,49 @@ class AuthController {
         });
       }
 
+      // Resolve hotelId and hotelName if missing
+      let resolvedHotelId = user.hotelId || "";
+      let resolvedHotelName = user.hotelName || "";
+      let resolvedAssignedHotels = user.assignedHotelNames || [];
+
+      if (!resolvedHotelId || !resolvedHotelName) {
+        const Staff = require("../models/Staff");
+        const staffMember = await Staff.findOne({ email: user.email });
+        if (staffMember) {
+          if (!resolvedHotelName) resolvedHotelName = staffMember.hotel || staffMember.assignedHotelNames?.[0] || "";
+          if (!resolvedHotelId) resolvedHotelId = staffMember.hotelId || "";
+          if (resolvedAssignedHotels.length === 0 && staffMember.assignedHotelNames?.length > 0) {
+            resolvedAssignedHotels = staffMember.assignedHotelNames;
+          }
+        }
+      }
+
+      if (!resolvedHotelId && resolvedHotelName) {
+        const Hotel = require("../models/Hotel");
+        const matchedHotel = await Hotel.findOne({
+          name: new RegExp(`^${resolvedHotelName.trim()}$`, "i"),
+          ...(user.orgId ? { orgId: user.orgId } : {}),
+        });
+        if (matchedHotel) {
+          resolvedHotelId = matchedHotel.id;
+        }
+      }
+
+      // If user is hotel_manager or staff, persist the resolved hotelId back to user
+      if (resolvedHotelId && (!user.hotelId || user.hotelId !== resolvedHotelId)) {
+        user.hotelId = resolvedHotelId;
+        user.hotelName = resolvedHotelName;
+        await user.save();
+      }
+
       const tokenPayload = {
         id: user.id,
         email: user.email,
         role: user.role,
         orgId: user.orgId,
         orgName: user.orgName,
-        hotelId: user.hotelId,
+        hotelId: resolvedHotelId,
+        hotelName: resolvedHotelName,
       };
 
       const token = jwt.sign(tokenPayload, JWT_SECRET, {
@@ -50,13 +86,16 @@ class AuthController {
       });
 
       const safeUser = user.toObject();
+      safeUser.hotelId = resolvedHotelId;
+      safeUser.hotelName = resolvedHotelName;
+      safeUser.assignedHotelNames = resolvedAssignedHotels;
       delete safeUser.passwordHash;
 
       await AuditService.log({
         userId: user.id,
         userRole: user.role,
         orgId: user.orgId,
-        hotelId: user.hotelId,
+        hotelId: resolvedHotelId,
         action: "LOGIN_SUCCESS",
         resource: "auth",
         resourceId: user.id,

@@ -10,7 +10,7 @@ interface Lead {
   name: string;
   phone: string;
   email: string;
-  source: "Website" | "WhatsApp" | "AI Phone Call" | "Social" | "Direct Enquiry";
+  source: "Website" | "WhatsApp" | "AI Phone Call" | "Social" | "Direct Enquiry" | "OTA" | "Channel Manager";
   requirement: string;
   budget: number;
   stage: "New" | "Contacted" | "AI Qualified" | "Proposal" | "Converted" | "Lost";
@@ -77,7 +77,7 @@ export default function AILeadManagementPage() {
 
       setLeads([created, ...leads]);
       setIsModalOpen(false);
-      setToastMsg(`✅ Lead "${created.name}" ($${Number(created.budget).toLocaleString()}) saved to MongoDB database`);
+      setToastMsg(`✅ Lead "${created.name}" (₹${Number(created.budget).toLocaleString()}) saved to MongoDB database`);
       setTimeout(() => setToastMsg(null), 3500);
 
       setNewLead({
@@ -180,11 +180,11 @@ export default function AILeadManagementPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-5 rounded-lg border border-[#E5E7EB] shadow-xs">
           <div className="text-[11px] font-bold text-[#6B7280] uppercase">Total Pipeline Value</div>
-          <div className="text-[24px] font-bold text-[#111827] mt-1.5">${totalPipeline.toLocaleString()}</div>
+          <div className="text-[24px] font-bold text-[#111827] mt-1.5">₹{totalPipeline.toLocaleString()}</div>
         </div>
         <div className="bg-white p-5 rounded-lg border border-[#E5E7EB] shadow-xs">
           <div className="text-[11px] font-bold text-emerald-600 uppercase">Won &amp; Converted</div>
-          <div className="text-[24px] font-bold text-emerald-700 mt-1.5">${convertedTotal.toLocaleString()}</div>
+          <div className="text-[24px] font-bold text-emerald-700 mt-1.5">₹{convertedTotal.toLocaleString()}</div>
         </div>
         <div className="bg-white p-5 rounded-lg border border-[#E5E7EB] shadow-xs">
           <div className="text-[11px] font-bold text-purple-600 uppercase">AI Voice Qualified</div>
@@ -270,7 +270,7 @@ export default function AILeadManagementPage() {
                       {lead.requirement}
                     </td>
                     <td className="py-3.5 px-4 font-bold text-[#111827]">
-                      ${(lead.budget || 0).toLocaleString()}
+                      ₹{(lead.budget || 0).toLocaleString()}
                     </td>
                     <td className="py-3.5 px-4">
                       <span
@@ -378,6 +378,8 @@ export default function AILeadManagementPage() {
                     <option value="AI Phone Call">AI Phone Call</option>
                     <option value="WhatsApp">WhatsApp</option>
                     <option value="Website">Website</option>
+                    <option value="OTA">OTA (Booking.com / Agoda / MMT)</option>
+                    <option value="Channel Manager">Channel Manager (STAAH / SiteMinder)</option>
                     <option value="Social">Social</option>
                     <option value="Direct Enquiry">Direct Enquiry</option>
                   </select>
@@ -401,7 +403,7 @@ export default function AILeadManagementPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
-                    Estimated Budget ($)
+                    Estimated Budget (₹)
                   </label>
                   <input
                     type="number"

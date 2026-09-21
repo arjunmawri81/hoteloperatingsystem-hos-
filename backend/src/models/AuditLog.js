@@ -4,7 +4,11 @@ const AuditLogSchema = new mongoose.Schema(
   {
     userId: {
       type: String,
-      required: true,
+      default: "system",
+    },
+    user: {
+      type: String,
+      default: "",
     },
     userRole: {
       type: String,
@@ -21,12 +25,22 @@ const AuditLogSchema = new mongoose.Schema(
     action: {
       type: String,
       required: true,
+      default: "SYSTEM_ACTION",
     },
     resource: {
       type: String,
       required: true,
+      default: "GENERAL",
     },
     resourceId: {
+      type: String,
+      default: "",
+    },
+    oldValue: {
+      type: String,
+      default: "",
+    },
+    newValue: {
       type: String,
       default: "",
     },
@@ -35,6 +49,14 @@ const AuditLogSchema = new mongoose.Schema(
       default: {},
     },
     ipAddress: {
+      type: String,
+      default: "",
+    },
+    ip: {
+      type: String,
+      default: "",
+    },
+    device: {
       type: String,
       default: "",
     },

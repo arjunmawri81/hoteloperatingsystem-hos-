@@ -136,46 +136,84 @@ export default function HotelDiscoveryPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
             {filteredHotels.map((h) => {
-              const price = h.totalRooms > 80 ? 3500 : 2500;
+              const price = h.totalRooms > 80 ? 4500 : 3500;
+              const coverImage =
+                h.images?.front ||
+                h.images?.lobby ||
+                h.images?.room ||
+                "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80";
+
+              const galleryImages = [
+                { label: "Front Facade", src: h.images?.front },
+                { label: "Grand Lobby", src: h.images?.lobby },
+                { label: "Guest Room", src: h.images?.room },
+                { label: "Washroom", src: h.images?.washroom },
+              ].filter((img) => img.src);
+
               return (
                 <div
                   key={h.id}
-                  className="bg-white rounded-lg border border-[#E5E7EB] hover:border-[#D1D5DB] shadow-xs hover:shadow-md transition-all overflow-hidden flex flex-col justify-between"
+                  className="bg-white rounded-xl border border-[#E5E7EB] hover:border-[#D1D5DB] shadow-xs hover:shadow-lg transition-all overflow-hidden flex flex-col justify-between group"
                 >
                   <div>
-                    {/* Photo Header Placeholder */}
-                    <div className="h-40 bg-gradient-to-tr from-[#201E1D] to-[#4B5563] p-4 flex flex-col justify-between text-white relative">
-                      <div className="flex justify-between items-start">
-                        <span className="bg-[#EC3013] text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
-                          Featured Stay
-                        </span>
-                        <span className="inline-flex items-center gap-1 bg-black/50 backdrop-blur-xs text-[11px] font-bold px-2 py-0.5 rounded">
-                          <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                          {h.rating || "4.6"}
-                        </span>
-                      </div>
+                    {/* Hotel Cover Image */}
+                    <div className="h-48 relative overflow-hidden bg-slate-900">
+                      <img
+                        src={coverImage}
+                        alt={h.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent p-4 flex flex-col justify-between text-white">
+                        <div className="flex justify-between items-start">
+                          <span className="bg-[#EC3013] text-[10px] font-bold px-2.5 py-0.5 rounded uppercase tracking-wider shadow-sm">
+                            Verified Stay
+                          </span>
+                          <span className="inline-flex items-center gap-1 bg-black/60 backdrop-blur-xs text-[11px] font-bold px-2 py-0.5 rounded">
+                            <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                            {h.rating || "4.9"}
+                          </span>
+                        </div>
 
-                      <div>
-                        <div className="text-[18px] font-black">{h.name}</div>
-                        <div className="text-[12px] opacity-80 flex items-center gap-1 mt-0.5">
-                          <MapPin className="w-3 h-3" />
-                          <span>{h.city || "City Center"}, {h.region || "Central"}</span>
+                        <div>
+                          <div className="text-[19px] font-black drop-shadow-sm">{h.name}</div>
+                          <div className="text-[12px] opacity-90 flex items-center gap-1 mt-0.5">
+                            <MapPin className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                            <span>{h.city || "City Center"}, {h.region || "India"}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
+
+                    {/* 4-Photo Thumbnail Strip */}
+                    {galleryImages.length > 0 && (
+                      <div className="grid grid-cols-4 gap-1.5 p-2 bg-slate-50 border-b border-slate-200/80">
+                        {galleryImages.map((img, idx) => (
+                          <div key={idx} className="relative h-14 rounded-md overflow-hidden group/thumb border border-slate-200">
+                            <img
+                              src={img.src}
+                              alt={img.label}
+                              className="w-full h-full object-cover group-hover/thumb:scale-115 transition-transform duration-300"
+                            />
+                            <span className="absolute bottom-0 inset-x-0 bg-black/70 text-[9px] text-white text-center py-0.5 font-bold tracking-tight">
+                              {img.label}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
 
                     {/* Body Info */}
                     <div className="p-4 space-y-2 text-[13px] text-[#4B5563]">
                       <div className="flex justify-between">
                         <span>Total Rooms:</span>
-                        <span className="font-semibold text-[#111827]">{h.totalRooms} Rooms</span>
+                        <span className="font-semibold text-[#111827]">{h.totalRooms} Rooms (50 Luxury Units)</span>
                       </div>
                       <div className="flex justify-between">
                         <span>General Manager:</span>
-                        <span className="font-medium text-[#111827]">{h.managerName}</span>
+                        <span className="font-medium text-[#111827]">{h.managerName || "Hotel GM"}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Contact:</span>
+                        <span>Phone / Help Desk:</span>
                         <span className="text-[#6B7280]">{h.phone || "+91 90000 00000"}</span>
                       </div>
                     </div>
@@ -184,8 +222,8 @@ export default function HotelDiscoveryPage() {
                   {/* Footer Pricing & CTA */}
                   <div className="p-4 bg-[#F9FAFB] border-t border-[#E5E7EB] flex items-center justify-between">
                     <div>
-                      <span className="text-[10px] text-[#6B7280] block uppercase font-bold">From</span>
-                      <span className="text-[17px] font-black text-[#111827]">₹{price.toLocaleString("en-IN")}</span>
+                      <span className="text-[10px] text-[#6B7280] block uppercase font-bold">Starting from</span>
+                      <span className="text-[18px] font-black text-[#111827]">₹{price.toLocaleString("en-IN")}</span>
                       <span className="text-[11px] text-[#6B7280]"> / night</span>
                     </div>
 
@@ -193,7 +231,7 @@ export default function HotelDiscoveryPage() {
                       href={`/customer/booking?hotelId=${h.id}&hotelName=${encodeURIComponent(h.name)}`}
                       className="px-4 py-2 bg-[#EC3013] hover:bg-[#D62839] text-white text-[12px] font-bold rounded shadow-xs transition-colors"
                     >
-                      Select &amp; Book
+                      Select &amp; Book Room
                     </Link>
                   </div>
                 </div>

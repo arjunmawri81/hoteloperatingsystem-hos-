@@ -94,6 +94,27 @@ export async function apiClient<T = any>(
     defaultHeaders["Authorization"] = `Bearer ${token}`;
   }
 
+  if (typeof window !== "undefined") {
+    try {
+      const storedUserJson =
+        sessionStorage.getItem("hos_current_user") ||
+        localStorage.getItem("hos_current_user");
+      if (storedUserJson) {
+        const parsed = JSON.parse(storedUserJson);
+        if (parsed.orgId) {
+          defaultHeaders["x-org-id"] = parsed.orgId;
+          defaultHeaders["x-tenant-id"] = parsed.orgId;
+        }
+        if (parsed.hotelId) {
+          defaultHeaders["x-hotel-id"] = parsed.hotelId;
+        }
+        if (parsed.hotelName) {
+          defaultHeaders["x-hotel-name"] = parsed.hotelName;
+        }
+      }
+    } catch {}
+  }
+
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
 
