@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { hotelsApi } from "@/lib/api";
+import { hotelsApi, leadsApi } from "@/lib/api";
 import { Hotel } from "@/types";
-import { Search, Star, MapPin, Building, ArrowRight, RefreshCw } from "lucide-react";
+import { Search, Star, MapPin, Building, ArrowRight, RefreshCw, MessageSquare, Sparkles, X, Send, CheckCircle2 } from "lucide-react";
 
 export default function HotelDiscoveryPage() {
   const [hotels, setHotels] = useState<Hotel[]>([]);
@@ -13,11 +13,28 @@ export default function HotelDiscoveryPage() {
   const [dates, setDates] = useState("Sep 12 — Sep 15");
   const [guests, setGuests] = useState("2 Adults");
 
+  // Group / Event Quote Modal State
+  const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
+  const [quoteSubmitted, setQuoteSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [quoteForm, setQuoteForm] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    hotelId: "",
+    eventType: "Wedding & Celebrations",
+    requirement: "",
+    budget: 150000,
+  });
+
   const loadHotels = async () => {
     setIsLoading(true);
     try {
       const data = await hotelsApi.getAll();
       setHotels(data);
+      if (data && data.length > 0 && !quoteForm.hotelId) {
+        setQuoteForm((prev) => ({ ...prev, hotelId: data[0].id }));
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -28,6 +45,47 @@ export default function HotelDiscoveryPage() {
   useEffect(() => {
     loadHotels();
   }, []);
+
+  const handleQuoteSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quoteForm.name || !quoteForm.phone) return;
+    setIsSubmitting(true);
+    try {
+      const selectedH = hotels.find((h) => h.id === quoteForm.hotelId);
+      await leadsApi.create({
+        name: quoteForm.name,
+        phone: quoteForm.phone,
+        email: quoteForm.email || "guest@hotel.com",
+        source: "Website",
+        leadType: "hotel_guest",
+        hotelId: quoteForm.hotelId || (hotels[0]?.id ?? "hotel-taj-delhi"),
+        budget: Number(quoteForm.budget),
+        requirement: `${quoteForm.eventType}: ${quoteForm.requirement || "Group reservation inquiry from website"}`,
+        stage: "New",
+        aiSummary: `Web Inquiry received from ${quoteForm.name} for ${quoteForm.eventType} at ${selectedH?.name || "Hotel"}.`,
+        nextFollowUp: "Today, priority callback",
+      });
+      setQuoteSubmitted(true);
+      setTimeout(() => {
+        setIsQuoteModalOpen(false);
+        setQuoteSubmitted(false);
+        setQuoteForm({
+          name: "",
+          phone: "",
+          email: "",
+          hotelId: hotels[0]?.id || "",
+          eventType: "Wedding & Celebrations",
+          requirement: "",
+          budget: 150000,
+        });
+      }, 2500);
+    } catch (err) {
+      console.error("Quote submission error:", err);
+      alert("Failed to submit quote inquiry. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const filteredHotels = hotels.filter((h) => {
     if (!destination) return true;
@@ -51,13 +109,23 @@ export default function HotelDiscoveryPage() {
           </p>
         </div>
 
-        <Link
-          href="/customer/my-bookings"
-          className="flex items-center gap-1.5 px-4 py-2 bg-white border border-[#D1D5DB] hover:bg-[#F9FAFB] text-[#111827] text-[13px] font-bold rounded shadow-xs transition-colors"
-        >
-          <span>View My Bookings</span>
-          <ArrowRight className="w-4 h-4 text-[#EC3013]" />
-        </Link>
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => setIsQuoteModalOpen(true)}
+            className="flex items-center gap-1.5 px-4 py-2 bg-white border border-[#D1D5DB] hover:bg-[#F9FAFB] text-[#111827] text-[13px] font-bold rounded shadow-xs transition-colors cursor-pointer"
+          >
+            <Sparkles className="w-4 h-4 text-amber-500" />
+            <span>Group / Event Quote</span>
+          </button>
+
+          <Link
+            href="/customer/my-bookings"
+            className="flex items-center gap-1.5 px-4 py-2 bg-[#111827] hover:bg-black text-white text-[13px] font-bold rounded shadow-xs transition-colors"
+          >
+            <span>View My Bookings</span>
+            <ArrowRight className="w-4 h-4 text-emerald-400" />
+          </Link>
+        </div>
       </div>
 
       {/* Search Bar Widget */}
@@ -240,6 +308,133 @@ export default function HotelDiscoveryPage() {
           </div>
         )}
       </div>
+
+      {/* Group / Event Quote Modal */}
+      {isQuoteModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden border border-gray-100">
+            <div className="px-6 py-4 bg-gradient-to-r from-slate-900 to-slate-800 text-white flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-amber-400" />
+                <h3 className="text-[16px] font-bold">Request Group &amp; Event Quote</h3>
+              </div>
+              <button
+                onClick={() => setIsQuoteModalOpen(false)}
+                className="text-gray-400 hover:text-white p-1"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {quoteSubmitted ? (
+              <div className="p-8 text-center space-y-3">
+                <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto animate-bounce" />
+                <h4 className="text-[18px] font-bold text-gray-900">Inquiry Received!</h4>
+                <p className="text-[13px] text-gray-600">
+                  Our hotel sales executive and AI Concierge have logged your request. We will contact you on WhatsApp / Phone shortly with a tailored package.
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleQuoteSubmit} className="p-6 space-y-4 text-[13px]">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
+                      Your Full Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Rahul Sharma"
+                      value={quoteForm.name}
+                      onChange={(e) => setQuoteForm({ ...quoteForm, name: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#EC3013]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
+                      Phone / WhatsApp *
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      placeholder="+91 98765 43210"
+                      value={quoteForm.phone}
+                      onChange={(e) => setQuoteForm({ ...quoteForm, phone: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#EC3013]"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
+                      Preferred Hotel
+                    </label>
+                    <select
+                      value={quoteForm.hotelId}
+                      onChange={(e) => setQuoteForm({ ...quoteForm, hotelId: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#EC3013] bg-white font-medium text-gray-800"
+                    >
+                      {hotels.map((h) => (
+                        <option key={h.id} value={h.id}>
+                          {h.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
+                      Event / Booking Type
+                    </label>
+                    <select
+                      value={quoteForm.eventType}
+                      onChange={(e) => setQuoteForm({ ...quoteForm, eventType: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#EC3013] bg-white font-medium text-gray-800"
+                    >
+                      <option value="Wedding & Celebrations">💍 Wedding &amp; Celebrations</option>
+                      <option value="Corporate Conference">💼 Corporate Conference / MICE</option>
+                      <option value="Bulk Room Booking">🏨 Bulk Room Booking (10+ Rooms)</option>
+                      <option value="Birthday / Private Party">🎉 Birthday / Private Party</option>
+                      <option value="Extended Long Stay">🏖️ Extended Long Stay</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
+                    Requirements &amp; Expected Dates
+                  </label>
+                  <textarea
+                    rows={2}
+                    placeholder="e.g. 25 Deluxe rooms for Nov 14-16, banquet hall required for 150 guests..."
+                    value={quoteForm.requirement}
+                    onChange={(e) => setQuoteForm({ ...quoteForm, requirement: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#EC3013]"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsQuoteModalOpen(false)}
+                    className="px-4 py-2 border border-gray-300 text-gray-700 font-bold rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-5 py-2 bg-[#EC3013] hover:bg-[#D62839] text-white font-bold rounded-lg shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Send className="w-4 h-4" />
+                    <span>{isSubmitting ? "Submitting..." : "Submit Quote Request"}</span>
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

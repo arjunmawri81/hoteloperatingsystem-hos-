@@ -3,13 +3,27 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth, ROLE_ROUTE_MAP } from "@/context/AuthContext";
-import { ArrowRight, ArrowUpRight, Menu, X, ChevronDown } from "lucide-react";
+import { leadsApi } from "@/lib/api";
+import {
+  ArrowRight,
+  ArrowUpRight,
+  Menu,
+  X,
+  ChevronDown,
+  CheckCircle2,
+  Sparkles,
+  Building2,
+  PhoneCall,
+  ShieldCheck,
+  Loader2,
+  Clock,
+} from "lucide-react";
 
 const NAV_LINKS = [
   { label: "Home", href: "#home" },
   { label: "Platform", href: "#platform" },
   { label: "Guest Experience", href: "#guest" },
-  { label: "Pricing", href: "#pricing" },
+  { label: "Request Demo", href: "#demo" },
 ];
 
 const MODULES = [
@@ -73,6 +87,57 @@ export default function LandingPage() {
   const { user, isAuthenticated } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+
+  // Demo Lead Request Form State
+  const [demoForm, setDemoForm] = useState({
+    fullName: "",
+    phone: "",
+    email: "",
+    hotelName: "",
+    roomsCount: "21 - 50 Rooms",
+    primaryNeed: "All-in-One Hotel PMS",
+  });
+  const [isSubmittingDemo, setIsSubmittingDemo] = useState(false);
+  const [demoSubmitted, setDemoSubmitted] = useState(false);
+  const [demoError, setDemoError] = useState<string | null>(null);
+
+  const handleDemoSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!demoForm.fullName || !demoForm.phone || !demoForm.hotelName) {
+      setDemoError("Please fill in your name, phone number, and property name.");
+      return;
+    }
+
+    setIsSubmittingDemo(true);
+    setDemoError(null);
+
+    try {
+      let estimatedBudget = 48000;
+      if (demoForm.roomsCount.includes("51 - 100")) estimatedBudget = 96000;
+      else if (demoForm.roomsCount.includes("100+")) estimatedBudget = 150000;
+      else if (demoForm.roomsCount.includes("1 - 20")) estimatedBudget = 30000;
+
+      await leadsApi.create({
+        name: demoForm.fullName,
+        phone: demoForm.phone,
+        email: demoForm.email || "owner@hotel.com",
+        source: "Website",
+        requirement: `[SaaS Demo Request] Property: ${demoForm.hotelName} (${demoForm.roomsCount}). Focus: ${demoForm.primaryNeed}`,
+        budget: estimatedBudget,
+        stage: "New",
+        aiSummary: `[Landing Page Hot Lead]: ${demoForm.fullName} requested live demo for ${demoForm.hotelName}. Contact: ${demoForm.phone}`,
+        nextFollowUp: "Today, within 30 mins",
+        hotelId: "saas-platform",
+      });
+
+      setDemoSubmitted(true);
+    } catch (err: any) {
+      console.error("Failed to submit demo request:", err);
+      setDemoError(err?.message || "Failed to submit demo request. Please try again.");
+    } finally {
+      setIsSubmittingDemo(false);
+    }
+  };
 
   const dashboardHref =
     isAuthenticated && user?.role
@@ -185,9 +250,9 @@ export default function LandingPage() {
               </p>
 
               <div className="flex flex-wrap items-center gap-3">
-                <Link href="/login" className="h-12 px-7 flex items-center gap-2 rounded-xl bg-[#111] hover:bg-[#222] text-white text-[14px] font-bold transition-all hover:scale-[1.02] shadow-lg shadow-black/10">
-                  Open platform <ArrowRight className="w-4 h-4" />
-                </Link>
+                <a href="#demo" className="h-12 px-7 flex items-center gap-2 rounded-xl bg-[#111] hover:bg-[#222] text-white text-[14px] font-bold transition-all hover:scale-[1.02] shadow-lg shadow-black/10">
+                  Request live demo <ArrowRight className="w-4 h-4 text-amber-400" />
+                </a>
                 <Link href="/menu" className="h-12 px-6 flex items-center rounded-xl border border-black/10 bg-white hover:bg-black/[0.03] text-[#111] text-[14px] font-semibold transition-all shadow-sm">
                   See QR dining demo
                 </Link>
@@ -423,6 +488,250 @@ export default function LandingPage() {
                     <ArrowRight className="w-4 h-4 text-[#111]" />
                   </button>
                 </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* ─── SCHEDULE A LIVE DEMO (LEAD CAPTURE) ────────────────────────── */}
+      <section id="demo" className="py-24 bg-white border-t border-black/5">
+        <div className="max-w-6xl mx-auto px-5 sm:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            
+            {/* Left pitch */}
+            <div className="lg:col-span-5 space-y-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-900 text-[12px] font-bold uppercase tracking-wider">
+                <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                Live 1-on-1 Consultation
+              </div>
+
+              <h2 className="text-[38px] sm:text-[46px] font-black text-[#0e0e0e] tracking-[-1.5px] leading-[1.08]">
+                See LuckNexa tailored for your property.
+              </h2>
+
+              <p className="text-[15px] text-[#555] leading-relaxed">
+                Take a 15-minute personalized walkthrough with our hospitality specialists. We’ll show how LuckNexa automates your front desk, dining, banquet bookings, and OTA synchronization.
+              </p>
+
+              <div className="space-y-4 pt-2">
+                <div className="flex items-start gap-3.5">
+                  <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  </div>
+                  <div>
+                    <div className="text-[14px] font-bold text-[#111]">Customized Room Tariff &amp; ROI</div>
+                    <div className="text-[12.5px] text-[#666]">Transparent pricing based on your room and banquet inventory.</div>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3.5">
+                  <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  </div>
+                  <div>
+                    <div className="text-[14px] font-bold text-[#111]">Free 14-Day Full Platform Trial</div>
+                    <div className="text-[12.5px] text-[#666]">No setup fees or complex contracts. Instant property activation.</div>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3.5">
+                  <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  </div>
+                  <div>
+                    <div className="text-[14px] font-bold text-[#111]">Direct Data Migration Support</div>
+                    <div className="text-[12.5px] text-[#666]">Our team migrates existing guest history and rate cards seamlessly.</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-black/8 flex items-center gap-4 text-[13px] text-[#555]">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-amber-600" />
+                  <span>Avg response: <strong>&lt; 30 mins</strong></span>
+                </div>
+                <span>•</span>
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  <span>100% Privacy Protected</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right: Lead Capture Form Card */}
+            <div className="lg:col-span-7">
+              <div className="bg-[#F4F4F5] border border-black/8 rounded-3xl p-7 sm:p-9 shadow-xl shadow-black/5 relative">
+                
+                {demoSubmitted ? (
+                  <div className="text-center py-12 px-4 space-y-5">
+                    <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center mx-auto text-white shadow-lg shadow-emerald-500/25">
+                      <CheckCircle2 className="w-9 h-9" />
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="text-[26px] font-black text-[#111] tracking-tight">
+                        Inquiry Received, {demoForm.fullName}!
+                      </h3>
+                      <p className="text-[14px] text-[#555] max-w-md mx-auto leading-relaxed">
+                        We have logged your request for <strong className="text-[#111]">{demoForm.hotelName}</strong>. Our senior hospitality consultant will call you at <strong className="text-[#111]">{demoForm.phone}</strong> within 30 minutes with your customized demo credentials and tariff.
+                      </p>
+                    </div>
+                    <div className="pt-4">
+                      <button
+                        onClick={() => {
+                          setDemoSubmitted(false);
+                          setDemoForm({
+                            fullName: "",
+                            phone: "",
+                            email: "",
+                            hotelName: "",
+                            roomsCount: "21 - 50 Rooms",
+                            primaryNeed: "All-in-One Hotel PMS",
+                          });
+                        }}
+                        className="px-6 py-2.5 rounded-xl border border-black/15 bg-white text-[#111] text-[13px] font-bold hover:bg-black/5 transition-colors shadow-xs"
+                      >
+                        Submit Another Inquiry
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <form onSubmit={handleDemoSubmit} className="space-y-4">
+                    <div className="space-y-1 mb-5">
+                      <h3 className="text-[22px] font-black text-[#111] tracking-tight">
+                        Request a Personalized Demo
+                      </h3>
+                      <p className="text-[13px] text-[#666]">
+                        Fill in your property details below to speak with an onboarding consultant.
+                      </p>
+                    </div>
+
+                    {demoError && (
+                      <div className="p-3.5 bg-red-50 border border-red-200 rounded-xl text-[12.5px] text-red-700 font-medium">
+                        {demoError}
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[11.5px] font-bold text-[#444] uppercase tracking-wider mb-1.5">
+                          Your Full Name *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. Rahul Verma"
+                          value={demoForm.fullName}
+                          onChange={(e) => setDemoForm({ ...demoForm, fullName: e.target.value })}
+                          className="w-full px-4 py-3 bg-white border border-black/10 rounded-xl text-[13.5px] text-[#111] placeholder:text-[#aaa] focus:outline-none focus:border-amber-500 shadow-2xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11.5px] font-bold text-[#444] uppercase tracking-wider mb-1.5">
+                          Mobile Number *
+                        </label>
+                        <input
+                          type="tel"
+                          required
+                          placeholder="+91 98765 43210"
+                          value={demoForm.phone}
+                          onChange={(e) => setDemoForm({ ...demoForm, phone: e.target.value })}
+                          className="w-full px-4 py-3 bg-white border border-black/10 rounded-xl text-[13.5px] text-[#111] placeholder:text-[#aaa] focus:outline-none focus:border-amber-500 shadow-2xs"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[11.5px] font-bold text-[#444] uppercase tracking-wider mb-1.5">
+                          Hotel / Resort Name *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. Royal Heritage Resort"
+                          value={demoForm.hotelName}
+                          onChange={(e) => setDemoForm({ ...demoForm, hotelName: e.target.value })}
+                          className="w-full px-4 py-3 bg-white border border-black/10 rounded-xl text-[13.5px] text-[#111] placeholder:text-[#aaa] focus:outline-none focus:border-amber-500 shadow-2xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11.5px] font-bold text-[#444] uppercase tracking-wider mb-1.5">
+                          Work Email Address
+                        </label>
+                        <input
+                          type="email"
+                          placeholder="rahul@royalheritage.com"
+                          value={demoForm.email}
+                          onChange={(e) => setDemoForm({ ...demoForm, email: e.target.value })}
+                          className="w-full px-4 py-3 bg-white border border-black/10 rounded-xl text-[13.5px] text-[#111] placeholder:text-[#aaa] focus:outline-none focus:border-amber-500 shadow-2xs"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[11.5px] font-bold text-[#444] uppercase tracking-wider mb-1.5">
+                          Inventory / Room Count
+                        </label>
+                        <select
+                          value={demoForm.roomsCount}
+                          onChange={(e) => setDemoForm({ ...demoForm, roomsCount: e.target.value })}
+                          className="w-full px-4 py-3 bg-white border border-black/10 rounded-xl text-[13.5px] text-[#111] focus:outline-none focus:border-amber-500 shadow-2xs cursor-pointer"
+                        >
+                          <option value="1 - 20 Rooms">1 - 20 Rooms (Boutique / B&amp;B)</option>
+                          <option value="21 - 50 Rooms">21 - 50 Rooms (Mid-Scale Hotel)</option>
+                          <option value="51 - 100 Rooms">51 - 100 Rooms (Resort / Business)</option>
+                          <option value="100+ Rooms">100+ Rooms (Luxury / Multi-chain)</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11.5px] font-bold text-[#444] uppercase tracking-wider mb-1.5">
+                          Primary Focus Area
+                        </label>
+                        <select
+                          value={demoForm.primaryNeed}
+                          onChange={(e) => setDemoForm({ ...demoForm, primaryNeed: e.target.value })}
+                          className="w-full px-4 py-3 bg-white border border-black/10 rounded-xl text-[13.5px] text-[#111] focus:outline-none focus:border-amber-500 shadow-2xs cursor-pointer"
+                        >
+                          <option value="All-in-One Hotel PMS">Full Platform (PMS + POS + OTA)</option>
+                          <option value="Front Desk & Quick Check-in">Front Desk &amp; Quick Check-in</option>
+                          <option value="OTA Live Channel Sync">OTA Channel Manager &amp; Sync</option>
+                          <option value="Restaurant QR & POS">Restaurant POS &amp; QR Dining</option>
+                          <option value="Banquet & Event Halls">Banquet &amp; Event Booking</option>
+                          <option value="AI Receptionist & Guest Concierge">24/7 AI Receptionist</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="pt-3">
+                      <button
+                        type="submit"
+                        disabled={isSubmittingDemo}
+                        className="w-full h-12 bg-[#111] hover:bg-[#222] text-white text-[14px] font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-black/10 hover:scale-[1.01] cursor-pointer disabled:opacity-70"
+                      >
+                        {isSubmittingDemo ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
+                            Connecting to Sales Database...
+                          </>
+                        ) : (
+                          <>
+                            Schedule Live Demo &amp; Tariff Quote <ArrowRight className="w-4 h-4 text-amber-400" />
+                          </>
+                        )}
+                      </button>
+                      <p className="text-[11px] text-[#888] text-center mt-2.5">
+                        Free consultation · No credit card required · Instant WhatsApp follow-up
+                      </p>
+                    </div>
+                  </form>
+                )}
+
               </div>
             </div>
 

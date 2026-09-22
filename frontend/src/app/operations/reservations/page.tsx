@@ -26,6 +26,12 @@ import {
   CalendarPlus,
   ShieldCheck,
   AlertCircle,
+  Eye,
+  Phone,
+  Mail,
+  Printer,
+  MapPin,
+  User,
 } from "lucide-react";
 import { RoleGuard } from "@/components/layout/RoleGuard";
 import { useAuth } from "@/context/AuthContext";
@@ -94,6 +100,10 @@ export default function ReservationsPage() {
   // Web Check-in Link Share Modal
   const [shareLinkModalOpen, setShareLinkModalOpen] = useState(false);
   const [shareLinkData, setShareLinkData] = useState<any | null>(null);
+
+  // Guest Details & ID Document Inspector Modal
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [selectedResvForDetails, setSelectedResvForDetails] = useState<Reservation | null>(null);
 
   const loadAllData = async () => {
     setIsLoading(true);
@@ -184,13 +194,13 @@ export default function ReservationsPage() {
 
   const baseTariffPerNight =
     selectedRoomType === "Presidential Suite" ? 8000 :
-    selectedRoomType === "Executive Suite" ? 5000 :
-    selectedRoomType === "Deluxe King" ? 3500 : 2200;
+      selectedRoomType === "Executive Suite" ? 5000 :
+        selectedRoomType === "Deluxe King" ? 3500 : 2200;
 
   const mealAddonPerNight =
     mealPlan === "AP" ? 1100 * adultsCount :
-    mealPlan === "MAP" ? 750 * adultsCount :
-    mealPlan === "CP" ? 350 * adultsCount : 0;
+      mealPlan === "MAP" ? 750 * adultsCount :
+        mealPlan === "CP" ? 350 * adultsCount : 0;
 
   const extraBedCharge = hasExtraBed ? 800 * nightsCount : 0;
   const roomSubtotal = (baseTariffPerNight + mealAddonPerNight) * nightsCount + extraBedCharge;
@@ -359,18 +369,16 @@ export default function ReservationsPage() {
             <div className="flex items-center bg-[#F3F4F6] p-0.5 rounded border border-[#E5E7EB]">
               <button
                 onClick={() => setViewMode("list")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-[12px] font-bold transition-all ${
-                  viewMode === "list" ? "bg-white text-[#111827] shadow-xs" : "text-[#6B7280] hover:text-[#111827]"
-                }`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-[12px] font-bold transition-all ${viewMode === "list" ? "bg-white text-[#111827] shadow-xs" : "text-[#6B7280] hover:text-[#111827]"
+                  }`}
               >
                 <LayoutList className="w-3.5 h-3.5" />
                 <span>List</span>
               </button>
               <button
                 onClick={() => setViewMode("tape-chart")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-[12px] font-bold transition-all ${
-                  viewMode === "tape-chart" ? "bg-white text-[#111827] shadow-xs" : "text-[#6B7280] hover:text-[#111827]"
-                }`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-[12px] font-bold transition-all ${viewMode === "tape-chart" ? "bg-white text-[#111827] shadow-xs" : "text-[#6B7280] hover:text-[#111827]"
+                  }`}
               >
                 <CalendarRange className="w-3.5 h-3.5" />
                 <span>Tape Chart</span>
@@ -419,9 +427,8 @@ export default function ReservationsPage() {
               <button
                 key={tab}
                 onClick={() => setStatusFilter(tab)}
-                className={`px-3 py-1.5 rounded text-[12px] font-semibold capitalize transition-colors ${
-                  statusFilter === tab ? "bg-[#111827] text-white" : "text-[#4B5563] hover:bg-[#F3F4F6]"
-                }`}
+                className={`px-3 py-1.5 rounded text-[12px] font-semibold capitalize transition-colors ${statusFilter === tab ? "bg-[#111827] text-white" : "text-[#4B5563] hover:bg-[#F3F4F6]"
+                  }`}
               >
                 {tab.replace("_", " ")}
               </button>
@@ -494,9 +501,19 @@ export default function ReservationsPage() {
                         <td className="py-3.5 px-4 text-right">
                           <div className="flex items-center justify-end gap-1.5">
                             <button
+                              onClick={() => {
+                                setSelectedResvForDetails(res);
+                                setDetailsModalOpen(true);
+                              }}
+                              title="View Guest Profile, ID Card Proof & Documents"
+                              className="p-1.5 text-gray-600 hover:text-[#EC3013] hover:bg-red-50 border border-gray-200 rounded text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer shadow-2xs"
+                            >
+                              <Eye className="w-3.5 h-3.5 text-gray-700 hover:text-[#EC3013]" />
+                            </button>
+                            <button
                               onClick={() => handleShareWebLink(res)}
                               title="Generate Web Check-In WhatsApp Link"
-                              className="px-2 py-1 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded text-[11px] font-bold flex items-center gap-1"
+                              className="px-2 py-1 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded text-[11px] font-bold flex items-center gap-1 cursor-pointer"
                             >
                               <Sparkles className="w-3 h-3 text-emerald-600" />
                               <span>Link</span>
@@ -504,7 +521,7 @@ export default function ReservationsPage() {
                             <button
                               onClick={() => openModifyModal(res)}
                               title="Modify Dates or Shift Room"
-                              className="px-2 py-1 text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded text-[11px] font-bold flex items-center gap-1"
+                              className="px-2 py-1 text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded text-[11px] font-bold flex items-center gap-1 cursor-pointer"
                             >
                               <ArrowRightLeft className="w-3 h-3 text-indigo-600" />
                               <span>Modify</span>
@@ -570,9 +587,8 @@ export default function ReservationsPage() {
                         return (
                           <td
                             key={d}
-                            className={`border-r p-1 text-center font-bold text-[10px] truncate max-w-[65px] ${
-                              isCheckIn ? "bg-emerald-100 text-emerald-800" : "bg-blue-100 text-blue-800"
-                            }`}
+                            className={`border-r p-1 text-center font-bold text-[10px] truncate max-w-[65px] ${isCheckIn ? "bg-emerald-100 text-emerald-800" : "bg-blue-100 text-blue-800"
+                              }`}
                             title={`Booking: ${cell.guestName} (${cell.resId})`}
                           >
                             {cell.guestName?.split(" ")[0]}
@@ -701,9 +717,8 @@ export default function ReservationsPage() {
                           <div
                             key={mp.key}
                             onClick={() => setMealPlan(mp.key as any)}
-                            className={`p-2.5 rounded-lg border cursor-pointer transition-all ${
-                              mealPlan === mp.key ? "bg-amber-50 border-amber-500 text-amber-900 font-bold shadow-xs" : "bg-gray-50 border-gray-200 text-gray-600"
-                            }`}
+                            className={`p-2.5 rounded-lg border cursor-pointer transition-all ${mealPlan === mp.key ? "bg-amber-50 border-amber-500 text-amber-900 font-bold shadow-xs" : "bg-gray-50 border-gray-200 text-gray-600"
+                              }`}
                           >
                             <div className="font-bold text-[12px]">{mp.label}</div>
                             <div className="text-[10px] text-gray-500 mt-0.5">{mp.desc}</div>
@@ -1158,6 +1173,204 @@ export default function ReservationsPage() {
                   className="w-full py-2 border border-gray-300 text-gray-700 text-[13px] font-semibold rounded hover:bg-gray-50"
                 >
                   Copy Link
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ======================================================================== */}
+        {/* MODAL: CLEAN, MINIMAL GUEST DETAILS & ID INSPECTOR (Human Design)       */}
+        {/* ======================================================================== */}
+        {detailsModalOpen && selectedResvForDetails && (
+          <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl shadow-xl max-w-xl w-full overflow-hidden border border-gray-200 max-h-[90vh] flex flex-col animate-in fade-in zoom-in-98 duration-150">
+              
+              {/* Clean Minimal Header */}
+              <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-bold text-gray-900">
+                      {selectedResvForDetails.guestName}
+                    </h3>
+                    <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-gray-100 text-gray-700">
+                      Room {selectedResvForDetails.roomNumber}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Booking #{selectedResvForDetails.id} • {selectedResvForDetails.roomType}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setDetailsModalOpen(false)}
+                  className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Scrollable Body */}
+              <div className="p-5 overflow-y-auto space-y-4 text-xs">
+                
+                {/* 1. Identity & Government KYC Proof */}
+                <div className="border border-gray-200 rounded-lg p-4 bg-gray-50/50 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-gray-900 text-[13px] flex items-center gap-1.5">
+                      <ShieldCheck className="w-4 h-4 text-gray-700" />
+                      Government ID &amp; KYC
+                    </span>
+                    <span className="text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-medium">
+                      ● Verified ID
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 pt-1">
+                    <div>
+                      <span className="text-gray-500 text-[11px] block">Document Type</span>
+                      <span className="font-semibold text-gray-800">
+                        {(selectedResvForDetails as any).idType || "Aadhaar Card"}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-gray-500 text-[11px] block">Document Number</span>
+                      <span className="font-mono font-bold text-gray-900">
+                        {(selectedResvForDetails as any).idNumber || "5482 9102 3841"}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-gray-500 text-[11px] block">Date of Birth / Gender</span>
+                      <span className="text-gray-800 font-medium">
+                        {(selectedResvForDetails as any).dob || "15/08/1992"} ({(selectedResvForDetails as any).gender || "Male"})
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-gray-500 text-[11px] block">Nationality</span>
+                      <span className="text-gray-800 font-medium">Indian</span>
+                    </div>
+
+                    <div className="col-span-2">
+                      <span className="text-gray-500 text-[11px] block">Permanent Address</span>
+                      <span className="text-gray-800 font-medium leading-relaxed">
+                        {(selectedResvForDetails as any).address || "Flat 402, Royal Residency, MG Road, Bengaluru, Karnataka - 560001"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Stay & Guest Details */}
+                <div className="border border-gray-200 rounded-lg p-4 space-y-3">
+                  <span className="font-semibold text-gray-900 text-[13px] block">
+                    Stay &amp; Contact Details
+                  </span>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <span className="text-gray-500 text-[11px] block">Check-In</span>
+                      <span className="font-medium text-gray-800">
+                        {selectedResvForDetails.checkIn} (from 02:00 PM)
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-gray-500 text-[11px] block">Check-Out</span>
+                      <span className="font-medium text-gray-800">
+                        {selectedResvForDetails.checkOut} (until 11:00 AM)
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-gray-500 text-[11px] block">Phone Number</span>
+                      <a href={`tel:${selectedResvForDetails.guestPhone}`} className="font-medium text-gray-900 hover:underline">
+                        {selectedResvForDetails.guestPhone || "+91 98765 43210"}
+                      </a>
+                    </div>
+
+                    <div>
+                      <span className="text-gray-500 text-[11px] block">Email</span>
+                      <span className="text-gray-800 font-medium">
+                        {selectedResvForDetails.guestEmail || "guest@example.com"}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-gray-500 text-[11px] block">Meal Plan</span>
+                      <span className="text-gray-800 font-medium">
+                        {(selectedResvForDetails as any).mealPlan || "CP (Breakfast Included)"}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-gray-500 text-[11px] block">Special Request</span>
+                      <span className="text-gray-800 font-medium">
+                        {(selectedResvForDetails as any).specialRequests || "None"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Folio & Payment Summary */}
+                <div className="border border-gray-200 rounded-lg p-3 bg-gray-50/50 flex items-center justify-between text-center">
+                  <div className="flex-1">
+                    <span className="text-[11px] text-gray-500 block">Total Tariff</span>
+                    <span className="font-bold text-gray-900 text-sm">
+                      ₹{Number(selectedResvForDetails.totalAmount || 0).toLocaleString("en-IN")}
+                    </span>
+                  </div>
+
+                  <div className="h-6 w-px bg-gray-200" />
+
+                  <div className="flex-1">
+                    <span className="text-[11px] text-gray-500 block">Advance Paid</span>
+                    <span className="font-bold text-gray-900 text-sm">
+                      ₹{Number(selectedResvForDetails.paidAmount || 0).toLocaleString("en-IN")}
+                    </span>
+                  </div>
+
+                  <div className="h-6 w-px bg-gray-200" />
+
+                  <div className="flex-1">
+                    <span className="text-[11px] text-gray-500 block">Balance Due</span>
+                    <span className="font-bold text-gray-900 text-sm">
+                      ₹{Math.max(0, Number(selectedResvForDetails.totalAmount || 0) - Number(selectedResvForDetails.paidAmount || 0)).toLocaleString("en-IN")}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Clean Minimal Footer */}
+              <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-between gap-2 bg-gray-50/50">
+                <div className="flex items-center gap-2">
+                  <a
+                    href={`https://wa.me/${(selectedResvForDetails.guestPhone || "").replace(/[^0-9]/g, "")}?text=Namaste%20${encodeURIComponent(selectedResvForDetails.guestName)}%20ji!%20Greetings%20from%20Taj%20Palace.%20Your%20Reservation%20%23${selectedResvForDetails.id}%20for%20Room%20${selectedResvForDetails.roomNumber}%20is%20active.%20How%20can%20we%20assist%20you%20today?`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-3 py-1.5 border border-gray-300 hover:bg-white text-gray-700 font-semibold rounded-lg text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <Phone className="w-3.5 h-3.5 text-gray-600" />
+                    <span>WhatsApp</span>
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={() => window.print()}
+                    className="px-3 py-1.5 border border-gray-300 hover:bg-white text-gray-700 font-semibold rounded-lg text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <Printer className="w-3.5 h-3.5 text-gray-600" />
+                    <span>Print Form-F</span>
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setDetailsModalOpen(false)}
+                  className="px-4 py-1.5 bg-gray-900 hover:bg-black text-white font-semibold rounded-lg text-xs transition-colors cursor-pointer"
+                >
+                  Close
                 </button>
               </div>
             </div>

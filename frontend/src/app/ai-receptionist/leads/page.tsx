@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { leadsApi } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 import { Plus, X, Search, PhoneCall, Bot, CheckCircle2, RefreshCw } from "lucide-react";
 
 interface Lead {
@@ -19,6 +20,9 @@ interface Lead {
 }
 
 export default function AILeadManagementPage() {
+  const { user } = useAuth();
+  const currentHotelId = user?.hotelId || "hotel-taj-delhi";
+
   const [leads, setLeads] = useState<Lead[]>([]);
   const [metrics, setMetrics] = useState<any>({ totalPipeline: 0, convertedTotal: 0, aiQualifiedCount: 0, totalEnquiries: 0 });
   const [isLoading, setIsLoading] = useState(true);
@@ -42,7 +46,10 @@ export default function AILeadManagementPage() {
   const loadLeads = async () => {
     setIsLoading(true);
     try {
-      const res = await leadsApi.getAll();
+      const res = await leadsApi.getAll({
+        hotelId: currentHotelId,
+        leadType: "hotel_guest",
+      });
       if (res && res.data) {
         setLeads(res.data);
         if (res.metrics) setMetrics(res.metrics);
@@ -56,7 +63,7 @@ export default function AILeadManagementPage() {
 
   useEffect(() => {
     loadLeads();
-  }, []);
+  }, [currentHotelId]);
 
   const handleCreateLead = async (e: React.FormEvent) => {
     e.preventDefault();

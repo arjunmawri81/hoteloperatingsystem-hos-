@@ -219,12 +219,13 @@ function MyBookingsContent() {
                   )}
 
                   {isConfirmed && (
-                    <button
-                      onClick={() => handleDigitalCheckIn(b.id, b.guestName)}
-                      className="px-4 py-1.5 bg-[#EC3013] hover:bg-[#D62839] text-white text-[12px] font-bold rounded shadow-xs transition-colors cursor-pointer"
+                    <Link
+                      href={`/customer/pre-checkin?bookingId=${b.id}`}
+                      className="px-4 py-1.5 bg-[#EC3013] hover:bg-[#D62839] text-white text-[12px] font-bold rounded shadow-xs transition-colors cursor-pointer inline-flex items-center gap-1.5"
                     >
-                      Digital Check-In
-                    </button>
+                      <span>Digital Check-In</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
                   )}
 
                   {!isCancelled && (

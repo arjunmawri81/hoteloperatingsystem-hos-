@@ -6,7 +6,7 @@ import { UserMenu } from "@/components/layout/UserMenu";
 import { GlobalSearchModal } from "@/components/layout/GlobalSearchModal";
 import { NotificationPopover } from "@/components/layout/NotificationPopover";
 import { RoleGuard } from "@/components/layout/RoleGuard";
-import { LayoutDashboard, Building2, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, Building2, ShieldCheck, PhoneCall } from "lucide-react";
 
 export default function SuperAdminLayout({
   children,
@@ -14,9 +14,15 @@ export default function SuperAdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const isOrganizations = pathname.includes("/organizations");
+  const isDashboard = pathname === "/super-admin";
+  const isOrganizations = pathname.startsWith("/super-admin/organizations");
+  const isLeads = pathname.startsWith("/super-admin/leads");
 
-  const currentPageTitle = isOrganizations ? "Organizations" : "Platform Dashboard";
+  const currentPageTitle = isLeads
+    ? "Inquiries & Leads"
+    : isOrganizations
+    ? "Organizations"
+    : "Platform Dashboard";
 
   return (
     <RoleGuard allowedRoles={["super_admin"]} moduleName="Super Admin SaaS Platform">
@@ -58,7 +64,7 @@ export default function SuperAdminLayout({
               <Link
                 href="/super-admin"
                 className={`group flex items-center justify-between px-3.5 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 ${
-                  !isOrganizations
+                  isDashboard
                     ? "bg-[#16233B] text-white font-semibold shadow-inner border border-cyan-500/20 relative"
                     : "text-slate-400 hover:text-slate-100 hover:bg-[#111C33]/70"
                 }`}
@@ -66,14 +72,14 @@ export default function SuperAdminLayout({
                 <div className="flex items-center gap-3 min-w-0">
                   <LayoutDashboard
                     className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                      !isOrganizations
+                      isDashboard
                         ? "text-cyan-400 drop-shadow-[0_0_6px_rgba(56,189,248,0.5)]"
                         : "text-slate-400 group-hover:text-slate-200"
                     }`}
                   />
                   <span className="truncate">Platform Dashboard</span>
                 </div>
-                {!isOrganizations && (
+                {isDashboard && (
                   <span className="w-1.5 h-4 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(56,189,248,0.8)]" />
                 )}
               </Link>
@@ -97,6 +103,29 @@ export default function SuperAdminLayout({
                   <span className="truncate">Organizations &amp; Tenants</span>
                 </div>
                 {isOrganizations && (
+                  <span className="w-1.5 h-4 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(56,189,248,0.8)]" />
+                )}
+              </Link>
+
+              <Link
+                href="/super-admin/leads"
+                className={`group flex items-center justify-between px-3.5 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 ${
+                  isLeads
+                    ? "bg-[#16233B] text-white font-semibold shadow-inner border border-cyan-500/20 relative"
+                    : "text-slate-400 hover:text-slate-100 hover:bg-[#111C33]/70"
+                }`}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <PhoneCall
+                    className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                      isLeads
+                        ? "text-cyan-400 drop-shadow-[0_0_6px_rgba(56,189,248,0.5)]"
+                        : "text-slate-400 group-hover:text-slate-200"
+                    }`}
+                  />
+                  <span className="truncate">Inquiries &amp; Leads</span>
+                </div>
+                {isLeads && (
                   <span className="w-1.5 h-4 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(56,189,248,0.8)]" />
                 )}
               </Link>

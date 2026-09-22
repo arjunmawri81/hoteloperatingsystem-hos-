@@ -178,7 +178,7 @@ export const reservationsApi = {
     return (res as any)?.data || res;
   },
 
-  preCheckIn: async (id: string, payload: { idType?: string; idNumber?: string; estimatedArrivalTime?: string; specialRequests?: string }): Promise<any> => {
+  preCheckIn: async (id: string, payload: { idType?: string; idNumber?: string; estimatedArrivalTime?: string; specialRequests?: string; dob?: string }): Promise<any> => {
     const res = await api.post(`/reservations/${id}/pre-checkin`, payload);
     return (res as any)?.data || res;
   },
@@ -585,7 +585,7 @@ export const inventoryApi = {
 // 12. AI LEAD PIPELINE API (AI Receptionist)
 // -------------------------------------------------------------
 export const leadsApi = {
-  getAll: async (params?: { stage?: string; search?: string; hotelId?: string; orgId?: string }): Promise<{ data: any[]; metrics: any }> => {
+  getAll: async (params?: { stage?: string; search?: string; hotelId?: string; orgId?: string; leadType?: string }): Promise<{ data: any[]; metrics: any }> => {
     try {
       const res = await api.get<{ data: any[]; metrics: any }>("/leads", { params, timeout: 3000 });
       return res.data ? res : { data: (res as any), metrics: null };
@@ -599,6 +599,10 @@ export const leadsApi = {
   },
   advanceStage: async (id: string, stage: string): Promise<any> => {
     const res = await api.patch(`/leads/${id}/stage`, { stage });
+    return res.data || res;
+  },
+  delete: async (id: string): Promise<any> => {
+    const res = await api.delete(`/leads/${id}`);
     return res.data || res;
   },
 };

@@ -4,6 +4,7 @@ const AIKnowledge = require("../models/AIKnowledge");
 const AIToolsService = require("../services/aiTools.service");
 const Complaint = require("../models/Complaint");
 const Lead = require("../models/Lead");
+const Hotel = require("../models/Hotel");
 
 const router = express.Router();
 
@@ -82,6 +83,13 @@ router.post("/chat", async (req, res) => {
       const extractedPhone = phoneMatch ? phoneMatch[0].replace(/[\s-]/g, "") : (guestPhone || "+91 98000 00000");
       const testLeadId = `lead-chat-${Date.now().toString().slice(-4)}`;
       
+      const targetHotelId = hotelId || "hotel-taj-delhi";
+      let targetOrgId = "";
+      try {
+        const matchedHotel = await Hotel.findOne({ id: targetHotelId });
+        if (matchedHotel) targetOrgId = matchedHotel.orgId;
+      } catch (err) {}
+
       const newLead = await Lead.create({
         id: testLeadId,
         name: `Guest Inquiry (${extractedPhone.slice(-4)})`,
@@ -93,7 +101,9 @@ router.post("/chat", async (req, res) => {
         stage: "New",
         aiSummary: `[AI Web Chat Captured]: ${message}`,
         nextFollowUp: "Today, within 2 hours",
-        hotelId: hotelId || "hotel-taj-delhi",
+        hotelId: targetHotelId,
+        orgId: targetOrgId,
+        leadType: "hotel_guest",
       });
 
       return res.json({
@@ -126,7 +136,17 @@ router.post("/chat", async (req, res) => {
       });
     }
 
-    // 5. Fallback contextual reply
+    // 5. Call Live Google Gemini AI Model
+    const geminiReply = await askGemini(message);
+    if (geminiReply) {
+      return res.json({
+        success: true,
+        reply: geminiReply,
+        toolUsed: "Google Gemini AI",
+      });
+    }
+
+    // 6. Fallback contextual reply
     return res.json({
       success: true,
       reply: `I am your 24/7 AI Concierge for Meridian Hotels. I can check live room availability, lookup your reservation, capture your booking requirement, or connect you with front desk staff. How may I assist you?`,
@@ -135,6 +155,52 @@ router.post("/chat", async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 });
+
+async function askGemini(prompt, hotelContext = "") {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return null;
+
+  try {
+    const systemPrompt = `You are "Aura", the intelligent 24/7 AI Concierge and Front Desk Assistant for Meridian Hotels & Resorts. 
+You are warm, polite, professional, and hospitable. You can communicate fluently in both English and Hindi/Hinglish based on the guest's language.
+Hotel Details:
+- Check-in: 02:00 PM, Check-out: 11:00 AM
+- Breakfast Buffet: 07:00 AM - 10:30 AM at Grand Spice Restaurant
+- Swimming Pool & Fitness Gym: 06:00 AM - 09:00 PM
+- Wi-Fi: "Meridian_Guest_HighSpeed" (Room No + Last Name)
+- 24/7 Room Dining: Dial 9
+- Banquet & Weddings: Grand Ballroom up to 500 guests.
+${hotelContext ? "Additional info: " + hotelContext : ""}`;
+
+    const modelName = process.env.GEMINI_MODEL || "gemini-3.6-flash";
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: `${systemPrompt}\n\nGuest Query: ${prompt}` }],
+          },
+        ],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 350,
+        },
+      }),
+    });
+
+    const data = await response.json();
+    if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
+      return data.candidates[0].content.parts[0].text;
+    }
+  } catch (err) {
+    console.error("Gemini API call failed:", err.message);
+  }
+  return null;
+}
 
 // --- AI Knowledge Base CRUD ---
 router.get("/knowledge", async (req, res) => {

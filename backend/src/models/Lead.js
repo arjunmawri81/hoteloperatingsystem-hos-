@@ -52,6 +52,15 @@ const LeadSchema = new mongoose.Schema(
       type: String,
       default: "hotel-101",
     },
+    orgId: {
+      type: String,
+      default: "",
+    },
+    leadType: {
+      type: String,
+      enum: ["saas", "hotel_guest"],
+      default: "hotel_guest",
+    },
   },
   {
     timestamps: true,

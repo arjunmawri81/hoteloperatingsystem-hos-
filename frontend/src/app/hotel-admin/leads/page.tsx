@@ -17,6 +17,9 @@ import {
   Check,
   MapPin,
   ArrowUpRight,
+  Download,
+  Trash2,
+  MessageSquare,
 } from "lucide-react";
 
 interface Lead {
@@ -64,7 +67,11 @@ export default function HotelAdminLeadsOverviewPage() {
     setIsLoading(true);
     try {
       const [leadsRes, hotelsRes] = await Promise.all([
-        leadsApi.getAll({ hotelId: selectedHotelId !== "all" ? selectedHotelId : undefined }),
+        leadsApi.getAll({
+          hotelId: selectedHotelId !== "all" ? selectedHotelId : undefined,
+          orgId: user?.orgId || undefined,
+          leadType: "hotel_guest",
+        }),
         hotelsApi.getAll(user?.orgId ? { orgId: user.orgId } : undefined),
       ]);
       if (leadsRes && leadsRes.data) {
@@ -153,6 +160,53 @@ export default function HotelAdminLeadsOverviewPage() {
     }
   };
 
+  const handleExportCSV = () => {
+    if (filteredLeads.length === 0) {
+      alert("No leads to export.");
+      return;
+    }
+    const headers = ["ID", "Name", "Phone", "Email", "Hotel", "Source", "Requirement", "Budget", "Stage", "Next Action", "Created At"];
+    const rows = filteredLeads.map((l) => {
+      const hName = hotels.find((h) => h.id === l.hotelId || h._id === l.hotelId)?.name || l.hotelId || "Default Property";
+      return [
+        l.id || l._id || "",
+        `"${(l.name || "").replace(/"/g, '""')}"`,
+        `"${l.phone || ""}"`,
+        `"${l.email || ""}"`,
+        `"${hName.replace(/"/g, '""')}"`,
+        `"${l.source || ""}"`,
+        `"${(l.requirement || "").replace(/"/g, '""')}"`,
+        l.budget || 0,
+        l.stage || "New",
+        `"${(l.nextFollowUp || "").replace(/"/g, '""')}"`,
+        `"${l.createdAt || new Date().toISOString()}"`,
+      ];
+    });
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `chain_leads_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setToastMsg("📥 Exported chain leads to CSV successfully!");
+    setTimeout(() => setToastMsg(null), 3000);
+  };
+
+  const handleDeleteLead = async (leadId: string, leadName: string) => {
+    if (!confirm(`Are you sure you want to delete lead "${leadName}"?`)) return;
+    try {
+      await leadsApi.delete(leadId);
+      setLeads((prev) => prev.filter((l) => l.id !== leadId && (l as any)._id !== leadId));
+      setToastMsg(`🗑️ Lead "${leadName}" deleted from database`);
+      setTimeout(() => setToastMsg(null), 3000);
+    } catch (err: any) {
+      console.error(err);
+      alert("Failed to delete lead: " + (err.message || "Unknown error"));
+    }
+  };
+
   const filteredLeads = leads.filter((l) => {
     const matchesSearch =
       l.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -224,6 +278,16 @@ export default function HotelAdminLeadsOverviewPage() {
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin text-[#EC3013]" : ""}`} />
           </button>
+
+          <button
+            onClick={handleExportCSV}
+            title="Export chain leads to CSV"
+            className="flex items-center gap-1.5 px-3 py-2 bg-white border border-[#D1D5DB] hover:bg-[#F3F4F6] text-[#374151] text-[13px] font-bold rounded shadow-2xs transition-colors cursor-pointer"
+          >
+            <Download className="w-4 h-4 text-[#4B5563]" />
+            <span>Export CSV</span>
+          </button>
+
           <button
             onClick={() => setIsModalOpen(true)}
             className="flex items-center gap-1.5 px-4 py-2 bg-[#EC3013] hover:bg-[#D62839] text-white text-[13px] font-bold rounded shadow-xs transition-colors cursor-pointer"
@@ -451,19 +515,48 @@ export default function HotelAdminLeadsOverviewPage() {
                           </p>
                         </td>
                         <td className="py-3.5 px-4 text-right">
-                          {lead.stage !== "Converted" && lead.stage !== "Lost" ? (
+                          <div className="flex items-center justify-end gap-1.5">
+                            <a
+                              href={`https://wa.me/${lead.phone.replace(/[^0-9]/g, "")}?text=Namaste%20${encodeURIComponent(lead.name)}%20ji!%20Greetings%20from%20${encodeURIComponent(hotelMatch?.name || "our Hotel")}.%20We%20received%20your%20inquiry%20regarding%20${encodeURIComponent(lead.requirement)}.%20How%20can%20we%20assist%20you%20with%20our%20best%20package?`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="p-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border border-emerald-200 rounded transition-colors"
+                              title="WhatsApp Guest"
+                            >
+                              <MessageSquare className="w-3.5 h-3.5" />
+                            </a>
+
+                            <a
+                              href={`tel:${lead.phone}`}
+                              className="p-1.5 border border-[#D1D5DB] hover:bg-gray-100 rounded text-gray-700 transition-colors"
+                              title="Call Guest"
+                            >
+                              <PhoneCall className="w-3.5 h-3.5" />
+                            </a>
+
+                            {lead.stage !== "Converted" && lead.stage !== "Lost" ? (
+                              <button
+                                type="button"
+                                onClick={() => advanceStage(lead.id || (lead as any)._id)}
+                                className="px-2.5 py-1 bg-[#111827] hover:bg-black text-white text-[11px] font-bold rounded shadow-xs cursor-pointer active:scale-95 transition-transform"
+                              >
+                                Advance →
+                              </button>
+                            ) : lead.stage === "Converted" ? (
+                              <span className="text-[11px] text-emerald-700 font-bold px-1.5 py-0.5 bg-emerald-50 rounded">Won ✓</span>
+                            ) : (
+                              <span className="text-[11px] text-rose-600 font-bold px-1.5 py-0.5 bg-rose-50 rounded">Closed</span>
+                            )}
+
                             <button
                               type="button"
-                              onClick={() => advanceStage(lead.id || (lead as any)._id)}
-                              className="px-3 py-1 bg-white border border-[#D1D5DB] hover:bg-[#F9FAFB] text-[#111827] text-[11px] font-bold rounded shadow-xs cursor-pointer active:scale-95 transition-transform"
+                              onClick={() => handleDeleteLead(lead.id || (lead as any)._id, lead.name)}
+                              className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors cursor-pointer"
+                              title="Delete Lead"
                             >
-                              Advance →
+                              <Trash2 className="w-3.5 h-3.5" />
                             </button>
-                          ) : lead.stage === "Converted" ? (
-                            <span className="text-[11px] text-emerald-700 font-bold">Won ✓</span>
-                          ) : (
-                            <span className="text-[11px] text-rose-600 font-bold">Closed</span>
-                          )}
+                          </div>
                         </td>
                       </tr>
                     );

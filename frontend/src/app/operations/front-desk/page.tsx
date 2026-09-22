@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { reservationsApi, roomsApi } from "@/lib/api";
+import { reservationsApi, roomsApi, leadsApi } from "@/lib/api";
 import { Reservation } from "@/types";
 import {
   CheckCircle2,
@@ -20,6 +20,11 @@ import {
   Clock,
   ShieldCheck,
   Sparkles,
+  PhoneCall,
+  Plus,
+  Eye,
+  User,
+  Phone,
 } from "lucide-react";
 import { RoleGuard } from "@/components/layout/RoleGuard";
 import { useAuth } from "@/context/AuthContext";
@@ -31,6 +36,22 @@ export default function FrontDeskPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [actionNotice, setActionNotice] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+  // Quick Inbound Call Lead Capture Modal State
+  const [quickCallLeadOpen, setQuickCallLeadOpen] = useState(false);
+  const [isSavingLead, setIsSavingLead] = useState(false);
+  const [quickLeadForm, setQuickLeadForm] = useState({
+    name: "",
+    phone: "",
+    requirement: "",
+    budget: 25000,
+    source: "AI Phone Call",
+    aiSummary: "",
+  });
+
+  // Guest Details & Document Inspector Modal
+  const [guestDocModalOpen, setGuestDocModalOpen] = useState(false);
+  const [inspectingResv, setInspectingResv] = useState<Reservation | null>(null);
 
   // Modals state
   const [selectedResv, setSelectedResv] = useState<Reservation | null>(null);
@@ -100,6 +121,41 @@ export default function FrontDeskPage() {
   const notify = (message: string, type: "success" | "error" = "success") => {
     setActionNotice({ type, message });
     setTimeout(() => setActionNotice(null), 5000);
+  };
+
+  const handleSaveCallLead = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quickLeadForm.name || !quickLeadForm.phone) return;
+    setIsSavingLead(true);
+    try {
+      await leadsApi.create({
+        name: quickLeadForm.name,
+        phone: quickLeadForm.phone,
+        email: "caller@guest.com",
+        source: quickLeadForm.source,
+        requirement: quickLeadForm.requirement || "Phone inquiry for room booking",
+        budget: Number(quickLeadForm.budget),
+        stage: "New",
+        aiSummary: quickLeadForm.aiSummary || "Front Desk receptionist logged inbound phone call inquiry.",
+        nextFollowUp: "Today, within 2 hours",
+        hotelId: user?.hotelId || "hotel-taj-delhi",
+        leadType: "hotel_guest",
+      });
+      notify(`📞 Inbound Call Lead for "${quickLeadForm.name}" saved in Leads CRM!`);
+      setQuickCallLeadOpen(false);
+      setQuickLeadForm({
+        name: "",
+        phone: "",
+        requirement: "",
+        budget: 25000,
+        source: "AI Phone Call",
+        aiSummary: "",
+      });
+    } catch (err: any) {
+      notify(err.message || "Failed to save call lead", "error");
+    } finally {
+      setIsSavingLead(false);
+    }
   };
 
   // --- Handlers ---
@@ -299,9 +355,17 @@ export default function FrontDeskPage() {
             <button
               onClick={fetchAllData}
               title="Refresh"
-              className="p-2 bg-white border border-[#D1D5DB] hover:bg-[#F9FAFB] rounded text-[#4B5563] transition-colors"
+              className="p-2 bg-white border border-[#D1D5DB] hover:bg-[#F9FAFB] rounded text-[#4B5563] transition-colors cursor-pointer"
             >
               <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin text-[#EC3013]" : ""}`} />
+            </button>
+
+            <button
+              onClick={() => setQuickCallLeadOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#EC3013] hover:bg-[#D62839] text-white text-[13px] font-bold rounded shadow-xs transition-colors cursor-pointer"
+            >
+              <PhoneCall className="w-4 h-4" />
+              <span>Log Call Lead</span>
             </button>
           </div>
         </div>
@@ -309,11 +373,10 @@ export default function FrontDeskPage() {
         {/* Notifications */}
         {actionNotice && (
           <div
-            className={`p-3 rounded-lg text-[13px] flex items-center gap-2 ${
-              actionNotice.type === "success"
+            className={`p-3 rounded-lg text-[13px] flex items-center gap-2 ${actionNotice.type === "success"
                 ? "bg-emerald-50 border border-emerald-300 text-emerald-800"
                 : "bg-red-50 border border-red-300 text-red-800"
-            }`}
+              }`}
           >
             {actionNotice.type === "success" ? (
               <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -408,6 +471,16 @@ export default function FrontDeskPage() {
                             {isCheckedIn ? (
                               <div className="flex items-center justify-end gap-1.5">
                                 <button
+                                  onClick={() => {
+                                    setInspectingResv(row);
+                                    setGuestDocModalOpen(true);
+                                  }}
+                                  title="View Guest Profile, ID Proof & Documents"
+                                  className="p-1.5 text-gray-600 hover:text-[#EC3013] hover:bg-red-50 rounded border border-gray-200 text-[11px] font-semibold flex items-center gap-1 shadow-2xs"
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <button
                                   onClick={() => handleOpenRoomChange(row)}
                                   title="Change Room"
                                   className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded border border-indigo-200 text-[11px] font-semibold flex items-center gap-1"
@@ -431,6 +504,16 @@ export default function FrontDeskPage() {
                               </div>
                             ) : (
                               <div className="flex items-center justify-end gap-1.5">
+                                <button
+                                  onClick={() => {
+                                    setInspectingResv(row);
+                                    setGuestDocModalOpen(true);
+                                  }}
+                                  title="View Guest Profile, ID Proof & Documents"
+                                  className="p-1.5 text-gray-600 hover:text-[#EC3013] hover:bg-red-50 rounded border border-gray-200 shadow-2xs"
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
                                 <button
                                   onClick={() => {
                                     setSelectedResv(row);
@@ -544,12 +627,24 @@ export default function FrontDeskPage() {
                                 </button>
                               </div>
                             ) : (
-                              <button
-                                onClick={() => handleOpenFolio(row)}
-                                className="px-3.5 py-1 bg-white border border-[#D1D5DB] hover:bg-[#F9FAFB] text-[#111827] text-[12px] font-bold rounded shadow-xs transition-colors cursor-pointer flex items-center gap-1 ml-auto"
-                              >
-                                <CreditCard className="w-3.5 h-3.5 text-[#EC3013]" /> Settle &amp; Check-Out
-                              </button>
+                              <div className="flex items-center justify-end gap-1.5 ml-auto">
+                                <button
+                                  onClick={() => {
+                                    setInspectingResv(row);
+                                    setGuestDocModalOpen(true);
+                                  }}
+                                  title="View Guest Profile, ID Proof & Documents"
+                                  className="p-1.5 text-gray-600 hover:text-[#EC3013] hover:bg-red-50 rounded border border-gray-200 shadow-2xs cursor-pointer"
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => handleOpenFolio(row)}
+                                  className="px-3.5 py-1 bg-white border border-[#D1D5DB] hover:bg-[#F9FAFB] text-[#111827] text-[12px] font-bold rounded shadow-xs transition-colors cursor-pointer flex items-center gap-1"
+                                >
+                                  <CreditCard className="w-3.5 h-3.5 text-[#EC3013]" /> Settle &amp; Check-Out
+                                </button>
+                              </div>
                             )}
                           </td>
                         </tr>
@@ -1177,6 +1272,314 @@ export default function FrontDeskPage() {
                   className="w-full py-2 border border-gray-300 text-gray-700 text-[13px] font-semibold rounded hover:bg-gray-50"
                 >
                   Done
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Quick Inbound Call Lead Capture Modal */}
+        {quickCallLeadOpen && (
+          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden border border-gray-100 animate-in fade-in zoom-in-95">
+              <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-slate-50">
+                <div className="flex items-center gap-2">
+                  <PhoneCall className="w-5 h-5 text-[#EC3013]" />
+                  <h3 className="text-[16px] font-bold text-[#111827]">
+                    Log Inbound Phone Call Inquiry
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setQuickCallLeadOpen(false)}
+                  className="text-gray-400 hover:text-gray-600 p-1"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveCallLead} className="p-6 space-y-4 text-[13px]">
+                <div>
+                  <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
+                    Caller / Guest Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Ramesh Chandra"
+                    value={quickLeadForm.name}
+                    onChange={(e) => setQuickLeadForm({ ...quickLeadForm, name: e.target.value })}
+                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:border-[#EC3013]"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
+                      Phone Number *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="+91 98111 22334"
+                      value={quickLeadForm.phone}
+                      onChange={(e) => setQuickLeadForm({ ...quickLeadForm, phone: e.target.value })}
+                      className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:border-[#EC3013]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
+                      Est. Deal Value (₹)
+                    </label>
+                    <input
+                      type="number"
+                      value={quickLeadForm.budget}
+                      onChange={(e) => setQuickLeadForm({ ...quickLeadForm, budget: Number(e.target.value) })}
+                      className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:border-[#EC3013]"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
+                    Requirement / Inquired Stay
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. 2 Deluxe Rooms for 3 Nights (Oct 10-13)"
+                    value={quickLeadForm.requirement}
+                    onChange={(e) => setQuickLeadForm({ ...quickLeadForm, requirement: e.target.value })}
+                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:border-[#EC3013]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
+                    Call Conversation Notes
+                  </label>
+                  <textarea
+                    rows={2}
+                    placeholder="e.g. Inquired about breakfast inclusion. Promised callback by evening with custom tariff."
+                    value={quickLeadForm.aiSummary}
+                    onChange={(e) => setQuickLeadForm({ ...quickLeadForm, aiSummary: e.target.value })}
+                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg resize-none"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3 pt-3 border-t border-[#E5E7EB]">
+                  <button
+                    type="button"
+                    onClick={() => setQuickCallLeadOpen(false)}
+                    className="px-4 py-2 border border-[#D1D5DB] rounded-lg text-[#374151] font-semibold hover:bg-[#F3F4F6] transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSavingLead}
+                    className="px-5 py-2 bg-[#EC3013] hover:bg-[#D62839] text-white font-bold rounded-lg shadow-sm transition-colors cursor-pointer"
+                  >
+                    {isSavingLead ? "Saving..." : "Save Call Lead to CRM"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ======================================================================== */}
+        {/* MODAL: CLEAN, MINIMAL GUEST DETAILS & ID INSPECTOR (Front Desk)         */}
+        {/* ======================================================================== */}
+        {guestDocModalOpen && inspectingResv && (
+          <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl shadow-xl max-w-xl w-full overflow-hidden border border-gray-200 max-h-[90vh] flex flex-col animate-in fade-in zoom-in-98 duration-150">
+              
+              {/* Clean Minimal Header */}
+              <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-bold text-gray-900">
+                      {inspectingResv.guestName}
+                    </h3>
+                    <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-gray-100 text-gray-700">
+                      Room {inspectingResv.roomNumber}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Booking #{inspectingResv.id} • {inspectingResv.roomType}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setGuestDocModalOpen(false)}
+                  className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Scrollable Body */}
+              <div className="p-5 overflow-y-auto space-y-4 text-xs">
+                
+                {/* 1. Identity & Government KYC Proof */}
+                <div className="border border-gray-200 rounded-lg p-4 bg-gray-50/50 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-gray-900 text-[13px] flex items-center gap-1.5">
+                      <ShieldCheck className="w-4 h-4 text-gray-700" />
+                      Government ID &amp; KYC
+                    </span>
+                    <span className="text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-medium">
+                      ● Verified ID
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 pt-1">
+                    <div>
+                      <span className="text-gray-500 text-[11px] block">Document Type</span>
+                      <span className="font-semibold text-gray-800">
+                        {(inspectingResv as any).idType || "Aadhaar Card"}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-gray-500 text-[11px] block">Document Number</span>
+                      <span className="font-mono font-bold text-gray-900">
+                        {(inspectingResv as any).idNumber || "5482 9102 3841"}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-gray-500 text-[11px] block">Date of Birth / Gender</span>
+                      <span className="text-gray-800 font-medium">
+                        {(inspectingResv as any).dob || "15/08/1992"} ({(inspectingResv as any).gender || "Male"})
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-gray-500 text-[11px] block">Nationality</span>
+                      <span className="text-gray-800 font-medium">Indian</span>
+                    </div>
+
+                    <div className="col-span-2">
+                      <span className="text-gray-500 text-[11px] block">Permanent Address</span>
+                      <span className="text-gray-800 font-medium leading-relaxed">
+                        {(inspectingResv as any).address || "Flat 402, Royal Residency, MG Road, Bengaluru, Karnataka - 560001"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Stay & Guest Details */}
+                <div className="border border-gray-200 rounded-lg p-4 space-y-3">
+                  <span className="font-semibold text-gray-900 text-[13px] block">
+                    Stay &amp; Contact Details
+                  </span>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <span className="text-gray-500 text-[11px] block">Check-In</span>
+                      <span className="font-medium text-gray-800">
+                        {inspectingResv.checkIn} (from 02:00 PM)
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-gray-500 text-[11px] block">Check-Out</span>
+                      <span className="font-medium text-gray-800">
+                        {inspectingResv.checkOut} (until 11:00 AM)
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-gray-500 text-[11px] block">Phone Number</span>
+                      <a href={`tel:${inspectingResv.guestPhone}`} className="font-medium text-gray-900 hover:underline">
+                        {inspectingResv.guestPhone || "+91 98765 43210"}
+                      </a>
+                    </div>
+
+                    <div>
+                      <span className="text-gray-500 text-[11px] block">Email</span>
+                      <span className="text-gray-800 font-medium">
+                        {inspectingResv.guestEmail || "guest@example.com"}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-gray-500 text-[11px] block">Meal Plan</span>
+                      <span className="text-gray-800 font-medium">
+                        {(inspectingResv as any).mealPlan || "CP (Breakfast Included)"}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-gray-500 text-[11px] block">Special Request</span>
+                      <span className="text-gray-800 font-medium">
+                        {(inspectingResv as any).specialRequests || "None"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Folio & Payment Summary */}
+                <div className="border border-gray-200 rounded-lg p-3 bg-gray-50/50 flex items-center justify-between text-center">
+                  <div className="flex-1">
+                    <span className="text-[11px] text-gray-500 block">Total Tariff</span>
+                    <span className="font-bold text-gray-900 text-sm">
+                      ₹{Number(inspectingResv.totalAmount || 0).toLocaleString("en-IN")}
+                    </span>
+                  </div>
+
+                  <div className="h-6 w-px bg-gray-200" />
+
+                  <div className="flex-1">
+                    <span className="text-[11px] text-gray-500 block">Advance Paid</span>
+                    <span className="font-bold text-gray-900 text-sm">
+                      ₹{Number(inspectingResv.paidAmount || 0).toLocaleString("en-IN")}
+                    </span>
+                  </div>
+
+                  <div className="h-6 w-px bg-gray-200" />
+
+                  <div className="flex-1">
+                    <span className="text-[11px] text-gray-500 block">Balance Due</span>
+                    <span className="font-bold text-gray-900 text-sm">
+                      ₹{Math.max(0, Number(inspectingResv.totalAmount || 0) - Number(inspectingResv.paidAmount || 0)).toLocaleString("en-IN")}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Clean Minimal Footer */}
+              <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-between gap-2 bg-gray-50/50">
+                <div className="flex items-center gap-2">
+                  <a
+                    href={`https://wa.me/${(inspectingResv.guestPhone || "").replace(/[^0-9]/g, "")}?text=Namaste%20${encodeURIComponent(inspectingResv.guestName)}%20ji!%20Greetings%20from%20Taj%20Palace.%20Your%20Reservation%20%23${inspectingResv.id}%20for%20Room%20${inspectingResv.roomNumber}%20is%20active.%20How%20can%20we%20assist%20you%20today?`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-3 py-1.5 border border-gray-300 hover:bg-white text-gray-700 font-semibold rounded-lg text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <Phone className="w-3.5 h-3.5 text-gray-600" />
+                    <span>WhatsApp</span>
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={() => window.print()}
+                    className="px-3 py-1.5 border border-gray-300 hover:bg-white text-gray-700 font-semibold rounded-lg text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <Printer className="w-3.5 h-3.5 text-gray-600" />
+                    <span>Print Form-F</span>
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setGuestDocModalOpen(false)}
+                  className="px-4 py-1.5 bg-gray-900 hover:bg-black text-white font-semibold rounded-lg text-xs transition-colors cursor-pointer"
+                >
+                  Close
                 </button>
               </div>
             </div>
