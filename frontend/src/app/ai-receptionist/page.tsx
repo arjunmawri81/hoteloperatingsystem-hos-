@@ -87,7 +87,7 @@ export default function AIReceptionistPage() {
 
   const loadKnowledge = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/ai/knowledge");
+      const res = await fetch("/api/ai/knowledge");
       if (res.ok) {
         const json = await res.json();
         setKnowledgeList(json.data || []);
@@ -124,7 +124,7 @@ export default function AIReceptionistPage() {
 
     try {
       // Query backend AI chat engine with live tool-calling
-      const res = await fetch("http://localhost:5000/api/ai/chat", {
+      const res = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: userText, hotelId: "hotel-101" }),
@@ -156,7 +156,7 @@ export default function AIReceptionistPage() {
 
   const handleEscalate = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/ai/escalate", {
+      const res = await fetch("/api/ai/escalate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -177,7 +177,7 @@ export default function AIReceptionistPage() {
   const handleAddKnowledge = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:5000/api/ai/knowledge", {
+      const res = await fetch("/api/ai/knowledge", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -198,7 +198,7 @@ export default function AIReceptionistPage() {
 
   const handleDeleteKnowledge = async (id: string) => {
     try {
-      await fetch(`http://localhost:5000/api/ai/knowledge/${id}`, { method: "DELETE" });
+      await fetch(`/api/ai/knowledge/${id}`, { method: "DELETE" });
       setKnowledgeList(knowledgeList.filter((k) => k._id !== id));
     } catch (e) {
       console.error(e);

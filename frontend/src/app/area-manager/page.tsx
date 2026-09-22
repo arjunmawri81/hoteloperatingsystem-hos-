@@ -119,7 +119,7 @@ export default function AreaManagerDashboardPage() {
 
   const handleAction = async (id: string, action: "Approved" | "Rejected") => {
     try {
-      await fetch(`http://localhost:5000/api/approvals/${id}/action`, {
+      await fetch(`/api/approvals/${id}/action`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: action.toLowerCase(), decisionBy: "Area Manager (Arjun)" }),
@@ -288,7 +288,7 @@ export default function AreaManagerDashboardPage() {
               onSubmit={async (e) => {
                 e.preventDefault();
                 try {
-                  const res = await fetch("http://localhost:5000/api/approvals", {
+                  const res = await fetch("/api/approvals", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({

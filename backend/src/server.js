@@ -43,6 +43,16 @@ app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use(morgan("dev"));
 
+// Ensure DB connection for serverless/lambda executions
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+  } catch (err) {
+    console.warn("DB connection warning in middleware:", err.message);
+  }
+  next();
+});
+
 // Standardized Request ID Generator (PDF Sec 20)
 app.use((req, res, next) => {
   req.requestId = `REQ-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`;
@@ -90,7 +100,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start Server
+// Start Server (only for traditional Node.js process / local development)
 const startServer = async () => {
   try {
     const dbConn = await connectDB();
@@ -120,7 +130,13 @@ const startServer = async () => {
   }
 };
 
-startServer();
+if (!process.env.VERCEL) {
+  startServer();
+} else {
+  // In Vercel serverless environment
+  initFirebase();
+}
 
 module.exports = app;
-// Reloaded with new MongoDB Atlas cluster
+
+

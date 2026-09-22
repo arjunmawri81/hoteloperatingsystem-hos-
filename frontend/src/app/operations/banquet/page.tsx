@@ -102,8 +102,8 @@ export default function BanquetManagementPage() {
     try {
       setLoading(true);
       const [hallsRes, bookingsRes] = await Promise.all([
-        fetch("http://localhost:5000/api/banquet/halls"),
-        fetch("http://localhost:5000/api/banquet/bookings"),
+        fetch("/api/banquet/halls"),
+        fetch("/api/banquet/bookings"),
       ]);
 
       if (hallsRes.ok) {
@@ -128,7 +128,7 @@ export default function BanquetManagementPage() {
   const handleCreateBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:5000/api/banquet/bookings", {
+      const res = await fetch("/api/banquet/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -163,7 +163,7 @@ export default function BanquetManagementPage() {
     e.preventDefault();
     try {
       const facilitiesArr = hallFormData.facilities.split(",").map((f) => f.trim()).filter(Boolean);
-      const res = await fetch("http://localhost:5000/api/banquet/halls", {
+      const res = await fetch("/api/banquet/halls", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -200,7 +200,7 @@ export default function BanquetManagementPage() {
     try {
       setIsSettling(true);
       const bookingId = selectedBookingForSettle._id || selectedBookingForSettle.bookingId;
-      const res = await fetch(`http://localhost:5000/api/banquet/bookings/${bookingId}/settle`, {
+      const res = await fetch(`/api/banquet/bookings/${bookingId}/settle`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ amountPaid: settleAmount, paymentMode: settleMode }),

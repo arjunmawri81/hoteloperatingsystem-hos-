@@ -41,7 +41,7 @@ export default function ReportsAndKPIsPage() {
   const fetchKPIs = async () => {
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:5000/api/reports/kpis?hotelId=hotel-101");
+      const res = await fetch("/api/reports/kpis?hotelId=hotel-101");
       if (res.ok) {
         const json = await res.json();
         setData(json.data);
@@ -58,7 +58,7 @@ export default function ReportsAndKPIsPage() {
   }, []);
 
   const handleExportCSV = () => {
-    window.open("http://localhost:5000/api/reports/export/reservations", "_blank");
+    window.open("/api/reports/export/reservations", "_blank");
   };
 
   return (

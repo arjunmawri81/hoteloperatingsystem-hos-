@@ -102,9 +102,9 @@ export default function ChannelManagerPage() {
   const fetchData = async () => {
     try {
       const [chanRes, mapRes, logRes] = await Promise.all([
-        fetch("http://localhost:5000/api/channel-manager/channels"),
-        fetch("http://localhost:5000/api/channel-manager/mappings"),
-        fetch("http://localhost:5000/api/channel-manager/logs"),
+        fetch("/api/channel-manager/channels"),
+        fetch("/api/channel-manager/mappings"),
+        fetch("/api/channel-manager/logs"),
       ]);
 
       if (chanRes.ok) {
@@ -131,7 +131,7 @@ export default function ChannelManagerPage() {
   const handleTriggerSync = async () => {
     try {
       setSyncing(true);
-      const res = await fetch("http://localhost:5000/api/channel-manager/sync", {
+      const res = await fetch("/api/channel-manager/sync", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ hotelId: "hotel-101", provider: "STAAH" }),
@@ -153,7 +153,7 @@ export default function ChannelManagerPage() {
     if (!newChannel.provider) return;
 
     try {
-      const res = await fetch("http://localhost:5000/api/channel-manager/channels", {
+      const res = await fetch("/api/channel-manager/channels", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -182,7 +182,7 @@ export default function ChannelManagerPage() {
     if (!confirm(`Are you sure you want to disconnect and remove "${name}" channel adapter?`)) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/api/channel-manager/channels/${id}`, {
+      const res = await fetch(`/api/channel-manager/channels/${id}`, {
         method: "DELETE",
       });
       if (res.ok) {
@@ -200,7 +200,7 @@ export default function ChannelManagerPage() {
   const handleAddMapping = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:5000/api/channel-manager/mappings", {
+      const res = await fetch("/api/channel-manager/mappings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -243,7 +243,7 @@ export default function ChannelManagerPage() {
     if (!confirm(`Delete mapping for "${roomName}"?`)) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/api/channel-manager/mappings/${id}`, {
+      const res = await fetch(`/api/channel-manager/mappings/${id}`, {
         method: "DELETE",
       });
       if (res.ok) {
@@ -261,7 +261,7 @@ export default function ChannelManagerPage() {
   const handleToggleStopSell = async (mapping: ChannelMapping) => {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/channel-manager/restrictions/${mapping._id}`,
+        `/api/channel-manager/restrictions/${mapping._id}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
