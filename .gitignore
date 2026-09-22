@@ -43,8 +43,9 @@ credentials.json
 *.db
 *.dump
 dump/
-data/
+/data/
 mongodata/
+!backend/src/data/**
 
 # Next.js & Build Outputs
 frontend/.next/

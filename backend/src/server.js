@@ -5,7 +5,12 @@ const morgan = require("morgan");
 const connectDB = require("./db");
 const { initFirebase } = require("./config/firebase");
 const User = require("./models/User");
-const seedDatabase = require("./data/seed");
+let seedDatabase = null;
+try {
+  seedDatabase = require("./data/seed");
+} catch (e) {
+  // Seed data optional for serverless production build
+}
 const apiRoutes = require("./routes");
 
 const app = express();
@@ -109,7 +114,7 @@ const startServer = async () => {
     if (dbConn) {
       try {
         const userCount = await User.countDocuments();
-        if (userCount === 0) {
+        if (userCount === 0 && typeof seedDatabase === "function") {
           console.log("No users found in database. Seeding initial data...");
           await seedDatabase();
         }
