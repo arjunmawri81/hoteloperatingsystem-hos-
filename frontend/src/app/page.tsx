@@ -86,13 +86,13 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#FAFAF8] text-[#111] font-sans antialiased">
+    <div className="min-h-screen bg-[#F4F4F5] text-[#111] font-sans antialiased">
 
       {/* ─── NAVBAR ─────────────────────────────────────────────────────── */}
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           scrolled
-            ? "bg-white/95 shadow-[0_1px_0_rgba(0,0,0,0.06)] backdrop-blur-md"
+            ? "bg-[#F4F4F5]/95 shadow-[0_1px_0_rgba(0,0,0,0.07)] backdrop-blur-md"
             : "bg-transparent"
         }`}
       >
@@ -132,7 +132,7 @@ export default function LandingPage() {
                 <Link href="/login" className="h-9 px-4 flex items-center text-[13px] font-semibold text-[#444] hover:text-[#111] transition-colors">
                   Sign in
                 </Link>
-                <Link href="/signup" className="h-9 px-4 flex items-center rounded-lg bg-[#111] hover:bg-[#2a2a2a] text-white text-[13px] font-semibold transition-colors shadow-sm">
+                <Link href="/signup" className="h-9 px-4 flex items-center rounded-lg bg-[#111] hover:bg-[#222] text-white text-[13px] font-semibold transition-colors shadow-sm">
                   Get started →
                 </Link>
               </>
@@ -140,7 +140,7 @@ export default function LandingPage() {
           </div>
 
           {/* Mobile toggle */}
-          <button onClick={() => setMenuOpen(!menuOpen)} className="md:hidden p-2 text-[#444] rounded-lg hover:bg-black/5">
+          <button onClick={() => setMenuOpen(!menuOpen)} className="md:hidden p-2 text-[#555] rounded-lg hover:bg-black/5">
             {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
@@ -163,7 +163,7 @@ export default function LandingPage() {
       </header>
 
       {/* ─── HERO ───────────────────────────────────────────────────────── */}
-      <section id="home" className="pt-[68px] bg-[#FAFAF8]">
+      <section id="home" className="pt-[68px] bg-[#F4F4F5]">
         <div className="max-w-6xl mx-auto px-5 sm:px-8 w-full">
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] min-h-[calc(100vh-68px)]">
 
@@ -188,12 +188,12 @@ export default function LandingPage() {
                 <Link href="/login" className="h-12 px-7 flex items-center gap-2 rounded-xl bg-[#111] hover:bg-[#222] text-white text-[14px] font-bold transition-all hover:scale-[1.02] shadow-lg shadow-black/10">
                   Open platform <ArrowRight className="w-4 h-4" />
                 </Link>
-                <Link href="/menu" className="h-12 px-6 flex items-center rounded-xl border border-black/12 bg-white hover:bg-black/[0.03] text-[#111] text-[14px] font-semibold transition-all shadow-sm">
+                <Link href="/menu" className="h-12 px-6 flex items-center rounded-xl border border-black/10 bg-white hover:bg-black/[0.03] text-[#111] text-[14px] font-semibold transition-all shadow-sm">
                   See QR dining demo
                 </Link>
               </div>
 
-              <div className="flex items-center gap-8 pt-2 border-t border-black/8">
+              <div className="flex items-center gap-8 pt-2 border-t border-black/10">
                 <div>
                   <div className="text-[26px] font-black text-[#111] tracking-tight">30s</div>
                   <div className="text-[11px] text-[#888] font-medium mt-0.5">Walk-in check-in</div>
@@ -340,7 +340,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── GUEST EXPERIENCE ───────────────────────────────────────────── */}
-      <section id="guest" className="py-24 bg-[#FAFAF8] overflow-hidden relative border-t border-black/5">
+      <section id="guest" className="py-24 bg-[#F4F4F5] overflow-hidden relative border-t border-black/5">
 
         <div className="max-w-6xl mx-auto px-5 sm:px-8 relative">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
@@ -386,12 +386,12 @@ export default function LandingPage() {
                   </div>
                   {/* macOS dots */}
                   <div className="ml-auto flex gap-1.5">
-                    {["#ff5f57","#febc2e","#28c840"].map(c => <div key={c} className="w-2.5 h-2.5 rounded-full" style={{background:c}} />)}
+                    {["#ff5f57", "#febc2e", "#28c840"].map(c => <div key={c} className="w-2.5 h-2.5 rounded-full" style={{ background: c }} />)}
                   </div>
                 </div>
 
                 {/* Messages */}
-                <div className="p-5 space-y-3.5 min-h-[260px] bg-[#F8F9FA]">
+                <div className="p-5 space-y-3.5 min-h-[260px] bg-[#F4F4F5]">
                   <div className="flex justify-end">
                     <div className="max-w-[75%] bg-amber-400 text-[#111] text-[13px] font-medium rounded-2xl rounded-tr-sm px-4 py-2.5">
                       What time is breakfast served?
@@ -416,7 +416,7 @@ export default function LandingPage() {
 
                 {/* Input */}
                 <div className="px-4 py-3 border-t border-black/6 bg-white flex items-center gap-3">
-                  <div className="flex-1 bg-[#F8F9FA] border border-black/8 rounded-xl px-4 py-2.5 text-[13px] text-[#bbb]">
+                  <div className="flex-1 bg-[#F4F4F5] border border-black/8 rounded-xl px-4 py-2.5 text-[13px] text-[#bbb]">
                     Ask anything about your stay...
                   </div>
                   <button className="w-9 h-9 rounded-xl bg-amber-400 hover:bg-amber-500 flex items-center justify-center shrink-0 transition-colors">
@@ -453,7 +453,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── FOOTER ─────────────────────────────────────────────────────── */}
-      <footer className="bg-white border-t border-black/5 py-12">
+      <footer className="bg-[#EDEDEE] border-t border-black/5 py-12">
         <div className="max-w-6xl mx-auto px-5 sm:px-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
 
