@@ -17,11 +17,13 @@ import {
   CreditCard,
   Calendar,
   Eye,
+  DollarSign,
+  BedDouble,
+  TrendingUp,
+  Check,
   X,
   FileText,
   UserCheck,
-  Check,
-  DollarSign
 } from "lucide-react";
 
 export default function HotelAdminDashboardPage() {
@@ -174,24 +176,40 @@ export default function HotelAdminDashboardPage() {
       value: String(hotels.length),
       subtext: `${distinctAreas} area${distinctAreas !== 1 ? "s" : ""}`,
       href: "/hotel-admin/hotels",
+      icon: Building2,
+      accentColor: "text-cyan-400",
+      iconBg: "bg-cyan-500/10 border-cyan-500/30 text-cyan-400",
+      topGlow: "from-cyan-500/40 via-cyan-500/10 to-transparent",
     },
     {
       title: "TOTAL ROOMS",
       value: String(totalRooms),
       subtext: "across all properties",
       href: "/hotel-admin/rooms",
+      icon: BedDouble,
+      accentColor: "text-blue-400",
+      iconBg: "bg-blue-500/10 border-blue-500/30 text-blue-400",
+      topGlow: "from-blue-500/40 via-blue-500/10 to-transparent",
     },
     {
       title: "OCCUPANCY",
       value: `${avgOccupancy}%`,
-      subtext: "org-wide",
+      subtext: "org-wide performance",
       href: "/operations/room-map",
+      icon: TrendingUp,
+      accentColor: "text-emerald-400",
+      iconBg: "bg-emerald-500/10 border-emerald-500/30 text-emerald-400",
+      topGlow: "from-emerald-500/40 via-emerald-500/10 to-transparent",
     },
     {
       title: "REVENUE",
       value: `₹${totalRevenue.toLocaleString("en-IN")}`,
       subtext: invoices.length > 0 ? `${invoices.length} bill${invoices.length !== 1 ? "s" : ""} / folios` : "MTD",
       href: "/hotel-admin/billing",
+      icon: Receipt,
+      accentColor: "text-amber-400",
+      iconBg: "bg-amber-500/10 border-amber-500/30 text-amber-400",
+      topGlow: "from-amber-500/40 via-amber-500/10 to-transparent",
     },
   ];
 
@@ -200,11 +218,11 @@ export default function HotelAdminDashboardPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-[28px] font-bold text-[#111827] tracking-tight">
+          <h1 className="text-[26px] font-bold text-[#0F172A] tracking-[-0.02em]">
             Hotel Admin Dashboard
           </h1>
-          <p className="text-[14px] text-[#6B7280] mt-1">
-            <strong className="text-[#111827] font-semibold">
+          <p className="text-[13px] text-[#64748B] mt-1 font-normal">
+            <strong className="text-[#0F172A] font-semibold">
               {user?.orgName || "Hotel Organization"}
             </strong>{" "}
             — organization overview &amp; revenue control
@@ -230,28 +248,44 @@ export default function HotelAdminDashboardPage() {
         </div>
       </div>
 
-      {/* 4 Interactive Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, i) => (
-          <Link
-            key={i}
-            href={stat.href}
-            className="bg-white p-6 rounded-md border border-[#E5E7EB] shadow-[0_1px_2px_rgba(0,0,0,0.04)] cursor-pointer hover:border-[#D1D5DB] hover:shadow-md transition-all group block"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-[#EC3013] uppercase tracking-wider">
-                {stat.title}
-              </span>
-              <ArrowRight className="w-3.5 h-3.5 text-[#9CA3AF] group-hover:text-[#EC3013] group-hover:translate-x-0.5 transition-all" />
-            </div>
-            <div className="text-[34px] font-bold text-[#111827] mt-3 tracking-tight">
-              {stat.value}
-            </div>
-            <div className="text-[13px] text-[#9CA3AF] mt-2 font-normal">
-              {stat.subtext}
-            </div>
-          </Link>
-        ))}
+      {/* 4 Interactive Stat Cards (Matching Sidebar Deep Navy Theme) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {stats.map((stat, i) => {
+          const Icon = stat.icon;
+          return (
+            <Link
+              key={i}
+              href={stat.href}
+              className="relative overflow-hidden bg-[#0B132B] hover:bg-[#0F1A3A] p-5 rounded-xl border border-slate-800/90 shadow-xl hover:border-cyan-500/50 hover:shadow-cyan-950/40 hover:-translate-y-0.5 transition-all duration-300 group block cursor-pointer"
+            >
+              {/* Top Accent Gradient Glow Line */}
+              <div className={`absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r ${stat.topGlow}`} />
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className={`p-2 rounded-lg border ${stat.iconBg} shadow-inner`}>
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <span className={`text-[11px] font-black uppercase tracking-wider ${stat.accentColor}`}>
+                    {stat.title}
+                  </span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-cyan-400 group-hover:translate-x-1 transition-all" />
+              </div>
+
+              <div className="text-[30px] font-black text-white mt-3.5 tracking-tight drop-shadow-xs">
+                {stat.value}
+              </div>
+
+              <div className="text-[12px] text-slate-400 mt-1.5 font-medium flex items-center justify-between">
+                <span>{stat.subtext}</span>
+                <span className="text-[10px] text-slate-500 group-hover:text-cyan-300 transition-colors uppercase font-bold tracking-wider">
+                  View &rarr;
+                </span>
+              </div>
+            </Link>
+          );
+        })}
       </div>
 
       {/* Main Section: Performance, Transactions, and Guest History Tabs */}

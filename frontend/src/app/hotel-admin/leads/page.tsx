@@ -243,10 +243,10 @@ export default function HotelAdminLeadsOverviewPage() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-[26px] font-bold text-[#111827] tracking-tight">
+          <h1 className="text-[26px] font-bold text-[#0F172A] tracking-[-0.02em]">
             Chain Sales &amp; Lead Performance
           </h1>
-          <p className="text-[13px] text-[#6B7280] mt-0.5">
+          <p className="text-[13px] text-[#64748B] mt-1 font-normal">
             Cross-property pipeline analytics, AI voice qualification &amp; revenue conversion by hotel
           </p>
         </div>
@@ -306,27 +306,90 @@ export default function HotelAdminLeadsOverviewPage() {
         </div>
       )}
 
-      {/* Chain Level Financial Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-lg border border-[#E5E7EB] shadow-xs">
-          <div className="text-[11px] font-bold text-[#6B7280] uppercase tracking-wider">Total Chain Pipeline</div>
-          <div className="text-[24px] font-bold text-[#111827] mt-1.5">₹{totalPipeline.toLocaleString()}</div>
-          <div className="text-[11px] text-[#6B7280] mt-1">Across all properties</div>
+      {/* Chain Level Financial Metric Cards (Matching Sidebar Deep Navy Theme) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {/* Total Chain Pipeline */}
+        <div className="relative overflow-hidden bg-[#0B132B] hover:bg-[#0F1A3A] p-5 rounded-xl border border-slate-800/90 shadow-xl hover:border-cyan-500/50 hover:shadow-cyan-950/40 hover:-translate-y-0.5 transition-all duration-300">
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-cyan-500/50 via-cyan-500/20 to-transparent" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg border bg-cyan-500/10 border-cyan-500/30 text-cyan-400 shadow-inner">
+                <TrendingUp className="w-4 h-4" />
+              </div>
+              <span className="text-[11px] font-black uppercase tracking-wider text-cyan-400">
+                Total Chain Pipeline
+              </span>
+            </div>
+          </div>
+          <div className="text-[28px] font-black text-white mt-3 tracking-tight drop-shadow-xs">
+            ₹{totalPipeline.toLocaleString()}
+          </div>
+          <div className="text-[12px] text-slate-400 mt-1 font-medium">
+            Across all properties
+          </div>
         </div>
-        <div className="bg-white p-5 rounded-lg border border-[#E5E7EB] shadow-xs">
-          <div className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">Won &amp; Converted</div>
-          <div className="text-[24px] font-bold text-emerald-700 mt-1.5">₹{convertedTotal.toLocaleString()}</div>
-          <div className="text-[11px] text-emerald-600 font-semibold mt-1">Direct bookings realized</div>
+
+        {/* Won & Converted */}
+        <div className="relative overflow-hidden bg-[#0B132B] hover:bg-[#0F1A3A] p-5 rounded-xl border border-slate-800/90 shadow-xl hover:border-emerald-500/50 hover:shadow-emerald-950/40 hover:-translate-y-0.5 transition-all duration-300">
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-emerald-500/60 via-emerald-500/20 to-transparent" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg border bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-inner">
+                <CheckCircle2 className="w-4 h-4" />
+              </div>
+              <span className="text-[11px] font-black uppercase tracking-wider text-emerald-400">
+                Won &amp; Converted
+              </span>
+            </div>
+          </div>
+          <div className="text-[28px] font-black text-emerald-300 mt-3 tracking-tight drop-shadow-xs">
+            ₹{convertedTotal.toLocaleString()}
+          </div>
+          <div className="text-[12px] text-emerald-400/80 mt-1 font-semibold">
+            Direct bookings realized
+          </div>
         </div>
-        <div className="bg-white p-5 rounded-lg border border-[#E5E7EB] shadow-xs">
-          <div className="text-[11px] font-bold text-purple-600 uppercase tracking-wider">AI Voice Qualified</div>
-          <div className="text-[24px] font-bold text-purple-700 mt-1.5">{aiQualifiedCount} Deals</div>
-          <div className="text-[11px] text-purple-600 font-semibold mt-1">High conversion probability</div>
+
+        {/* AI Voice Qualified */}
+        <div className="relative overflow-hidden bg-[#0B132B] hover:bg-[#0F1A3A] p-5 rounded-xl border border-slate-800/90 shadow-xl hover:border-purple-500/50 hover:shadow-purple-950/40 hover:-translate-y-0.5 transition-all duration-300">
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-purple-500/60 via-purple-500/20 to-transparent" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg border bg-purple-500/10 border-purple-500/30 text-purple-400 shadow-inner">
+                <Bot className="w-4 h-4" />
+              </div>
+              <span className="text-[11px] font-black uppercase tracking-wider text-purple-400">
+                AI Voice Qualified
+              </span>
+            </div>
+          </div>
+          <div className="text-[28px] font-black text-purple-300 mt-3 tracking-tight drop-shadow-xs">
+            {aiQualifiedCount} Deals
+          </div>
+          <div className="text-[12px] text-purple-400/80 mt-1 font-semibold">
+            High conversion probability
+          </div>
         </div>
-        <div className="bg-white p-5 rounded-lg border border-[#E5E7EB] shadow-xs">
-          <div className="text-[11px] font-bold text-blue-600 uppercase tracking-wider">Active Inquiries</div>
-          <div className="text-[24px] font-bold text-blue-700 mt-1.5">{leads.length} Total</div>
-          <div className="text-[11px] text-blue-600 font-semibold mt-1">Calls, Web &amp; WhatsApp</div>
+
+        {/* Active Inquiries */}
+        <div className="relative overflow-hidden bg-[#0B132B] hover:bg-[#0F1A3A] p-5 rounded-xl border border-slate-800/90 shadow-xl hover:border-blue-500/50 hover:shadow-blue-950/40 hover:-translate-y-0.5 transition-all duration-300">
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-blue-500/60 via-blue-500/20 to-transparent" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg border bg-blue-500/10 border-blue-500/30 text-blue-400 shadow-inner">
+                <PhoneCall className="w-4 h-4" />
+              </div>
+              <span className="text-[11px] font-black uppercase tracking-wider text-blue-400">
+                Active Inquiries
+              </span>
+            </div>
+          </div>
+          <div className="text-[28px] font-black text-blue-300 mt-3 tracking-tight drop-shadow-xs">
+            {leads.length} Total
+          </div>
+          <div className="text-[12px] text-blue-400/80 mt-1 font-semibold">
+            Calls, Web &amp; WhatsApp
+          </div>
         </div>
       </div>
 

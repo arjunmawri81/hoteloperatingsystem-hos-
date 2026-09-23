@@ -788,5 +788,48 @@ export const cashCounterApi = {
   },
 };
 
+// -------------------------------------------------------------
+// 17. EXECUTIVE AI BUSINESS ASSISTANT & BRIEFING API
+// -------------------------------------------------------------
+export const executiveBriefingApi = {
+  getSnapshot: async (params?: { period?: string; hotelId?: string }): Promise<any> => {
+    try {
+      const res = await api.get("/ai/briefing/snapshot", { params });
+      return (res as any)?.data || (res as any);
+    } catch (e: any) {
+      console.warn("Failed to fetch live briefing snapshot, generating fallback:", e.message);
+      return null;
+    }
+  },
+
+  getNarration: async (payload: { language?: string; period?: string; snapshot?: any }): Promise<any> => {
+    try {
+      const res = await api.post("/ai/briefing/narrate", payload);
+      return res as any;
+    } catch (e: any) {
+      console.warn("Failed to fetch live narration:", e.message);
+      return null;
+    }
+  },
+
+  askQuestion: async (payload: {
+    question: string;
+    language?: string;
+    snapshot?: any;
+    conversationHistory?: any[];
+  }): Promise<any> => {
+    try {
+      const res = await api.post("/ai/briefing/ask", payload);
+      return res as any;
+    } catch (e: any) {
+      console.warn("Failed to ask briefing question:", e.message);
+      return {
+        success: false,
+        answer: "Maaf kijiye, connection me dikkat aayi hai. Kripya dobara poochiye.",
+      };
+    }
+  },
+};
+
 
 

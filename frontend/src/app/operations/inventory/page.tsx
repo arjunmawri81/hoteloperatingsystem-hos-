@@ -19,6 +19,8 @@ import {
   Layers,
   Store,
   History,
+  Trash2,
+  Sparkles,
 } from "lucide-react";
 import { RoleGuard } from "@/components/layout/RoleGuard";
 
@@ -62,13 +64,20 @@ export default function InventoryManagementPage() {
     supplier: "Direct Supplies",
   });
 
-  // GRN Purchase Inward State (Video 4)
+  // GRN Purchase Inward State
   const [grnVendor, setGrnVendor] = useState("Royal Linen Mills Pvt Ltd");
   const [grnVendorGstin, setGrnVendorGstin] = useState("29ABCDE1234F1Z5");
   const [grnInvoiceNo, setGrnInvoiceNo] = useState("INV-2026-9041");
   const [grnDepartment, setGrnDepartment] = useState("Housekeeping");
-  const [grnItems, setGrnItems] = useState([
-    { sku: "SKU-LIN-101", name: "Egyptian Cotton Bath Towels", quantity: 50, unitPrice: 450, taxRate: 18, totalAmount: 26550 },
+  const [grnItems, setGrnItems] = useState<Array<{
+    sku: string;
+    name: string;
+    quantity: number;
+    unitPrice: number;
+    unit?: string;
+    isCustomNew?: boolean;
+  }>>([
+    { sku: "SKU-LIN-101", name: "Egyptian Cotton Bath Towels", quantity: 50, unitPrice: 450, unit: "Pieces", isCustomNew: false },
   ]);
 
   // Stock Issue State (Video 4)
@@ -132,19 +141,38 @@ export default function InventoryManagementPage() {
   const handleSubmitGRN = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const totalAmount = grnItems.reduce((sum, itm) => sum + (itm.quantity * itm.unitPrice * 1.18), 0);
+      if (grnItems.length === 0) {
+        alert("Please add at least one item");
+        return;
+      }
+
+      // Check validation for each row
+      for (const item of grnItems) {
+        if (!item.name || !item.sku || item.quantity <= 0) {
+          alert("Please fill all item names, SKU, and valid quantities");
+          return;
+        }
+      }
+
+      const totalAmount = grnItems.reduce((sum, itm) => sum + (Number(itm.quantity) * (Number(itm.unitPrice) || 0) * 1.18), 0);
       const res = await inventoryApi.createGRN({
         vendorName: grnVendor,
         vendorGstin: grnVendorGstin,
         invoiceNumber: grnInvoiceNo,
         department: grnDepartment,
-        items: grnItems,
+        items: grnItems.map((itm) => ({
+          sku: itm.sku,
+          name: itm.name,
+          quantity: Number(itm.quantity),
+          unitPrice: Number(itm.unitPrice) || 0,
+          unit: itm.unit || "Units",
+        })),
         totalAmount,
         receivedBy: "Store Manager",
       });
 
       if (res && res.success) {
-        setToastMsg(`✅ Purchase Inward ${res.data.grnNumber} recorded and stock levels increased!`);
+        setToastMsg(`✅ Purchase Inward ${res.data?.grnNumber || "GRN"} recorded and ${grnItems.length} item(s) added/increased!`);
         setIsGrnModalOpen(false);
         loadInventory();
       } else {
@@ -508,110 +536,340 @@ export default function InventoryManagementPage() {
         {/* MODAL: PURCHASE INWARD (GRN) */}
         {isGrnModalOpen && (
           <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 space-y-4 animate-in fade-in">
-              <div className="flex items-center justify-between border-b pb-3">
+            <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full p-6 space-y-4 animate-in fade-in my-8 max-h-[90vh] flex flex-col">
+              <div className="flex items-center justify-between border-b pb-3 shrink-0">
                 <div className="flex items-center gap-2">
                   <Truck className="w-5 h-5 text-emerald-600" />
-                  <h3 className="text-[17px] font-bold text-gray-900">Goods Receipt Note (Purchase Inward)</h3>
+                  <div>
+                    <h3 className="text-[17px] font-bold text-gray-900">Goods Receipt Note (Purchase Inward)</h3>
+                    <p className="text-[11px] text-gray-500">Record vendor delivery, increase stock &amp; register new items directly</p>
+                  </div>
                 </div>
                 <button onClick={() => setIsGrnModalOpen(false)} className="text-gray-400 hover:text-gray-700">
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <form onSubmit={handleSubmitGRN} className="space-y-3 text-[13px]">
-                <div>
-                  <label className="block font-bold text-gray-700 mb-1">Vendor Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={grnVendor}
-                    onChange={(e) => setGrnVendor(e.target.value)}
-                    className="w-full border border-gray-300 rounded px-3 py-2 text-[13px]"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block font-bold text-gray-700 mb-1">Vendor GSTIN</label>
-                    <input
-                      type="text"
-                      value={grnVendorGstin}
-                      onChange={(e) => setGrnVendorGstin(e.target.value)}
-                      className="w-full border border-gray-300 rounded px-3 py-2 font-mono text-[12px]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block font-bold text-gray-700 mb-1">Vendor Bill / Inv No.</label>
+              <form onSubmit={handleSubmitGRN} className="space-y-4 text-[13px] overflow-y-auto pr-1 flex-1">
+                {/* Vendor & Invoice Details */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-gray-50/70 p-3.5 rounded-lg border border-gray-200">
+                  <div className="sm:col-span-1">
+                    <label className="block font-bold text-gray-700 text-xs mb-1">Vendor / Supplier Name</label>
                     <input
                       type="text"
                       required
-                      value={grnInvoiceNo}
-                      onChange={(e) => setGrnInvoiceNo(e.target.value)}
-                      className="w-full border border-gray-300 rounded px-3 py-2 font-mono text-[12px]"
+                      placeholder="e.g. Amul Dairy / City Grocery"
+                      value={grnVendor}
+                      onChange={(e) => setGrnVendor(e.target.value)}
+                      className="w-full border border-gray-300 rounded px-2.5 py-1.5 text-[13px] bg-white"
                     />
                   </div>
-                </div>
 
-                <div>
-                  <label className="block font-bold text-gray-700 mb-1">Target Department Store</label>
-                  <select
-                    value={grnDepartment}
-                    onChange={(e) => setGrnDepartment(e.target.value)}
-                    className="w-full border border-gray-300 rounded px-3 py-2 bg-white font-semibold"
-                  >
-                    <option value="Housekeeping">Housekeeping Store</option>
-                    <option value="Kitchen & F&B">Kitchen &amp; F&amp;B Store</option>
-                    <option value="Front Desk & Maintenance">Front Desk &amp; Maintenance</option>
-                  </select>
-                </div>
+                  <div>
+                    <label className="block font-bold text-gray-700 text-xs mb-1">Vendor GSTIN (Optional)</label>
+                    <input
+                      type="text"
+                      placeholder="29ABCDE1234F1Z5"
+                      value={grnVendorGstin}
+                      onChange={(e) => setGrnVendorGstin(e.target.value)}
+                      className="w-full border border-gray-300 rounded px-2.5 py-1.5 font-mono text-[12px] bg-white"
+                    />
+                  </div>
 
-                {/* Items in GRN */}
-                <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg space-y-2">
-                  <span className="font-bold text-gray-700 block text-xs uppercase">Item Received</span>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="col-span-2">
-                      <select
-                        value={grnItems[0].sku}
-                        onChange={(e) => {
-                          const itm = items.find((i) => i.sku === e.target.value);
-                          setGrnItems([{ ...grnItems[0], sku: e.target.value, name: itm?.name || "Item" }]);
-                        }}
-                        className="w-full border border-gray-300 rounded p-1.5 bg-white text-xs"
-                      >
-                        {items.map((i) => (
-                          <option key={i.sku} value={i.sku}>
-                            {i.name} ({i.sku})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <input
-                        type="number"
-                        min="1"
-                        placeholder="Qty"
-                        value={grnItems[0].quantity}
-                        onChange={(e) => setGrnItems([{ ...grnItems[0], quantity: Number(e.target.value) }])}
-                        className="w-full border border-gray-300 rounded p-1.5 text-xs font-bold text-emerald-700"
-                      />
-                    </div>
+                  <div>
+                    <label className="block font-bold text-gray-700 text-xs mb-1">Vendor Bill / Inv No.</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="INV-9821"
+                      value={grnInvoiceNo}
+                      onChange={(e) => setGrnInvoiceNo(e.target.value)}
+                      className="w-full border border-gray-300 rounded px-2.5 py-1.5 font-mono text-[12px] bg-white"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-3">
+                    <label className="block font-bold text-gray-700 text-xs mb-1">Target Department Store</label>
+                    <select
+                      value={grnDepartment}
+                      onChange={(e) => setGrnDepartment(e.target.value)}
+                      className="w-full border border-gray-300 rounded px-2.5 py-1.5 bg-white font-semibold text-xs"
+                    >
+                      <option value="Housekeeping">Housekeeping Store</option>
+                      <option value="Kitchen & F&B">Kitchen &amp; Restaurant (F&amp;B Store)</option>
+                      <option value="Front Desk & Maintenance">Front Desk &amp; Maintenance</option>
+                      <option value="General Store">Central / General Store</option>
+                    </select>
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-2 pt-2 border-t">
+                {/* Items in Invoice (Multi-Item List) */}
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="font-bold text-gray-800 text-xs uppercase tracking-wide">
+                        Items Received in Bill ({grnItems.length})
+                      </span>
+                      <p className="text-[11px] text-gray-500">
+                        Choose existing inventory items or click "New Item" to add unlisted goods on the fly
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const randomSku = `SKU-ITEM-${Date.now().toString().slice(-4)}`;
+                        setGrnItems((prev) => [
+                          ...prev,
+                          { sku: items[0]?.sku || randomSku, name: items[0]?.name || "New Item", quantity: 10, unitPrice: 100, unit: items[0]?.unit || "Units", isCustomNew: false },
+                        ]);
+                      }}
+                      className="flex items-center gap-1 px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100 rounded text-xs font-bold transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>+ Add Another Item Row</span>
+                    </button>
+                  </div>
+
+                  {grnItems.map((itemRow, index) => (
+                    <div
+                      key={index}
+                      className="p-3 bg-white border border-gray-200 rounded-lg shadow-2xs space-y-2.5 hover:border-gray-300 transition-all"
+                    >
+                      <div className="flex items-center justify-between text-xs pb-1 border-b border-gray-100">
+                        <span className="font-bold text-gray-600">Item #{index + 1}</span>
+
+                        <div className="flex items-center gap-3">
+                          {/* Toggle between existing and custom */}
+                          <label className="flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-indigo-700 bg-indigo-50/80 px-2 py-0.5 rounded border border-indigo-200">
+                            <input
+                              type="checkbox"
+                              checked={itemRow.isCustomNew || false}
+                              onChange={(e) => {
+                                const isCustom = e.target.checked;
+                                const newSku = isCustom ? `SKU-${Date.now().toString().slice(-5)}` : (items[0]?.sku || "");
+                                const newName = isCustom ? "" : (items[0]?.name || "");
+                                setGrnItems((prev) =>
+                                  prev.map((r, i) =>
+                                    i === index
+                                      ? { ...r, isCustomNew: isCustom, sku: newSku, name: newName, unit: isCustom ? "kg" : (items[0]?.unit || "Units") }
+                                      : r
+                                  )
+                                );
+                              }}
+                              className="w-3.5 h-3.5 accent-indigo-600 rounded"
+                            />
+                            <span>➕ Add as Brand New / Custom Item</span>
+                          </label>
+
+                          {grnItems.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => setGrnItems((prev) => prev.filter((_, i) => i !== index))}
+                              className="text-rose-600 hover:text-rose-800 p-0.5"
+                              title="Delete row"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Item Inputs */}
+                      {!itemRow.isCustomNew ? (
+                        /* Dropdown for existing items */
+                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
+                          <div className="sm:col-span-6">
+                            <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Select Existing Item</label>
+                            <select
+                              value={itemRow.sku}
+                              onChange={(e) => {
+                                const selected = items.find((i) => i.sku === e.target.value);
+                                setGrnItems((prev) =>
+                                  prev.map((r, i) =>
+                                    i === index
+                                      ? {
+                                          ...r,
+                                          sku: e.target.value,
+                                          name: selected?.name || "Item",
+                                          unitPrice: selected?.unitPrice || r.unitPrice,
+                                          unit: selected?.unit || "Units",
+                                        }
+                                      : r
+                                  )
+                                );
+                              }}
+                              className="w-full border border-gray-300 rounded px-2.5 py-1.5 bg-white text-xs font-medium"
+                            >
+                              {items.map((i) => (
+                                <option key={i.sku} value={i.sku}>
+                                  {i.name} ({i.sku}) — Curr: {i.quantity} {i.unit}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div className="sm:col-span-2">
+                            <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Qty</label>
+                            <input
+                              type="number"
+                              min="1"
+                              value={itemRow.quantity}
+                              onChange={(e) =>
+                                setGrnItems((prev) =>
+                                  prev.map((r, i) => (i === index ? { ...r, quantity: Number(e.target.value) } : r))
+                                )
+                              }
+                              className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold text-emerald-700 bg-white"
+                            />
+                          </div>
+
+                          <div className="sm:col-span-2">
+                            <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Rate (₹)</label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={itemRow.unitPrice}
+                              onChange={(e) =>
+                                setGrnItems((prev) =>
+                                  prev.map((r, i) => (i === index ? { ...r, unitPrice: Number(e.target.value) } : r))
+                                )
+                              }
+                              className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-medium bg-white"
+                            />
+                          </div>
+
+                          <div className="sm:col-span-2 flex flex-col justify-end">
+                            <span className="text-[11px] font-semibold text-gray-500">Row Total</span>
+                            <span className="text-xs font-bold text-gray-900 py-1.5">
+                              ₹{(Number(itemRow.quantity) * Number(itemRow.unitPrice || 0)).toLocaleString("en-IN")}
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        /* Input fields for Brand New Custom Item */
+                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 bg-indigo-50/40 p-2.5 rounded border border-indigo-100">
+                          <div className="sm:col-span-4">
+                            <label className="block text-[11px] font-bold text-indigo-900 mb-0.5">
+                              New Item Name <span className="text-rose-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              placeholder="e.g. Amul Butter 500g, Fresh Paneer"
+                              value={itemRow.name}
+                              onChange={(e) =>
+                                setGrnItems((prev) =>
+                                  prev.map((r, i) => (i === index ? { ...r, name: e.target.value } : r))
+                                )
+                              }
+                              className="w-full border border-indigo-300 rounded px-2 py-1 text-xs bg-white font-semibold"
+                            />
+                          </div>
+
+                          <div className="sm:col-span-3">
+                            <label className="block text-[11px] font-bold text-indigo-900 mb-0.5">SKU Code</label>
+                            <input
+                              type="text"
+                              required
+                              value={itemRow.sku}
+                              onChange={(e) =>
+                                setGrnItems((prev) =>
+                                  prev.map((r, i) => (i === index ? { ...r, sku: e.target.value } : r))
+                                )
+                              }
+                              className="w-full border border-indigo-300 rounded px-2 py-1 text-xs font-mono bg-white"
+                            />
+                          </div>
+
+                          <div className="sm:col-span-2">
+                            <label className="block text-[11px] font-bold text-indigo-900 mb-0.5">Unit</label>
+                            <select
+                              value={itemRow.unit || "kg"}
+                              onChange={(e) =>
+                                setGrnItems((prev) =>
+                                  prev.map((r, i) => (i === index ? { ...r, unit: e.target.value } : r))
+                                )
+                              }
+                              className="w-full border border-indigo-300 rounded px-1.5 py-1 text-xs bg-white"
+                            >
+                              <option value="kg">kg</option>
+                              <option value="Liters">Liters</option>
+                              <option value="Pieces">Pieces</option>
+                              <option value="Packets">Packets</option>
+                              <option value="Bottles">Bottles</option>
+                              <option value="Units">Units</option>
+                              <option value="Boxes">Boxes</option>
+                            </select>
+                          </div>
+
+                          <div className="sm:col-span-1">
+                            <label className="block text-[11px] font-bold text-indigo-900 mb-0.5">Qty</label>
+                            <input
+                              type="number"
+                              min="1"
+                              value={itemRow.quantity}
+                              onChange={(e) =>
+                                setGrnItems((prev) =>
+                                  prev.map((r, i) => (i === index ? { ...r, quantity: Number(e.target.value) } : r))
+                                )
+                              }
+                              className="w-full border border-indigo-300 rounded px-1.5 py-1 text-xs font-bold text-emerald-700 bg-white"
+                            />
+                          </div>
+
+                          <div className="sm:col-span-2">
+                            <label className="block text-[11px] font-bold text-indigo-900 mb-0.5">Rate (₹)</label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={itemRow.unitPrice}
+                              onChange={(e) =>
+                                setGrnItems((prev) =>
+                                  prev.map((r, i) => (i === index ? { ...r, unitPrice: Number(e.target.value) } : r))
+                                )
+                              }
+                              className="w-full border border-indigo-300 rounded px-1.5 py-1 text-xs bg-white"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Total Summary */}
+                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center justify-between text-xs">
+                  <div>
+                    <span className="font-bold text-emerald-900">Items Total: </span>
+                    <span className="text-emerald-700 font-semibold">
+                      ₹{grnItems.reduce((s, itm) => s + (Number(itm.quantity || 0) * Number(itm.unitPrice || 0)), 0).toLocaleString("en-IN")}
+                    </span>
+                    <span className="text-gray-500 ml-2">(+18% GST Est.)</span>
+                  </div>
+
+                  <div className="text-right">
+                    <span className="text-gray-600 font-medium">Grand Total: </span>
+                    <span className="text-sm font-black text-emerald-800">
+                      ₹{(grnItems.reduce((s, itm) => s + (Number(itm.quantity || 0) * Number(itm.unitPrice || 0)), 0) * 1.18).toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2 border-t shrink-0">
                   <button
                     type="button"
                     onClick={() => setIsGrnModalOpen(false)}
-                    className="px-4 py-2 border border-gray-300 rounded font-semibold text-gray-700"
+                    className="px-4 py-2 border border-gray-300 rounded font-semibold text-gray-700 hover:bg-gray-50"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-bold shadow-xs"
+                    className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-bold shadow-xs flex items-center gap-1.5"
                   >
-                    Generate GRN &amp; Increase Stock
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Generate GRN &amp; Increase Stock</span>
                   </button>
                 </div>
               </form>

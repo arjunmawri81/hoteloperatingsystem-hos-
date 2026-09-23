@@ -33,7 +33,8 @@ const MODULES = [
     short: "Smart check-in under 30 seconds. Interactive room map, Aadhaar ID capture, and auto-calculated GST folio billing.",
     stat: "< 30s", statLabel: "Walk-in Check-in",
     accent: "bg-amber-500",
-    image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80",
+    // Hotel reception / front desk counter
+    image: "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=800&q=80",
     link: "/operations/front-desk",
   },
   {
@@ -42,7 +43,8 @@ const MODULES = [
     short: "Generative AI that handles guest questions, room availability, room service, and escalates to your team when needed.",
     stat: "24/7", statLabel: "Always Available",
     accent: "bg-slate-900",
-    image: "https://images.unsplash.com/photo-1677442135703-1787eea5ce01?auto=format&fit=crop&w=800&q=80",
+    // Concierge / hotel staff at desk
+    image: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=800&q=80",
     link: "/ai-receptionist",
   },
   {
@@ -51,7 +53,8 @@ const MODULES = [
     short: "Table-specific QR codes, live Kitchen Display System with bell alerts, and direct room folio bill posting.",
     stat: "0", statLabel: "Paper KOTs",
     accent: "bg-orange-500",
-    image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=800&q=80",
+    // Restaurant dining interior with tables & ambience
+    image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80",
     link: "/operations/restaurant-pos",
   },
   {
@@ -60,7 +63,8 @@ const MODULES = [
     short: "End-to-end event hall booking, slot conflict protection, layout planning, and advance payment milestones.",
     stat: "0", statLabel: "Double Bookings",
     accent: "bg-stone-800",
-    image: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=800&q=80",
+    // Decorated banquet / wedding hall setup
+    image: "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?auto=format&fit=crop&w=800&q=80",
     link: "/operations/banquet",
   },
   {
@@ -69,7 +73,8 @@ const MODULES = [
     short: "2-way live sync across MakeMyTrip, Agoda, and Booking.com — rates, availability, and stop-sell in one click.",
     stat: "2-Way", statLabel: "Live OTA Sync",
     accent: "bg-yellow-500",
-    image: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=800&q=80",
+    // Travel planning / online booking on laptop
+    image: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80",
     link: "/operations/channel-manager",
   },
   {
@@ -78,10 +83,12 @@ const MODULES = [
     short: "Real-time occupancy, RevPAR, ADR, and departmental revenue dashboards with one-click CSV export.",
     stat: "Live", statLabel: "RevPAR Tracking",
     accent: "bg-neutral-900",
+    // Business analytics / data dashboard
     image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80",
     link: "/operations/reports",
   },
 ];
+
 
 export default function LandingPage() {
   const { user, isAuthenticated } = useAuth();
@@ -151,13 +158,13 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#F4F4F5] text-[#111] font-sans antialiased">
+    <div className="min-h-screen bg-[#F8F8FA] text-[#111] font-sans antialiased">
 
       {/* ─── NAVBAR ─────────────────────────────────────────────────────── */}
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           scrolled
-            ? "bg-[#F4F4F5]/95 shadow-[0_1px_0_rgba(0,0,0,0.07)] backdrop-blur-md"
+            ? "bg-[#D2D2D4]/95 shadow-[0_1px_0_rgba(0,0,0,0.09)] backdrop-blur-md"
             : "bg-transparent"
         }`}
       >
@@ -228,7 +235,7 @@ export default function LandingPage() {
       </header>
 
       {/* ─── HERO ───────────────────────────────────────────────────────── */}
-      <section id="home" className="pt-[68px] bg-[#F4F4F5]">
+      <section id="home" className="pt-[68px] bg-[#F8F8FA]">
         <div className="max-w-6xl mx-auto px-5 sm:px-8 w-full">
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] min-h-[calc(100vh-68px)]">
 
@@ -361,8 +368,8 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {MODULES.map((mod) => (
-              <Link href={mod.link} key={mod.number}
-                className="group relative block rounded-2xl overflow-hidden border border-black/8 hover:border-black/15 hover:shadow-xl hover:-translate-y-1 transition-all duration-200"
+              <div key={mod.number}
+                className="group relative block rounded-2xl overflow-hidden border border-black/8 hover:shadow-xl hover:-translate-y-1 transition-all duration-200"
                 style={{ minHeight: "280px" }}
               >
                 {/* Background image */}
@@ -375,14 +382,11 @@ export default function LandingPage() {
                 <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/20 to-amber-950/80" />
                 {/* Warm amber color cast — ties image to brand */}
                 <div className="absolute inset-0 bg-gradient-to-br from-amber-400/8 to-transparent" />
-                {/* Hover lift */}
-                <div className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-colors duration-300" />
 
                 {/* Content — text on dark bottom */}
                 <div className="relative z-10 p-7 flex flex-col h-full" style={{ minHeight: "280px" }}>
                   <div className="flex items-start justify-between mb-auto">
                     <span className="text-[11px] font-black tracking-widest text-white/70 uppercase bg-black/20 backdrop-blur-sm px-2 py-1 rounded-md">{mod.number}</span>
-                    <ArrowUpRight className="w-4 h-4 text-white/70 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
                   <div className="mt-auto pt-5">
                     <h3 className="text-[20px] font-black text-white tracking-tight leading-snug mb-1.5 drop-shadow-sm">{mod.title}</h3>
@@ -397,7 +401,7 @@ export default function LandingPage() {
                   </div>
                 </div>
 
-              </Link>
+              </div>
             ))}
           </div>
 
@@ -405,7 +409,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── GUEST EXPERIENCE ───────────────────────────────────────────── */}
-      <section id="guest" className="py-24 bg-[#F4F4F5] overflow-hidden relative border-t border-black/5">
+      <section id="guest" className="py-24 bg-[#F8F8FA] overflow-hidden relative border-t border-black/5">
 
         <div className="max-w-6xl mx-auto px-5 sm:px-8 relative">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
@@ -456,14 +460,14 @@ export default function LandingPage() {
                 </div>
 
                 {/* Messages */}
-                <div className="p-5 space-y-3.5 min-h-[260px] bg-[#F4F4F5]">
+                <div className="p-5 space-y-3.5 min-h-[260px] bg-[#F4F4F6]">
                   <div className="flex justify-end">
                     <div className="max-w-[75%] bg-amber-400 text-[#111] text-[13px] font-medium rounded-2xl rounded-tr-sm px-4 py-2.5">
                       What time is breakfast served?
                     </div>
                   </div>
                   <div className="flex justify-start">
-                    <div className="max-w-[80%] bg-white text-[#333] text-[13px] rounded-2xl rounded-tl-sm px-4 py-2.5 border border-black/6 shadow-sm">
+                    <div className="max-w-[80%] bg-white text-[#333] text-[13px] rounded-2xl rounded-tl-sm px-4 py-2.5 border border-black/8 shadow-sm">
                       Good morning! Breakfast is served daily from <strong className="text-[#111]">7:00 AM to 10:30 AM</strong> at the All-Day Dining on Level 2. Would you like a table reservation?
                     </div>
                   </div>
@@ -473,7 +477,7 @@ export default function LandingPage() {
                     </div>
                   </div>
                   <div className="flex justify-start">
-                    <div className="max-w-[80%] bg-white text-[#333] text-[13px] rounded-2xl rounded-tl-sm px-4 py-2.5 border border-black/6 shadow-sm">
+                    <div className="max-w-[80%] bg-white text-[#333] text-[13px] rounded-2xl rounded-tl-sm px-4 py-2.5 border border-black/8 shadow-sm">
                       Done! Table for 2 at 8:00 AM reserved for Room 304. Enjoy your stay, Mr. Sharma! 🎉
                     </div>
                   </div>
@@ -481,7 +485,7 @@ export default function LandingPage() {
 
                 {/* Input */}
                 <div className="px-4 py-3 border-t border-black/6 bg-white flex items-center gap-3">
-                  <div className="flex-1 bg-[#F4F4F5] border border-black/8 rounded-xl px-4 py-2.5 text-[13px] text-[#bbb]">
+                  <div className="flex-1 bg-[#F4F4F6] border border-black/8 rounded-xl px-4 py-2.5 text-[13px] text-[#bbb]">
                     Ask anything about your stay...
                   </div>
                   <button className="w-9 h-9 rounded-xl bg-amber-400 hover:bg-amber-500 flex items-center justify-center shrink-0 transition-colors">
@@ -496,16 +500,13 @@ export default function LandingPage() {
       </section>
 
       {/* ─── SCHEDULE A LIVE DEMO (LEAD CAPTURE) ────────────────────────── */}
-      <section id="demo" className="py-24 bg-white border-t border-black/5">
+      <section id="demo" className="py-24 bg-[#C6C6C8] border-t border-black/[0.06]">
         <div className="max-w-6xl mx-auto px-5 sm:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             
             {/* Left pitch */}
             <div className="lg:col-span-5 space-y-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-900 text-[12px] font-bold uppercase tracking-wider">
-                <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-                Live 1-on-1 Consultation
-              </div>
+
 
               <h2 className="text-[38px] sm:text-[46px] font-black text-[#0e0e0e] tracking-[-1.5px] leading-[1.08]">
                 See LuckNexa tailored for your property.
@@ -562,7 +563,7 @@ export default function LandingPage() {
 
             {/* Right: Lead Capture Form Card */}
             <div className="lg:col-span-7">
-              <div className="bg-[#F4F4F5] border border-black/8 rounded-3xl p-7 sm:p-9 shadow-xl shadow-black/5 relative">
+              <div className="bg-[#DBDBDD] border border-black/[0.07] rounded-3xl p-7 sm:p-9 shadow-xl shadow-black/5 relative">
                 
                 {demoSubmitted ? (
                   <div className="text-center py-12 px-4 space-y-5">
@@ -590,7 +591,7 @@ export default function LandingPage() {
                             primaryNeed: "All-in-One Hotel PMS",
                           });
                         }}
-                        className="px-6 py-2.5 rounded-xl border border-black/15 bg-white text-[#111] text-[13px] font-bold hover:bg-black/5 transition-colors shadow-xs"
+                        className="px-6 py-2.5 rounded-xl border border-black/15 bg-white text-[#111] text-[13px] font-bold hover:bg-black/5 transition-colors shadow-sm"
                       >
                         Submit Another Inquiry
                       </button>
@@ -762,7 +763,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── FOOTER ─────────────────────────────────────────────────────── */}
-      <footer className="bg-[#EDEDEE] border-t border-black/5 py-12">
+      <footer className="bg-[#F0F0F2] border-t border-black/5 py-12">
         <div className="max-w-6xl mx-auto px-5 sm:px-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
 

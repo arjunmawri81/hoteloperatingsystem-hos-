@@ -1,9 +1,25 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { housekeepingApi, roomsApi } from "@/lib/api";
+import { housekeepingApi, roomsApi, inventoryApi } from "@/lib/api";
 import { HousekeepingTask } from "@/types";
-import { Sparkles, CheckCircle2, Plus, X, RefreshCw, UserCheck, BedDouble, ClipboardCheck, CheckCheck, AlertTriangle } from "lucide-react";
+import {
+  Sparkles,
+  CheckCircle2,
+  Plus,
+  X,
+  RefreshCw,
+  UserCheck,
+  BedDouble,
+  ClipboardCheck,
+  CheckCheck,
+  AlertTriangle,
+  Boxes,
+  Minus,
+  Send,
+  Search,
+  Package,
+} from "lucide-react";
 import { RoleGuard } from "@/components/layout/RoleGuard";
 
 export default function HousekeepingPage() {
@@ -37,6 +53,30 @@ export default function HousekeepingPage() {
     status: "dirty" as HousekeepingTask["status"],
   });
 
+  // Housekeeping Linen, Amenities & Cleaning Supplies Stock Management
+  const [hkInventory, setHkInventory] = useState<any[]>([]);
+  const [isStockModalOpen, setIsStockModalOpen] = useState(false);
+  const [stockRequestItems, setStockRequestItems] = useState<Array<{ itemId: string; sku: string; name: string; unit: string; qty: number; available: number }>>([]);
+  const [hkStaffName, setHkStaffName] = useState("");
+  const [hkPurpose, setHkPurpose] = useState("Daily Floor turnover & Room linen replenishment");
+  const [stockSearch, setStockSearch] = useState("");
+  const [isSubmittingStock, setIsSubmittingStock] = useState(false);
+  const [stockSuccess, setStockSuccess] = useState("");
+
+  const loadInventory = async () => {
+    try {
+      const res = await inventoryApi.getAll();
+      if (res && res.data) {
+        const hkItems = res.data.filter((item: any) =>
+          ["Linen & Bedding", "Guest Amenities", "Cleaning Supplies", "Maintenance"].includes(item.category)
+        );
+        setHkInventory(hkItems);
+      }
+    } catch (e) {
+      console.error("Failed to load housekeeping inventory:", e);
+    }
+  };
+
   const loadData = async () => {
     setIsLoading(true);
     try {
@@ -49,6 +89,7 @@ export default function HousekeepingPage() {
       if (roomsData && roomsData.length > 0 && !newTask.roomNumber) {
         setNewTask((prev) => ({ ...prev, roomNumber: String(roomsData[0].number || roomsData[0].roomNumber) }));
       }
+      loadInventory();
     } catch (e) {
       console.error("Failed to load housekeeping data:", e);
     } finally {
@@ -59,6 +100,58 @@ export default function HousekeepingPage() {
   useEffect(() => {
     loadData();
   }, []);
+
+  const addToRequest = (item: any) => {
+    if (stockRequestItems.find((r) => r.itemId === item._id)) return;
+    setStockRequestItems((prev) => [
+      ...prev,
+      { itemId: item._id, sku: item.sku, name: item.name, unit: item.unit || "Units", qty: 1, available: item.quantity },
+    ]);
+  };
+
+  const updateRequestQty = (itemId: string, delta: number) => {
+    setStockRequestItems((prev) =>
+      prev.map((r) => (r.itemId === itemId ? { ...r, qty: Math.max(1, r.qty + delta) } : r))
+    );
+  };
+
+  const removeFromRequest = (itemId: string) => {
+    setStockRequestItems((prev) => prev.filter((r) => r.itemId !== itemId));
+  };
+
+  const handleSubmitStockUsage = async () => {
+    if (!hkStaffName.trim()) {
+      alert("Please enter Housekeeper / Staff name");
+      return;
+    }
+    if (stockRequestItems.length === 0) {
+      alert("Please add at least one item");
+      return;
+    }
+    setIsSubmittingStock(true);
+    try {
+      await inventoryApi.createIssue({
+        department: "Housekeeping",
+        issuedToStaff: hkStaffName,
+        purpose: hkPurpose,
+        items: stockRequestItems.map((r) => ({
+          sku: r.sku,
+          name: r.name,
+          quantity: r.qty,
+          unit: r.unit,
+        })),
+      });
+      setStockSuccess(`✓ Stock updated! ${stockRequestItems.length} item(s) deducted from inventory.`);
+      setStockRequestItems([]);
+      setHkStaffName("");
+      loadInventory();
+      setTimeout(() => setStockSuccess(""), 5000);
+    } catch (err: any) {
+      alert(err.message || "Failed to update stock");
+    } finally {
+      setIsSubmittingStock(false);
+    }
+  };
 
   const moveTask = async (taskId: string, targetStatus: HousekeepingTask["status"]) => {
     try {
@@ -194,6 +287,19 @@ export default function HousekeepingPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsStockModalOpen(true)}
+              className="flex items-center gap-2 px-3.5 py-2 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 text-indigo-700 text-[13px] font-bold rounded shadow-xs transition-colors cursor-pointer"
+            >
+              <Boxes className="w-4 h-4 text-indigo-600" />
+              <span>Linen &amp; Supplies Stock</span>
+              {hkInventory.filter((i) => i.status === "Low Stock" || i.status === "Critical").length > 0 && (
+                <span className="px-1.5 py-0.2 bg-rose-500 text-white text-[10px] font-black rounded-full animate-pulse">
+                  {hkInventory.filter((i) => i.status === "Low Stock" || i.status === "Critical").length} Low
+                </span>
+              )}
+            </button>
+
             <button
               onClick={loadData}
               title="Refresh Housekeeping Status"
@@ -587,6 +693,191 @@ export default function HousekeepingPage() {
                   className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded text-[12px] shadow-sm transition-colors"
                 >
                   Approve & Make Ready
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ----------------- HOUSEKEEPING LINEN & SUPPLIES STOCK MODAL ----------------- */}
+        {isStockModalOpen && (
+          <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-150">
+            <div className="bg-white rounded-xl border border-[#E5E7EB] shadow-2xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] flex flex-col">
+              <div className="flex items-center justify-between pb-3 border-b border-[#E5E7EB] shrink-0">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 bg-indigo-50 text-indigo-700 rounded-lg">
+                    <Boxes className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-[17px] font-bold text-[#111827]">
+                      Housekeeping Linen &amp; Supplies Usage
+                    </h3>
+                    <p className="text-[11px] text-gray-500">
+                      Record towels, bedsheets, cleaning liquids &amp; guest amenities used on floors
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsStockModalOpen(false)}
+                  className="text-gray-400 hover:text-gray-600 p-1"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {stockSuccess && (
+                <div className="p-3 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-lg text-xs font-semibold flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>{stockSuccess}</span>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 overflow-y-auto pr-1 flex-1">
+                {/* Left: Available Housekeeping Store Inventory */}
+                <div className="space-y-2 border border-gray-200 rounded-lg p-3 bg-gray-50/50 flex flex-col">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-gray-700 uppercase">Available Supplies</span>
+                    <span className="text-[11px] text-gray-500">{hkInventory.length} SKUs</span>
+                  </div>
+
+                  <div className="relative">
+                    <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-2.5" />
+                    <input
+                      type="text"
+                      placeholder="Search towels, soap, shampoo..."
+                      value={stockSearch}
+                      onChange={(e) => setStockSearch(e.target.value)}
+                      className="w-full pl-8 pr-2.5 py-1.5 bg-white border border-gray-200 rounded text-xs focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5 overflow-y-auto max-h-[260px] pr-1 flex-1">
+                    {hkInventory
+                      .filter(
+                        (item) =>
+                          item.name.toLowerCase().includes(stockSearch.toLowerCase()) ||
+                          item.sku.toLowerCase().includes(stockSearch.toLowerCase())
+                      )
+                      .map((item) => (
+                        <div
+                          key={item.sku}
+                          className="p-2 bg-white rounded border border-gray-200 flex items-center justify-between hover:border-indigo-300 transition-colors"
+                        >
+                          <div className="min-w-0 pr-2">
+                            <p className="text-xs font-bold text-gray-800 truncate">{item.name}</p>
+                            <p className="text-[10px] text-gray-500 font-mono">
+                              {item.sku} &bull; <span className={item.quantity <= item.minStock ? "text-rose-600 font-bold" : "text-emerald-700 font-semibold"}>Stock: {item.quantity} {item.unit}</span>
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => addToRequest(item)}
+                            className="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded shrink-0 transition-colors"
+                          >
+                            + Use
+                          </button>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+
+                {/* Right: Selected Consumption Form */}
+                <div className="space-y-3 flex flex-col">
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                      Housekeeper / Attendant Name <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Ramesh Kumar / Sunita"
+                      value={hkStaffName}
+                      onChange={(e) => setHkStaffName(e.target.value)}
+                      className="w-full px-2.5 py-1.5 border border-gray-300 rounded text-xs focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                      Floor / Room / Purpose
+                    </label>
+                    <input
+                      type="text"
+                      value={hkPurpose}
+                      onChange={(e) => setHkPurpose(e.target.value)}
+                      className="w-full px-2.5 py-1.5 border border-gray-300 rounded text-xs focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+
+                  {/* Selected Items List */}
+                  <div className="space-y-1.5 flex-1">
+                    <span className="text-xs font-bold text-gray-700 block uppercase">
+                      Items Taken for Cleaning / Turnover ({stockRequestItems.length})
+                    </span>
+
+                    {stockRequestItems.length === 0 ? (
+                      <div className="p-4 border border-dashed border-gray-300 rounded-lg text-center text-gray-400 text-xs">
+                        Select items from the left list to record usage
+                      </div>
+                    ) : (
+                      <div className="space-y-1.5 max-h-[160px] overflow-y-auto pr-1">
+                        {stockRequestItems.map((r) => (
+                          <div
+                            key={r.itemId}
+                            className="p-2 bg-indigo-50/60 border border-indigo-200 rounded flex items-center justify-between text-xs"
+                          >
+                            <div className="min-w-0 pr-2">
+                              <p className="font-bold text-gray-800 truncate">{r.name}</p>
+                              <p className="text-[10px] text-gray-500">{r.unit}</p>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => updateRequestQty(r.itemId, -1)}
+                                className="w-5 h-5 bg-white border border-gray-300 rounded flex items-center justify-center font-bold text-gray-700 hover:bg-gray-100"
+                              >
+                                -
+                              </button>
+                              <span className="w-8 text-center font-bold text-indigo-900">{r.qty}</span>
+                              <button
+                                type="button"
+                                onClick={() => updateRequestQty(r.itemId, 1)}
+                                className="w-5 h-5 bg-white border border-gray-300 rounded flex items-center justify-center font-bold text-gray-700 hover:bg-gray-100"
+                              >
+                                +
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => removeFromRequest(r.itemId)}
+                                className="text-rose-500 hover:text-rose-700 ml-1 p-0.5"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setIsStockModalOpen(false)}
+                  className="px-4 py-2 border border-gray-300 rounded font-semibold text-gray-700 text-xs hover:bg-gray-50"
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  disabled={isSubmittingStock || stockRequestItems.length === 0}
+                  onClick={handleSubmitStockUsage}
+                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded font-bold text-xs shadow-xs flex items-center gap-1.5 transition-colors"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>{isSubmittingStock ? "Updating..." : "Submit Usage & Deduct Stock"}</span>
                 </button>
               </div>
             </div>

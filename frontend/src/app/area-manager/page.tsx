@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
-import { CheckCircle2, XCircle, ArrowRight, ShieldAlert, Check, ShieldCheck, Plus, X, AlertTriangle } from "lucide-react";
+import { CheckCircle2, XCircle, ArrowRight, ShieldAlert, Check, ShieldCheck, Plus, X, AlertTriangle, Building2, BedDouble, TrendingUp, ClipboardCheck } from "lucide-react";
 
 import { api } from "@/lib/api";
 
@@ -96,24 +96,40 @@ export default function AreaManagerDashboardPage() {
       value: String(assignedHotels.length),
       subtext: assignedHotels.length > 0 ? hotelNamesSummary : "No property assigned yet",
       link: "/area-manager/comparison",
+      icon: Building2,
+      accentColor: "text-cyan-400",
+      iconBg: "bg-cyan-500/10 border-cyan-500/30 text-cyan-400",
+      topGlow: "from-cyan-500/40 via-cyan-500/10 to-transparent",
     },
     {
       title: "OCCUPANCY",
       value: clusterOccupancyRate,
       subtext: assignedHotels.length > 0 ? "cluster occupancy" : "No active property",
       link: "/area-manager/comparison",
+      icon: TrendingUp,
+      accentColor: "text-emerald-400",
+      iconBg: "bg-emerald-500/10 border-emerald-500/30 text-emerald-400",
+      topGlow: "from-emerald-500/40 via-emerald-500/10 to-transparent",
     },
     {
       title: "PROPERTY RESERVATIONS",
       value: String(clusterArrivalsCount),
       subtext: "across assigned cluster",
       link: "/operations/reservations",
+      icon: BedDouble,
+      accentColor: "text-blue-400",
+      iconBg: "bg-blue-500/10 border-blue-500/30 text-blue-400",
+      topGlow: "from-blue-500/40 via-blue-500/10 to-transparent",
     },
     {
       title: "OPEN APPROVALS",
       value: String(openApprovalsCount),
       subtext: "pending your decision",
       link: "#approvals",
+      icon: ClipboardCheck,
+      accentColor: "text-amber-400",
+      iconBg: "bg-amber-500/10 border-amber-500/30 text-amber-400",
+      topGlow: "from-amber-500/40 via-amber-500/10 to-transparent",
     },
   ];
 
@@ -139,10 +155,10 @@ export default function AreaManagerDashboardPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-[26px] font-bold text-[#111827] tracking-tight">
+          <h1 className="text-[26px] font-bold text-[#0F172A] tracking-[-0.02em]">
             Area Manager Dashboard
           </h1>
-          <p className="text-[13px] text-[#6B7280] mt-0.5">
+          <p className="text-[13px] text-[#64748B] mt-1 font-normal">
             {hotelName} ({regionName}) — cluster oversight &amp; property approval management
           </p>
         </div>
@@ -164,25 +180,44 @@ export default function AreaManagerDashboardPage() {
         </div>
       )}
 
-      {/* 4 Stat Cards */}
+      {/* 4 Key Stat Cards (Matching Sidebar Deep Navy Theme) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {stats.map((stat, i) => (
-          <Link
-            key={i}
-            href={stat.link}
-            className="bg-white p-5 rounded-lg border border-[#E5E7EB] hover:border-[#D1D5DB] shadow-xs transition-all hover:shadow-md block group"
-          >
-            <div className="text-[11px] font-bold text-[#EC3013] uppercase tracking-wider">
-              {stat.title}
-            </div>
-            <div className="text-[30px] font-black text-[#111827] mt-2 tracking-tight">
-              {stat.value}
-            </div>
-            <div className="text-[12px] text-[#6B7280] mt-1">
-              {stat.subtext}
-            </div>
-          </Link>
-        ))}
+        {stats.map((stat, i) => {
+          const Icon = stat.icon;
+          return (
+            <Link
+              key={i}
+              href={stat.link}
+              className="relative overflow-hidden bg-[#0B132B] hover:bg-[#0F1A3A] p-5 rounded-xl border border-slate-800/90 shadow-xl hover:border-cyan-500/50 hover:shadow-cyan-950/40 hover:-translate-y-0.5 transition-all duration-300 group block cursor-pointer"
+            >
+              {/* Top Accent Gradient Glow Line */}
+              <div className={`absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r ${stat.topGlow}`} />
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className={`p-2 rounded-lg border ${stat.iconBg} shadow-inner`}>
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <span className={`text-[11px] font-black uppercase tracking-wider ${stat.accentColor}`}>
+                    {stat.title}
+                  </span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-cyan-400 group-hover:translate-x-1 transition-all" />
+              </div>
+
+              <div className="text-[30px] font-black text-white mt-3.5 tracking-tight drop-shadow-xs">
+                {stat.value}
+              </div>
+
+              <div className="text-[12px] text-slate-400 mt-1.5 font-medium flex items-center justify-between">
+                <span>{stat.subtext}</span>
+                <span className="text-[10px] text-slate-500 group-hover:text-cyan-300 transition-colors uppercase font-bold tracking-wider">
+                  View &rarr;
+                </span>
+              </div>
+            </Link>
+          );
+        })}
       </div>
 
       {/* Approval Center Section */}

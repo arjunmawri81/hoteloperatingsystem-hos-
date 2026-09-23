@@ -2,6 +2,8 @@ const express = require("express");
 const AIConversation = require("../models/AIConversation");
 const AIKnowledge = require("../models/AIKnowledge");
 const AIToolsService = require("../services/aiTools.service");
+const ExecutiveBriefingService = require("../services/executiveBriefing.service");
+const { identifyTenant } = require("../middleware/tenant");
 const Complaint = require("../models/Complaint");
 const Lead = require("../models/Lead");
 const Hotel = require("../models/Hotel");
@@ -271,6 +273,128 @@ router.post("/calls/webhook", async (req, res) => {
     res.json({ success: true, message: "AI Call recording and transcript ingested successfully." });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ==========================================
+// --- Executive AI Business Assistant Briefing Suite ---
+// ==========================================
+
+/**
+ * GET /api/ai/briefing/snapshot
+ * Generates verified, multi-module business metrics snapshot
+ */
+router.get("/briefing/snapshot", identifyTenant, async (req, res) => {
+  try {
+    const orgId = req.tenant?.orgId || req.user?.orgId || "org-1";
+    const orgName = req.user?.orgName || "Meridian Hotel Group";
+    const period = req.query.period || "today";
+
+    let hotelIds = [];
+    if (req.query.hotelId) {
+      hotelIds = [req.query.hotelId];
+    } else if (req.user?.assignedHotelIds && req.user.assignedHotelIds.length > 0) {
+      hotelIds = req.user.assignedHotelIds;
+    } else if (req.tenant?.hotelId) {
+      hotelIds = [req.tenant.hotelId];
+    }
+
+    const snapshot = await ExecutiveBriefingService.getExecutiveBriefingSnapshot({
+      orgId,
+      hotelIds,
+      period,
+      orgName,
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: snapshot,
+    });
+  } catch (error) {
+    console.error("Executive briefing snapshot error:", error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * POST /api/ai/briefing/narrate
+ * Generates chapter-by-chapter voice narration script in Hindi/Hinglish/English
+ */
+router.post("/briefing/narrate", identifyTenant, async (req, res) => {
+  try {
+    const { language = "hinglish", period = "today" } = req.body;
+    let snapshot = req.body.snapshot;
+
+    if (!snapshot) {
+      const orgId = req.tenant?.orgId || req.user?.orgId || "org-1";
+      const orgName = req.user?.orgName || "Meridian Hotel Group";
+      let hotelIds = req.user?.assignedHotelIds || (req.tenant?.hotelId ? [req.tenant.hotelId] : []);
+      snapshot = await ExecutiveBriefingService.getExecutiveBriefingSnapshot({
+        orgId,
+        hotelIds,
+        period,
+        orgName,
+      });
+    }
+
+    const narration = await ExecutiveBriefingService.generateBriefingNarration({
+      snapshot,
+      language,
+    });
+
+    return res.status(200).json({
+      success: true,
+      narration,
+      snapshot,
+    });
+  } catch (error) {
+    console.error("Executive briefing narration error:", error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * POST /api/ai/briefing/ask
+ * Resolves mid-briefing voice/text questions grounded solely on verified snapshot
+ */
+router.post("/briefing/ask", identifyTenant, async (req, res) => {
+  try {
+    const { question, language = "hinglish", conversationHistory = [] } = req.body;
+    let snapshot = req.body.snapshot;
+
+    if (!question) {
+      return res.status(400).json({ success: false, message: "Question is required" });
+    }
+
+    if (!snapshot) {
+      const orgId = req.tenant?.orgId || req.user?.orgId || "org-1";
+      const orgName = req.user?.orgName || "Meridian Hotel Group";
+      let hotelIds = req.user?.assignedHotelIds || (req.tenant?.hotelId ? [req.tenant.hotelId] : []);
+      snapshot = await ExecutiveBriefingService.getExecutiveBriefingSnapshot({
+        orgId,
+        hotelIds,
+        period: "today",
+        orgName,
+      });
+    }
+
+    const result = await ExecutiveBriefingService.answerBriefingQuery({
+      snapshot,
+      query: question,
+      language,
+      conversationHistory,
+    });
+
+    return res.status(200).json({
+      success: true,
+      answer: result.answer,
+      action: result.action,
+      category: result.category,
+      data: result.data,
+    });
+  } catch (error) {
+    console.error("Executive briefing Q&A error:", error);
+    return res.status(500).json({ success: false, message: error.message });
   }
 });
 

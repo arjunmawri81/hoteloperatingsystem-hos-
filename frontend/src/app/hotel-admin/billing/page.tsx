@@ -238,12 +238,12 @@ export default function HotelAdminBillingPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-[26px] font-bold text-[#111827] tracking-tight">
+          <h1 className="text-[26px] font-bold text-[#0F172A] tracking-[-0.02em]">
             Billing &amp; Revenue Transactions
           </h1>
-          <p className="text-[13px] text-[#6B7280] mt-0.5">
+          <p className="text-[13px] text-[#64748B] mt-1 font-normal">
             Full ledger of all transactions, folios, and collections by staff across{" "}
-            <strong className="text-[#111827] font-semibold">{user?.orgName || "Hotel Organization"}</strong>
+            <strong className="text-[#0F172A] font-semibold">{user?.orgName || "Hotel Organization"}</strong>
           </p>
         </div>
 
@@ -284,64 +284,88 @@ export default function HotelAdminBillingPage() {
         </div>
       )}
 
-      {/* 4 Financial Metric Cards */}
+      {/* 4 Financial Metric Cards (Matching Sidebar Deep Navy Theme) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="bg-white p-5 rounded-lg border border-[#E5E7EB] shadow-xs">
+        {/* Total Invoiced */}
+        <div className="relative overflow-hidden bg-[#0B132B] hover:bg-[#0F1A3A] p-5 rounded-xl border border-slate-800/90 shadow-xl hover:border-cyan-500/50 hover:shadow-cyan-950/40 hover:-translate-y-0.5 transition-all duration-300">
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-cyan-500/50 via-cyan-500/20 to-transparent" />
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-[#6B7280] uppercase tracking-wider">
-              Total Invoiced
-            </span>
-            <Receipt className="w-4 h-4 text-[#EC3013]" />
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg border bg-cyan-500/10 border-cyan-500/30 text-cyan-400 shadow-inner">
+                <Receipt className="w-4 h-4" />
+              </div>
+              <span className="text-[11px] font-black uppercase tracking-wider text-cyan-400">
+                Total Invoiced
+              </span>
+            </div>
           </div>
-          <div className="text-[28px] font-black text-[#111827] mt-2">
+          <div className="text-[28px] font-black text-white mt-3 tracking-tight drop-shadow-xs">
             ₹{totalInvoiced.toLocaleString("en-IN")}
           </div>
-          <div className="text-[12px] text-[#9CA3AF] mt-1">
+          <div className="text-[12px] text-slate-400 mt-1 font-medium">
             {invoices.length} total folios generated
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-lg border border-[#E5E7EB] shadow-xs">
+        {/* Total Settled */}
+        <div className="relative overflow-hidden bg-[#0B132B] hover:bg-[#0F1A3A] p-5 rounded-xl border border-slate-800/90 shadow-xl hover:border-emerald-500/50 hover:shadow-emerald-950/40 hover:-translate-y-0.5 transition-all duration-300">
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-emerald-500/60 via-emerald-500/20 to-transparent" />
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">
-              Total Settled (Paid)
-            </span>
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg border bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-inner">
+                <CheckCircle2 className="w-4 h-4" />
+              </div>
+              <span className="text-[11px] font-black uppercase tracking-wider text-emerald-400">
+                Total Settled (Paid)
+              </span>
+            </div>
           </div>
-          <div className="text-[28px] font-black text-emerald-600 mt-2">
+          <div className="text-[28px] font-black text-emerald-300 mt-3 tracking-tight drop-shadow-xs">
             ₹{totalPaid.toLocaleString("en-IN")}
           </div>
-          <div className="text-[12px] text-emerald-700/80 mt-1">
+          <div className="text-[12px] text-emerald-400/80 mt-1 font-semibold">
             {totalInvoiced > 0 ? `${Math.round((totalPaid / totalInvoiced) * 100)}% collection rate` : "0% settled"}
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-lg border border-[#E5E7EB] shadow-xs">
+        {/* Pending Collections */}
+        <div className="relative overflow-hidden bg-[#0B132B] hover:bg-[#0F1A3A] p-5 rounded-xl border border-slate-800/90 shadow-xl hover:border-amber-500/50 hover:shadow-amber-950/40 hover:-translate-y-0.5 transition-all duration-300">
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-amber-500/60 via-amber-500/20 to-transparent" />
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wider">
-              Pending Collections
-            </span>
-            <Clock className="w-4 h-4 text-amber-600" />
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg border bg-amber-500/10 border-amber-500/30 text-amber-400 shadow-inner">
+                <Clock className="w-4 h-4" />
+              </div>
+              <span className="text-[11px] font-black uppercase tracking-wider text-amber-400">
+                Pending Collections
+              </span>
+            </div>
           </div>
-          <div className="text-[28px] font-black text-amber-600 mt-2">
+          <div className="text-[28px] font-black text-amber-300 mt-3 tracking-tight drop-shadow-xs">
             ₹{totalPending.toLocaleString("en-IN")}
           </div>
-          <div className="text-[12px] text-amber-700/80 mt-1">
+          <div className="text-[12px] text-amber-400/80 mt-1 font-semibold">
             {invoices.filter((i) => i.status === "pending").length} active guest folios
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-lg border border-[#E5E7EB] shadow-xs">
+        {/* Overdue Amount */}
+        <div className="relative overflow-hidden bg-[#0B132B] hover:bg-[#0F1A3A] p-5 rounded-xl border border-slate-800/90 shadow-xl hover:border-rose-500/50 hover:shadow-rose-950/40 hover:-translate-y-0.5 transition-all duration-300">
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-rose-500/60 via-rose-500/20 to-transparent" />
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-red-700 uppercase tracking-wider">
-              Overdue Amount
-            </span>
-            <AlertCircle className="w-4 h-4 text-red-600" />
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg border bg-rose-500/10 border-rose-500/30 text-rose-400 shadow-inner">
+                <AlertCircle className="w-4 h-4" />
+              </div>
+              <span className="text-[11px] font-black uppercase tracking-wider text-rose-400">
+                Overdue Amount
+              </span>
+            </div>
           </div>
-          <div className="text-[28px] font-black text-red-600 mt-2">
+          <div className="text-[28px] font-black text-rose-300 mt-3 tracking-tight drop-shadow-xs">
             ₹{totalOverdue.toLocaleString("en-IN")}
           </div>
-          <div className="text-[12px] text-red-700/80 mt-1">
+          <div className="text-[12px] text-rose-400/80 mt-1 font-semibold">
             {invoices.filter((i) => i.status === "overdue").length} overdue folios
           </div>
         </div>

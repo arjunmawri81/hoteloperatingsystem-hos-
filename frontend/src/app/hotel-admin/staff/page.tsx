@@ -276,10 +276,10 @@ export default function StaffManagementPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-[26px] font-bold text-[#111827] tracking-tight">
+          <h1 className="text-[26px] font-bold text-[#0F172A] tracking-[-0.02em]">
             Staff &amp; Role Management
           </h1>
-          <p className="text-[13px] text-[#6B7280] mt-0.5">
+          <p className="text-[13px] text-[#64748B] mt-1 font-normal">
             Personnel directory, property assignments, and RBAC roles (Database Persisted)
           </p>
         </div>

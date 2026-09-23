@@ -215,10 +215,10 @@ export default function OrganizationsPage() {
       {/* Top Header Section with Create Button */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-[26px] font-bold text-[#111827] tracking-tight flex items-center gap-2">
-            <Building className="w-6 h-6 text-[#EC3013]" /> Organizations &amp; KYC Approvals
+          <h1 className="text-[26px] font-bold text-[#0F172A] tracking-[-0.02em]">
+            Organizations &amp; KYC Approvals
           </h1>
-          <p className="text-[13px] text-[#6B7280] mt-0.5">
+          <p className="text-[13px] text-[#64748B] mt-1 font-normal">
             Review business registration documents, approve hotel chains, and manage workspace tenant access ({organizations.length})
           </p>
         </div>
@@ -238,6 +238,110 @@ export default function OrganizationsPage() {
             <Plus className="w-4 h-4" />
             <span>Create Organization</span>
           </button>
+        </div>
+      </div>
+
+      {/* 4 Key Stat Cards (Matching Sidebar Deep Navy Theme) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {/* Total Organizations */}
+        <div
+          onClick={() => setStatusFilter("all")}
+          className="relative overflow-hidden bg-[#0B132B] hover:bg-[#0F1A3A] p-5 rounded-xl border border-slate-800/90 shadow-xl hover:border-cyan-500/50 hover:shadow-cyan-950/40 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
+        >
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-cyan-500/50 via-cyan-500/20 to-transparent" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg border bg-cyan-500/10 border-cyan-500/30 text-cyan-400 shadow-inner">
+                <Building className="w-4 h-4" />
+              </div>
+              <span className="text-[11px] font-black uppercase tracking-wider text-cyan-400">
+                Total Organizations
+              </span>
+            </div>
+          </div>
+          <div className="text-[28px] font-black text-white mt-3 tracking-tight drop-shadow-xs">
+            {organizations.length}
+          </div>
+          <div className="text-[12px] text-slate-400 mt-1 font-medium">
+            Registered on platform
+          </div>
+        </div>
+
+        {/* Pending KYC */}
+        <div
+          onClick={() => setStatusFilter("pending_approval")}
+          className="relative overflow-hidden bg-[#0B132B] hover:bg-[#0F1A3A] p-5 rounded-xl border border-slate-800/90 shadow-xl hover:border-amber-500/50 hover:shadow-amber-950/40 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
+        >
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-amber-500/60 via-amber-500/20 to-transparent" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg border bg-amber-500/10 border-amber-500/30 text-amber-400 shadow-inner">
+                <Clock className="w-4 h-4" />
+              </div>
+              <span className="text-[11px] font-black uppercase tracking-wider text-amber-400">
+                Pending KYC
+              </span>
+            </div>
+            {pendingCount > 0 && (
+              <span className="px-2 py-0.5 bg-amber-500 text-black text-[10px] font-black rounded-full animate-pulse">
+                Action Required
+              </span>
+            )}
+          </div>
+          <div className="text-[28px] font-black text-amber-300 mt-3 tracking-tight drop-shadow-xs">
+            {pendingCount}
+          </div>
+          <div className="text-[12px] text-amber-400/80 mt-1 font-semibold">
+            Awaiting Super Admin approval
+          </div>
+        </div>
+
+        {/* Active Chains */}
+        <div
+          onClick={() => setStatusFilter("active")}
+          className="relative overflow-hidden bg-[#0B132B] hover:bg-[#0F1A3A] p-5 rounded-xl border border-slate-800/90 shadow-xl hover:border-emerald-500/50 hover:shadow-emerald-950/40 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
+        >
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-emerald-500/60 via-emerald-500/20 to-transparent" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg border bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-inner">
+                <CheckCircle2 className="w-4 h-4" />
+              </div>
+              <span className="text-[11px] font-black uppercase tracking-wider text-emerald-400">
+                Active Chains
+              </span>
+            </div>
+          </div>
+          <div className="text-[28px] font-black text-emerald-300 mt-3 tracking-tight drop-shadow-xs">
+            {activeCount}
+          </div>
+          <div className="text-[12px] text-emerald-400/80 mt-1 font-semibold">
+            Verified &amp; live workspaces
+          </div>
+        </div>
+
+        {/* Rejected / Other */}
+        <div
+          onClick={() => setStatusFilter("rejected")}
+          className="relative overflow-hidden bg-[#0B132B] hover:bg-[#0F1A3A] p-5 rounded-xl border border-slate-800/90 shadow-xl hover:border-rose-500/50 hover:shadow-rose-950/40 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
+        >
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-rose-500/60 via-rose-500/20 to-transparent" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg border bg-rose-500/10 border-rose-500/30 text-rose-400 shadow-inner">
+                <Ban className="w-4 h-4" />
+              </div>
+              <span className="text-[11px] font-black uppercase tracking-wider text-rose-400">
+                Rejected / Blocked
+              </span>
+            </div>
+          </div>
+          <div className="text-[28px] font-black text-rose-300 mt-3 tracking-tight drop-shadow-xs">
+            {rejectedCount}
+          </div>
+          <div className="text-[12px] text-rose-400/80 mt-1 font-semibold">
+            Failed KYC verification
+          </div>
         </div>
       </div>
 

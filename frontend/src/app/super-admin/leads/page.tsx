@@ -159,10 +159,10 @@ export default function SuperAdminLeadsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-[28px] font-bold text-[#111827] tracking-tight">
+          <h1 className="text-[26px] font-bold text-[#0F172A] tracking-[-0.02em]">
             SaaS Inquiries &amp; Hotel Leads
           </h1>
-          <p className="text-[14px] text-[#6B7280] mt-1">
+          <p className="text-[13px] text-[#64748B] mt-1 font-normal">
             Incoming demo requests from hotel owners on the LuckNexa landing page
           </p>
         </div>
@@ -178,58 +178,103 @@ export default function SuperAdminLeadsPage() {
           </button>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#0B132B] hover:bg-[#16233B] text-white text-[13px] font-bold rounded-lg shadow-sm transition-all hover:scale-[1.01]"
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#EC3013] hover:bg-[#D62839] text-white text-[13px] font-bold rounded-lg shadow-sm transition-all hover:scale-[1.01]"
           >
-            <Plus className="w-4 h-4 text-cyan-400" />
-            Add Manual Inquiry
+            <Plus className="w-4 h-4" />
+            <span>Add Manual Inquiry</span>
           </button>
         </div>
       </div>
 
-      {/* KPI Cards */}
+      {/* KPI Cards (Matching Sidebar Deep Navy Theme) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="bg-white p-5 rounded-xl border border-[#E5E7EB] shadow-xs">
-          <div className="flex items-center justify-between text-[11px] font-bold text-[#6B7280] uppercase tracking-wider">
-            <span>Total Inquiries</span>
-            <Building2 className="w-4 h-4 text-blue-500" />
+        {/* Total Inquiries */}
+        <div className="relative overflow-hidden bg-[#0B132B] hover:bg-[#0F1A3A] p-5 rounded-xl border border-slate-800/90 shadow-xl hover:border-cyan-500/50 hover:shadow-cyan-950/40 hover:-translate-y-0.5 transition-all duration-300">
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-cyan-500/50 via-cyan-500/20 to-transparent" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg border bg-cyan-500/10 border-cyan-500/30 text-cyan-400 shadow-inner">
+                <Building2 className="w-4 h-4" />
+              </div>
+              <span className="text-[11px] font-black uppercase tracking-wider text-cyan-400">
+                Total Inquiries
+              </span>
+            </div>
           </div>
-          <div className="text-[32px] font-black text-[#111827] mt-2">
+          <div className="text-[28px] font-black text-white mt-3 tracking-tight drop-shadow-xs">
             {leads.length}
           </div>
-          <div className="text-[12px] text-[#6B7280] mt-1">Across all web forms &amp; chat</div>
+          <div className="text-[12px] text-slate-400 mt-1 font-medium">
+            Across all web forms &amp; chat
+          </div>
         </div>
 
-        <div className="bg-white p-5 rounded-xl border border-[#E5E7EB] shadow-xs">
-          <div className="flex items-center justify-between text-[11px] font-bold text-amber-600 uppercase tracking-wider">
-            <span>New (Pending Call)</span>
-            <Clock className="w-4 h-4 text-amber-500" />
+        {/* New (Pending Call) */}
+        <div className="relative overflow-hidden bg-[#0B132B] hover:bg-[#0F1A3A] p-5 rounded-xl border border-slate-800/90 shadow-xl hover:border-amber-500/50 hover:shadow-amber-950/40 hover:-translate-y-0.5 transition-all duration-300">
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-amber-500/60 via-amber-500/20 to-transparent" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg border bg-amber-500/10 border-amber-500/30 text-amber-400 shadow-inner">
+                <Clock className="w-4 h-4" />
+              </div>
+              <span className="text-[11px] font-black uppercase tracking-wider text-amber-400">
+                New (Pending Call)
+              </span>
+            </div>
+            {newCount > 0 && (
+              <span className="px-2 py-0.5 bg-amber-500 text-black text-[10px] font-black rounded-full animate-pulse">
+                Hot
+              </span>
+            )}
           </div>
-          <div className="text-[32px] font-black text-amber-600 mt-2">
+          <div className="text-[28px] font-black text-amber-300 mt-3 tracking-tight drop-shadow-xs">
             {newCount}
           </div>
-          <div className="text-[12px] text-[#6B7280] mt-1">Needs consultation within 30 min</div>
+          <div className="text-[12px] text-amber-400/80 mt-1 font-semibold">
+            Needs consultation within 30 min
+          </div>
         </div>
 
-        <div className="bg-white p-5 rounded-xl border border-[#E5E7EB] shadow-xs">
-          <div className="flex items-center justify-between text-[11px] font-bold text-emerald-600 uppercase tracking-wider">
-            <span>Converted / Won</span>
-            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+        {/* Converted / Won */}
+        <div className="relative overflow-hidden bg-[#0B132B] hover:bg-[#0F1A3A] p-5 rounded-xl border border-slate-800/90 shadow-xl hover:border-emerald-500/50 hover:shadow-emerald-950/40 hover:-translate-y-0.5 transition-all duration-300">
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-emerald-500/60 via-emerald-500/20 to-transparent" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg border bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-inner">
+                <CheckCircle2 className="w-4 h-4" />
+              </div>
+              <span className="text-[11px] font-black uppercase tracking-wider text-emerald-400">
+                Converted / Won
+              </span>
+            </div>
           </div>
-          <div className="text-[32px] font-black text-emerald-600 mt-2">
+          <div className="text-[28px] font-black text-emerald-300 mt-3 tracking-tight drop-shadow-xs">
             {convertedCount}
           </div>
-          <div className="text-[12px] text-[#6B7280] mt-1">Active paid hotel onboarding</div>
+          <div className="text-[12px] text-emerald-400/80 mt-1 font-semibold">
+            Active paid hotel onboarding
+          </div>
         </div>
 
-        <div className="bg-white p-5 rounded-xl border border-[#E5E7EB] shadow-xs">
-          <div className="flex items-center justify-between text-[11px] font-bold text-cyan-600 uppercase tracking-wider">
-            <span>Est. Pipeline Value</span>
-            <TrendingUp className="w-4 h-4 text-cyan-500" />
+        {/* Est. Pipeline Value */}
+        <div className="relative overflow-hidden bg-[#0B132B] hover:bg-[#0F1A3A] p-5 rounded-xl border border-slate-800/90 shadow-xl hover:border-cyan-500/50 hover:shadow-cyan-950/40 hover:-translate-y-0.5 transition-all duration-300">
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-blue-500/60 via-cyan-500/40 to-transparent" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg border bg-cyan-500/10 border-cyan-500/30 text-cyan-400 shadow-inner">
+                <TrendingUp className="w-4 h-4" />
+              </div>
+              <span className="text-[11px] font-black uppercase tracking-wider text-cyan-400">
+                Est. Pipeline Value
+              </span>
+            </div>
           </div>
-          <div className="text-[32px] font-black text-[#111827] mt-2">
+          <div className="text-[28px] font-black text-white mt-3 tracking-tight drop-shadow-xs">
             ₹{totalValue.toLocaleString("en-IN")}
           </div>
-          <div className="text-[12px] text-[#6B7280] mt-1">Annual subscription estimate</div>
+          <div className="text-[12px] text-slate-400 mt-1 font-medium">
+            Annual subscription estimate
+          </div>
         </div>
       </div>
 

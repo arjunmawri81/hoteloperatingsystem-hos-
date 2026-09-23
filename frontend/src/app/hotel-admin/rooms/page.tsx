@@ -434,15 +434,10 @@ export default function HotelAdminRoomsPage() {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#EC3013]/10 text-[#EC3013] flex items-center justify-center font-bold">
-              <BedDouble className="w-4 h-4" />
-            </div>
-            <h1 className="text-[24px] sm:text-[26px] font-bold text-[#111827] tracking-tight">
-              Room Map &amp; Unit Management
-            </h1>
-          </div>
-          <p className="text-[13px] text-[#6B7280] mt-1">
+          <h1 className="text-[26px] font-bold text-[#0F172A] tracking-[-0.02em]">
+            Room Map &amp; Unit Management
+          </h1>
+          <p className="text-[13px] text-[#64748B] mt-1 font-normal">
             Build, configure, and manage physical room units floor-by-floor with custom room numbers and nightly pricing.
           </p>
         </div>
@@ -488,31 +483,57 @@ export default function HotelAdminRoomsPage() {
         </div>
       )}
 
-      {/* KPI Stats Row */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <div className="bg-white p-4 rounded-lg border border-[#E5E7EB] shadow-xs">
-          <div className="text-[11px] font-bold text-[#6B7280] uppercase tracking-wider">Total Units</div>
-          <div className="text-[22px] font-bold text-[#111827] mt-1">{counts.total}</div>
+      {/* KPI Stats Row (Matching Sidebar Deep Navy Theme) */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
+        {/* Total Units */}
+        <div className="relative overflow-hidden bg-[#0B132B] hover:bg-[#0F1A3A] p-4 rounded-xl border border-slate-800/90 shadow-lg hover:border-cyan-500/40 hover:shadow-cyan-950/30 hover:-translate-y-0.5 transition-all duration-200">
+          <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-cyan-500/50 to-transparent" />
+          <div className="text-[10px] font-black text-cyan-400 uppercase tracking-wider">Total Units</div>
+          <div className="text-[24px] font-black text-white mt-1 tracking-tight drop-shadow-xs">{counts.total}</div>
         </div>
-        <div className="bg-white p-4 rounded-lg border border-[#E5E7EB] shadow-xs">
-          <div className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">Available</div>
-          <div className="text-[22px] font-bold text-emerald-700 mt-1">{counts.available}</div>
+
+        {/* Available */}
+        <div className="relative overflow-hidden bg-[#0B132B] hover:bg-[#0F1A3A] p-4 rounded-xl border border-slate-800/90 shadow-lg hover:border-emerald-500/40 hover:shadow-emerald-950/30 hover:-translate-y-0.5 transition-all duration-200">
+          <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-emerald-500/60 to-transparent" />
+          <div className="text-[10px] font-black text-emerald-400 uppercase tracking-wider flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span>Available</span>
+          </div>
+          <div className="text-[24px] font-black text-emerald-300 mt-1 tracking-tight drop-shadow-xs">{counts.available}</div>
         </div>
-        <div className="bg-white p-4 rounded-lg border border-[#E5E7EB] shadow-xs">
-          <div className="text-[11px] font-bold text-rose-600 uppercase tracking-wider">Occupied</div>
-          <div className="text-[22px] font-bold text-rose-700 mt-1">{counts.occupied}</div>
+
+        {/* Occupied */}
+        <div className="relative overflow-hidden bg-[#0B132B] hover:bg-[#0F1A3A] p-4 rounded-xl border border-slate-800/90 shadow-lg hover:border-rose-500/40 hover:shadow-rose-950/30 hover:-translate-y-0.5 transition-all duration-200">
+          <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-rose-500/60 to-transparent" />
+          <div className="text-[10px] font-black text-rose-400 uppercase tracking-wider flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+            <span>Occupied</span>
+          </div>
+          <div className="text-[24px] font-black text-rose-300 mt-1 tracking-tight drop-shadow-xs">{counts.occupied}</div>
         </div>
-        <div className="bg-white p-4 rounded-lg border border-[#E5E7EB] shadow-xs">
-          <div className="text-[11px] font-bold text-amber-600 uppercase tracking-wider">Housekeeping</div>
-          <div className="text-[22px] font-bold text-amber-700 mt-1">{counts.dirty}</div>
+
+        {/* Housekeeping */}
+        <div className="relative overflow-hidden bg-[#0B132B] hover:bg-[#0F1A3A] p-4 rounded-xl border border-slate-800/90 shadow-lg hover:border-amber-500/40 hover:shadow-amber-950/30 hover:-translate-y-0.5 transition-all duration-200">
+          <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-amber-500/60 to-transparent" />
+          <div className="text-[10px] font-black text-amber-400 uppercase tracking-wider flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+            <span>Housekeeping</span>
+          </div>
+          <div className="text-[24px] font-black text-amber-300 mt-1 tracking-tight drop-shadow-xs">{counts.dirty}</div>
         </div>
-        <div className="bg-white p-4 rounded-lg border border-[#E5E7EB] shadow-xs">
-          <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Out of Order</div>
-          <div className="text-[22px] font-bold text-gray-700 mt-1">{counts.out_of_order}</div>
+
+        {/* Out of Order */}
+        <div className="relative overflow-hidden bg-[#0B132B] hover:bg-[#0F1A3A] p-4 rounded-xl border border-slate-800/90 shadow-lg hover:border-slate-500/40 hover:shadow-slate-950/30 hover:-translate-y-0.5 transition-all duration-200">
+          <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-slate-500/50 to-transparent" />
+          <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Out of Order</div>
+          <div className="text-[24px] font-black text-slate-300 mt-1 tracking-tight drop-shadow-xs">{counts.out_of_order}</div>
         </div>
-        <div className="bg-white p-4 rounded-lg border border-[#E5E7EB] shadow-xs">
-          <div className="text-[11px] font-bold text-blue-600 uppercase tracking-wider">Avg Nightly Rate</div>
-          <div className="text-[22px] font-bold text-blue-700 mt-1">₹{counts.avgRate}</div>
+
+        {/* Avg Nightly Rate */}
+        <div className="relative overflow-hidden bg-[#0B132B] hover:bg-[#0F1A3A] p-4 rounded-xl border border-slate-800/90 shadow-lg hover:border-cyan-500/40 hover:shadow-cyan-950/30 hover:-translate-y-0.5 transition-all duration-200">
+          <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-blue-500/60 via-cyan-500/40 to-transparent" />
+          <div className="text-[10px] font-black text-cyan-400 uppercase tracking-wider">Avg Nightly Rate</div>
+          <div className="text-[24px] font-black text-cyan-300 mt-1 tracking-tight drop-shadow-xs">₹{counts.avgRate}</div>
         </div>
       </div>
 
