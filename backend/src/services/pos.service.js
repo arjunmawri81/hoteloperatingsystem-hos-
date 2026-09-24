@@ -10,15 +10,18 @@ class PosService {
   }
 
   static async createOrder({ data, user, tenant, ipAddress }) {
-    const { tableNumber, roomNumber, items, total, status } = data;
+    const { tableNumber, roomNumber, items, total, status, guestName } = data;
 
     const newOrder = new RestaurantOrder({
       id: `POS-${Math.floor(400 + Math.random() * 600)}`,
       tableNumber: tableNumber || "T-01",
       roomNumber: roomNumber || undefined,
+      guestName: guestName || user?.name || "Dine-in Guest",
       items: items || ["Kitchen Order"],
       total: Number(total) || 1000,
       status: status || "cooking",
+      orgId: tenant?.orgId || "",
+      hotelId: tenant?.hotelId || "",
       time: new Date().toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",

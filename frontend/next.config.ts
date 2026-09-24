@@ -31,9 +31,14 @@ const nextConfig: NextConfig = {
     "localhost:3000",
     "127.0.0.1",
     "127.0.0.1:3000",
+    // Allow all LAN IP ranges so phones can scan QR codes on the same WiFi
     "10.18.242.58",
     "10.18.242.58:3000",
+    "10.175.252.58",
+    "10.175.252.58:3000",
     "0.0.0.0",
+    "*.local",
+    "*.lan",
   ],
   turbopack: {
     root: path.resolve(__dirname),

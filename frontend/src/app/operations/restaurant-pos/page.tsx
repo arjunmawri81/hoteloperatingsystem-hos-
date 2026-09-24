@@ -417,11 +417,16 @@ export default function RestaurantPOSPage() {
 
   const handleCreateOrder = async (e: React.FormEvent) => {
     e.preventDefault();
-    const itemNames = Object.entries(selectedItems).map(
-      ([name, details]) => `${details.qty}x ${name}`
+    const itemsPayload = Object.entries(selectedItems).map(
+      ([name, details]) => ({
+        name,
+        quantity: details.qty,
+        price: details.price,
+        instructions: "",
+      })
     );
 
-    if (itemNames.length === 0 || isSubmitting) {
+    if (itemsPayload.length === 0 || isSubmitting) {
       alert("Please add at least one item to the order.");
       return;
     }
@@ -432,7 +437,7 @@ export default function RestaurantPOSPage() {
         tableNumber: newOrder.tableNumber,
         roomNumber: newOrder.roomNumber || undefined,
         guestName: newOrder.guestName || "Dine-in Guest",
-        items: itemNames,
+        items: itemsPayload,
         total: orderCalculatedTotal,
         status: "cooking",
       });
@@ -442,7 +447,7 @@ export default function RestaurantPOSPage() {
           await posApi.chargeToRoom({
             roomNumber: newOrder.roomNumber.trim(),
             amount: orderCalculatedTotal,
-            description: `Restaurant Bill: ${itemNames.join(", ")}`,
+            description: `Restaurant Bill: ${itemsPayload.map((i) => `${i.quantity}x ${i.name}`).join(", ")}`,
           });
         } catch (folioErr) {
           console.warn("Could not post to room folio:", folioErr);

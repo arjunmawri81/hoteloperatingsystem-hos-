@@ -18,6 +18,7 @@ import {
   Download,
   Building2,
   Copy,
+  AlertCircle,
 } from "lucide-react";
 import { RoleGuard } from "@/components/layout/RoleGuard";
 
@@ -50,17 +51,40 @@ export default function NativeSmartQRStudioPage() {
   const [restaurantName, setRestaurantName] = useState(`${hotelName} Dining & Lounge`);
   const [badgeLabel, setBadgeLabel] = useState(DEFAULT_TABLES[4].badgeLabel);
   const [customOrigin, setCustomOrigin] = useState("");
+  const [isLocalhostWarning, setIsLocalhostWarning] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isAddTableOpen, setIsAddTableOpen] = useState(false);
   const [newTableNum, setNewTableNum] = useState("");
   const [newTableSec, setNewTableSec] = useState("Main Dining Hall");
 
-  // Determine current origin safely in browser
+  // Determine QR host URL — must be LAN IP for phones to scan
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (typeof window === "undefined") return;
+    const hostname = window.location.hostname;
+    const isLocal = hostname === "localhost" || hostname === "127.0.0.1" || hostname === "0.0.0.0";
+
+    // Try to restore previously saved LAN IP from localStorage
+    const savedOrigin = localStorage.getItem("qr_studio_origin");
+    if (savedOrigin && savedOrigin.trim()) {
+      setCustomOrigin(savedOrigin.trim());
+      setIsLocalhostWarning(false);
+    } else if (isLocal) {
+      // Running on localhost — phone cannot reach this. Show warning.
       setCustomOrigin(window.location.origin);
+      setIsLocalhostWarning(true);
+    } else {
+      // Already accessed via LAN IP (e.g., http://10.x.x.x:3000), use as-is
+      setCustomOrigin(window.location.origin);
+      setIsLocalhostWarning(false);
     }
   }, []);
+
+  const handleOriginChange = (val: string) => {
+    setCustomOrigin(val);
+    if (val.trim()) localStorage.setItem("qr_studio_origin", val.trim());
+    const h = (() => { try { return new URL(val).hostname; } catch { return ""; } })();
+    setIsLocalhostWarning(h === "localhost" || h === "127.0.0.1");
+  };
 
   const handleSelectTable = (tbl: TableItem) => {
     setSelectedTable(tbl);
@@ -256,31 +280,57 @@ export default function NativeSmartQRStudioPage() {
                     </span>
                   </div>
 
+                  {/* ⚠️ Localhost Warning Banner */}
+                  {isLocalhostWarning && (
+                    <div className="flex items-start gap-2 p-2.5 rounded-lg bg-red-50 border border-red-300">
+                      <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                      <div className="text-[11px] text-red-800 leading-snug">
+                        <strong className="font-black">Phone cannot scan this QR!</strong> The URL is set to{" "}
+                        <code className="font-mono bg-red-100 px-1 rounded">localhost</code> which only works on this
+                        computer. Enter your WiFi/LAN IP below so phones on the same network can open the menu.
+                      </div>
+                    </div>
+                  )}
+
                   <input
                     type="text"
                     value={customOrigin}
-                    onChange={(e) => setCustomOrigin(e.target.value)}
+                    onChange={(e) => handleOriginChange(e.target.value)}
                     placeholder="e.g. http://10.18.242.58:3000 or https://your-hotel.com"
-                    className="w-full px-3 py-2 rounded-lg border border-amber-300 bg-white font-mono text-xs text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                    className={`w-full px-3 py-2 rounded-lg border font-mono text-xs text-slate-800 font-semibold focus:outline-none focus:ring-2 ${
+                      isLocalhostWarning
+                        ? "border-red-400 bg-red-50 focus:ring-red-500/30"
+                        : "border-amber-300 bg-white focus:ring-amber-500/30"
+                    }`}
                   />
 
                   <div className="flex items-center gap-2 pt-1 flex-wrap">
                     <button
                       type="button"
-                      onClick={() => setCustomOrigin("http://10.18.242.58:3000")}
+                      onClick={() => handleOriginChange("http://10.175.252.58:3000")}
                       className="px-2.5 py-1 text-[11px] font-bold bg-amber-200/80 hover:bg-amber-300 text-amber-900 rounded-lg transition"
                     >
-                      📶 Use WiFi IP (10.18.242.58:3000)
+                      📶 Use WiFi IP (10.175.252.58:3000)
                     </button>
                     {typeof window !== "undefined" && (
                       <button
                         type="button"
-                        onClick={() => setCustomOrigin(window.location.origin)}
+                        onClick={() => handleOriginChange(window.location.origin)}
                         className="px-2.5 py-1 text-[11px] font-bold bg-white border border-amber-300 text-amber-900 rounded-lg hover:bg-amber-100 transition"
                       >
                         💻 Use Current Origin ({window.location.origin})
                       </button>
                     )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        localStorage.removeItem("qr_studio_origin");
+                        if (typeof window !== "undefined") handleOriginChange(window.location.origin);
+                      }}
+                      className="px-2.5 py-1 text-[11px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition"
+                    >
+                      🔄 Reset
+                    </button>
                   </div>
 
                   <p className="text-[10px] text-amber-800 leading-relaxed pt-1">

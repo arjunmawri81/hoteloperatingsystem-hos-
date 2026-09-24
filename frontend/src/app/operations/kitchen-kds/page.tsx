@@ -50,7 +50,10 @@ export default function KitchenKDSPage() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [activeTab, setActiveTab] = useState<"active" | "new" | "preparing" | "ready" | "all">("active");
   const [currentTime, setCurrentTime] = useState(Date.now());
-  const previousKotCountRef = useRef<number>(0);
+  const [newOrderAlert, setNewOrderAlert] = useState<string | null>(null);
+  // Track seen KOT IDs to detect truly new orders (survives page-open-after-order scenario)
+  const seenKotIdsRef = useRef<Set<string>>(new Set());
+  const isFirstLoadRef = useRef(true);
 
   // Stock request state
   const [showStockPanel, setShowStockPanel] = useState(false);
@@ -83,10 +86,32 @@ export default function KitchenKDSPage() {
   const loadKOTs = useCallback(async () => {
     try {
       const data = await posApi.getKOTs();
-      if (previousKotCountRef.current > 0 && data.length > previousKotCountRef.current) {
+
+      // Find truly new KOT IDs not seen before
+      const newKots = data.filter((k: any) => {
+        const id = k._id || k.id || k.kotNumber;
+        return id && !seenKotIdsRef.current.has(id);
+      });
+
+      // On first load: mark all existing as seen (don't alert for old tickets)
+      if (isFirstLoadRef.current) {
+        data.forEach((k: any) => {
+          const id = k._id || k.id || k.kotNumber;
+          if (id) seenKotIdsRef.current.add(id);
+        });
+        isFirstLoadRef.current = false;
+      } else if (newKots.length > 0) {
+        // New tickets arrived since last poll — alert kitchen!
+        newKots.forEach((k: any) => {
+          const id = k._id || k.id || k.kotNumber;
+          if (id) seenKotIdsRef.current.add(id);
+        });
         playChime();
+        const tables = newKots.map((k: any) => k.tableNumber || "?").join(", ");
+        setNewOrderAlert(`🔔 ${newKots.length} New Order${newKots.length > 1 ? "s" : ""} — Table ${tables}`);
+        setTimeout(() => setNewOrderAlert(null), 6000);
       }
-      previousKotCountRef.current = data.length;
+
       setKots(data);
     } catch {}
     finally { setIsLoading(false); }
@@ -191,6 +216,16 @@ export default function KitchenKDSPage() {
     >
       <div className="space-y-6">
 
+        {/* ─── NEW ORDER ALERT BANNER ──────────────────────────────── */}
+        {newOrderAlert && (
+          <div className="flex items-center gap-3 px-5 py-3.5 rounded-xl bg-red-600 text-white shadow-lg shadow-red-600/30 animate-pulse border border-red-400">
+            <Bell className="w-5 h-5 shrink-0" />
+            <span className="font-black text-base tracking-wide">{newOrderAlert}</span>
+            <button onClick={() => setNewOrderAlert(null)} className="ml-auto text-red-200 hover:text-white">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
         {/* ─── HEADER ─────────────────────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-lg border border-[#E5E7EB] shadow-xs">
           <div>

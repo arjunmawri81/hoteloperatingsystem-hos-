@@ -73,7 +73,7 @@ export async function apiClient<T = any>(
   endpoint: string,
   options: RequestOptions = {}
 ): Promise<T> {
-  const { params, timeout = 10000, skipAuth = false, headers = {}, ...customConfig } = options;
+  const { params, timeout = 30000, skipAuth = false, headers = {}, ...customConfig } = options;
 
   const baseUrl = getApiBaseUrl();
   let url = endpoint.startsWith("http")

@@ -16,10 +16,11 @@ const KOTSchema = new mongoose.Schema(
     items: [KOTItemSchema],
     status: {
       type: String,
-      enum: ["new", "preparing", "ready", "served", "cancelled"],
+      enum: ["new", "preparing", "ready", "served", "completed", "cancelled"],
       default: "new",
     },
     hotelId: { type: String, default: "hotel-101" },
+    orgId: { type: String, default: "" },
   },
   { timestamps: true }
 );
