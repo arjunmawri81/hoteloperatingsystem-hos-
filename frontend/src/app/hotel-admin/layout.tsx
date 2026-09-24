@@ -19,6 +19,7 @@ import {
   TrendingUp,
   Sparkles,
   Mic,
+  Bot,
 } from "lucide-react";
 
 export default function HotelAdminLayout({
@@ -38,6 +39,7 @@ export default function HotelAdminLayout({
     { name: "Area Management", href: "/hotel-admin/areas", icon: MapPin },
     { name: "Staff & Roles", href: "/hotel-admin/staff", icon: Users },
     { name: "Chain Leads & Pipeline", href: "/hotel-admin/leads", icon: TrendingUp },
+    { name: "AI Receptionist & Desk", href: "/ai-receptionist", icon: Bot },
   ];
 
   const getCurrentTitle = () => {

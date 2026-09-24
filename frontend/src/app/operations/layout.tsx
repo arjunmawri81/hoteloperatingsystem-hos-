@@ -24,6 +24,7 @@ import {
   Receipt,
   Banknote,
   Building2,
+  Bot,
 } from "lucide-react";
 
 export default function OperationsLayout({
@@ -53,6 +54,7 @@ export default function OperationsLayout({
     { name: "Channel Manager", href: "/operations/channel-manager", icon: Globe, allowedRoles: ["super_admin", "hotel_admin", "hotel_manager", "channel_manager"] },
     { name: "Guest CRM", href: "/operations/guests", icon: Users, allowedRoles: ["super_admin", "hotel_admin", "hotel_manager", "receptionist", "banquet_staff"] },
     { name: "Sales & Leads", href: "/operations/leads", icon: TrendingUp, allowedRoles: ["super_admin", "hotel_admin", "hotel_manager", "receptionist"] },
+    { name: "AI Receptionist", href: "/ai-receptionist", icon: Bot, allowedRoles: ["super_admin", "hotel_admin", "hotel_manager", "receptionist"] },
     { name: "Reports & KPIs", href: "/operations/reports", icon: BarChart3, allowedRoles: ["super_admin", "hotel_admin", "hotel_manager", "finance"] },
     { name: "Inventory", href: "/operations/inventory", icon: Package, allowedRoles: ["super_admin", "hotel_admin", "hotel_manager", "inventory_staff"] },
     { name: "Billing & Folios", href: "/operations/billing", icon: Receipt, allowedRoles: ["super_admin", "hotel_admin", "hotel_manager", "finance", "receptionist"] },
