@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 
 const KOTItemSchema = new mongoose.Schema({
   name: { type: String, required: true },
+  portion: { type: String, default: "Full" }, // e.g. "Full", "Half", "Quarter", "Standard"
   quantity: { type: Number, required: true, default: 1 },
   instructions: { type: String, default: "" }, // e.g. "Less spicy, no peanuts"
 });

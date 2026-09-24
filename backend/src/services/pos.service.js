@@ -12,13 +12,14 @@ class PosService {
   static async createOrder({ data, user, tenant, ipAddress }) {
     const { tableNumber, roomNumber, items, total, status, guestName } = data;
 
+    const uniqueSuffix = `${Date.now().toString().slice(-4)}${Math.floor(100 + Math.random() * 900)}`;
     const newOrder = new RestaurantOrder({
-      id: `POS-${Math.floor(400 + Math.random() * 600)}`,
+      id: `POS-${uniqueSuffix}`,
       tableNumber: tableNumber || "T-01",
       roomNumber: roomNumber || undefined,
       guestName: guestName || user?.name || "Dine-in Guest",
       items: items || ["Kitchen Order"],
-      total: Number(total) || 1000,
+      total: Number(total) || 0,
       status: status || "cooking",
       orgId: tenant?.orgId || "",
       hotelId: tenant?.hotelId || "",

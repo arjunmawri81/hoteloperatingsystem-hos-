@@ -289,8 +289,8 @@ export default function LandingPage() {
               <div className="relative w-full max-w-[300px]">
                 <div className="rounded-[20px] overflow-hidden shadow-2xl shadow-black/25">
                   <img
-                    src="https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=800&q=90"
-                    alt="Luxury hotel room"
+                    src="/hotel-hero.jpg"
+                    alt="Luxury hotel suite with city view"
                     className="w-full aspect-[3/4] object-cover"
                   />
                   {/* Front Desk overlay card */}

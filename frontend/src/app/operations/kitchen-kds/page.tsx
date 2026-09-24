@@ -602,19 +602,51 @@ export default function KitchenKDSPage() {
 
                   <div className="p-3.5 flex-1 space-y-2">
                     {kot.items && kot.items.length > 0 ? (
-                      kot.items.map((it, idx) => (
-                        <div key={idx} className="flex items-start gap-2 py-1 border-b border-[#F9FAFB] last:border-0">
-                          <span className="w-5 h-5 rounded bg-[#F3F4F6] text-[#111827] text-xs font-bold flex items-center justify-center shrink-0">
-                            {it.quantity}
-                          </span>
-                          <div>
-                            <p className="text-[13px] font-semibold text-[#111827] leading-snug">{it.name}</p>
-                            {it.instructions && (
-                              <p className="text-[11px] text-amber-700 font-medium italic mt-0.5">{it.instructions}</p>
-                            )}
+                      kot.items.map((it, idx) => {
+                        const portion =
+                          it.portion ||
+                          (it.name?.toLowerCase().includes("(half)")
+                            ? "Half"
+                            : it.name?.toLowerCase().includes("(full)")
+                            ? "Full"
+                            : null);
+                        const cleanName =
+                          it.name?.replace(/\s*\((Half|Full|Quarter)\)/i, "").trim() || it.name;
+
+                        return (
+                          <div
+                            key={idx}
+                            className="flex items-start gap-2 py-1.5 border-b border-[#F9FAFB] last:border-0"
+                          >
+                            <span className="w-5 h-5 rounded bg-[#111827] text-white text-xs font-black flex items-center justify-center shrink-0 mt-0.5">
+                              {it.quantity}
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-[13px] font-bold text-[#111827] leading-snug">
+                                  {cleanName}
+                                </span>
+                                {portion && (
+                                  <span
+                                    className={`text-[10px] font-black uppercase px-1.5 py-0.2 rounded border ${
+                                      portion.toLowerCase() === "half"
+                                        ? "bg-amber-100 text-amber-900 border-amber-300"
+                                        : "bg-blue-100 text-blue-900 border-blue-300"
+                                    }`}
+                                  >
+                                    {portion}
+                                  </span>
+                                )}
+                              </div>
+                              {it.instructions && (
+                                <p className="text-[11px] text-amber-700 font-medium italic mt-0.5">
+                                  📝 {it.instructions}
+                                </p>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ))
+                        );
+                      })
                     ) : (
                       <p className="text-[11px] text-[#9CA3AF] italic">No items detailed</p>
                     )}

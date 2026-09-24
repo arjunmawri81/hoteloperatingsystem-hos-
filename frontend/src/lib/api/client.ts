@@ -5,13 +5,13 @@
  */
 
 export function getApiBaseUrl(): string {
+  if (typeof window !== "undefined") {
+    // In browser (desktop or mobile phone scanning QR on WiFi), use relative /api path
+    // so it always hits the host server through Next.js proxy rewrite
+    return "/api";
+  }
   if (process.env.NEXT_PUBLIC_API_URL) {
     return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, "");
-  }
-  if (typeof window !== "undefined") {
-    // In browser (desktop or mobile phone), use relative /api path
-    // Next.js rewrites proxy /api/* seamlessly or direct
-    return "/api";
   }
   return "http://localhost:5000/api";
 }

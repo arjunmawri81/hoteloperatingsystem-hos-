@@ -25,6 +25,8 @@ const DEFAULT_MENU_ITEMS: MenuItem[] = [
     name: "Paneer Tikka Angara",
     category: "Starters",
     price: 380,
+    halfPrice: 220,
+    hasHalfPortion: true,
     description: "Cottage cheese charred with aromatic spices in clay tandoor",
     image: "https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?auto=format&fit=crop&w=600&q=80",
     isVeg: true,
@@ -36,6 +38,8 @@ const DEFAULT_MENU_ITEMS: MenuItem[] = [
     name: "Murgh Malai Tikka",
     category: "Starters",
     price: 460,
+    halfPrice: 260,
+    hasHalfPortion: true,
     description: "Tender chicken morsels marinated in fresh cream & royal cheese",
     image: "https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?auto=format&fit=crop&w=600&q=80",
     isVeg: false,
@@ -47,6 +51,8 @@ const DEFAULT_MENU_ITEMS: MenuItem[] = [
     name: "Dal Makhani Heritage",
     category: "Main Course",
     price: 390,
+    halfPrice: 230,
+    hasHalfPortion: true,
     description: "Slow-cooked black lentils simmered overnight with churned butter",
     image: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=600&q=80",
     isVeg: true,
@@ -58,6 +64,8 @@ const DEFAULT_MENU_ITEMS: MenuItem[] = [
     name: "Butter Chicken Delhi Style",
     category: "Main Course",
     price: 540,
+    halfPrice: 310,
+    hasHalfPortion: true,
     description: "Tandoori smoked chicken steeped in silky tomato-cashew gravy",
     image: "https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?auto=format&fit=crop&w=600&q=80",
     isVeg: false,
@@ -69,6 +77,8 @@ const DEFAULT_MENU_ITEMS: MenuItem[] = [
     name: "Dum Gosht Awadhi Biryani",
     category: "Main Course",
     price: 620,
+    halfPrice: 360,
+    hasHalfPortion: true,
     description: "Long-grain aged basmati rice layered with spiced tender mutton & saffron",
     image: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
     isVeg: false,
@@ -80,6 +90,8 @@ const DEFAULT_MENU_ITEMS: MenuItem[] = [
     name: "Garlic Butter Naan",
     category: "Breads & Rice",
     price: 95,
+    halfPrice: undefined,
+    hasHalfPortion: false,
     description: "Clay oven leavened artisan bread brushed with roasted garlic & butter",
     image: "https://images.unsplash.com/photo-1626074353765-517a681e40be?auto=format&fit=crop&w=600&q=80",
     isVeg: true,
@@ -91,6 +103,8 @@ const DEFAULT_MENU_ITEMS: MenuItem[] = [
     name: "Classic Tiramisu",
     category: "Desserts",
     price: 320,
+    halfPrice: undefined,
+    hasHalfPortion: false,
     description: "Espresso soaked ladyfingers layered with rich mascarpone cream",
     image: "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?auto=format&fit=crop&w=600&q=80",
     isVeg: true,
@@ -102,6 +116,8 @@ const DEFAULT_MENU_ITEMS: MenuItem[] = [
     name: "Fresh Mint Mojito",
     category: "Beverages",
     price: 210,
+    halfPrice: undefined,
+    hasHalfPortion: false,
     description: "Crushed farm mint, zesty lime & chilled sparkling soda",
     image: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=600&q=80",
     isVeg: true,
@@ -109,6 +125,13 @@ const DEFAULT_MENU_ITEMS: MenuItem[] = [
     prepTimeMinutes: 5,
   },
 ];
+
+interface CartEntry {
+  item: MenuItem;
+  portion: "Full" | "Half";
+  unitPrice: number;
+  quantity: number;
+}
 
 function MenuContent() {
   const searchParams = useSearchParams();
@@ -119,7 +142,7 @@ function MenuContent() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [vegOnlyFilter, setVegOnlyFilter] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [cart, setCart] = useState<{ [id: string]: { item: MenuItem; quantity: number } }>({});
+  const [cart, setCart] = useState<{ [key: string]: CartEntry }>({});
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [cookingNotes, setCookingNotes] = useState("");
   const [guestName, setGuestName] = useState("");
@@ -160,27 +183,52 @@ function MenuContent() {
     return true;
   });
 
-  const getItemKey = (item: MenuItem) => {
-    return String(item._id || item.id || item.name || "").trim();
+  const getItemKey = (item: MenuItem, portion: "Full" | "Half" = "Full") => {
+    const baseId = String(item._id || item.id || item.name || "").trim();
+    return `${baseId}_${portion}`;
   };
 
-  const addToCart = (item: MenuItem) => {
-    const key = getItemKey(item);
-    if (!key) return;
+  const getDishPrice = (item: MenuItem, portion: "Full" | "Half") => {
+    if (portion === "Half") {
+      return item.halfPrice || Math.round(item.price * 0.6);
+    }
+    return item.price;
+  };
+
+  const isHalfPortionAvailable = (item: MenuItem) => {
+    if (item.hasHalfPortion === false) return false;
+    if (item.halfPrice) return true;
+    const cat = String(item.category || "").toLowerCase();
+    return (
+      cat.includes("starter") ||
+      cat.includes("main") ||
+      cat.includes("biryani") ||
+      cat.includes("curry") ||
+      cat.includes("rice")
+    );
+  };
+
+  const addToCart = (item: MenuItem, portion: "Full" | "Half" = "Full") => {
+    const key = getItemKey(item, portion);
+    const unitPrice = getDishPrice(item, portion);
+
     try {
       if (typeof navigator !== "undefined" && navigator.vibrate) {
         navigator.vibrate(30);
       }
     } catch {}
+
     setCart((prev) => {
       const current = prev[key]?.quantity || 0;
-      return { ...prev, [key]: { item, quantity: current + 1 } };
+      return {
+        ...prev,
+        [key]: { item, portion, unitPrice, quantity: current + 1 },
+      };
     });
   };
 
-  const removeFromCart = (item: MenuItem) => {
-    const key = getItemKey(item);
-    if (!key) return;
+  const removeFromCart = (item: MenuItem, portion: "Full" | "Half" = "Full") => {
+    const key = getItemKey(item, portion);
     setCart((prev) => {
       const current = prev[key]?.quantity || 0;
       if (current <= 1) {
@@ -188,13 +236,16 @@ function MenuContent() {
         delete copy[key];
         return copy;
       }
-      return { ...prev, [key]: { item, quantity: current - 1 } };
+      return {
+        ...prev,
+        [key]: { ...prev[key], quantity: current - 1 },
+      };
     });
   };
 
   const totalItemsCount = Object.values(cart).reduce((sum, entry) => sum + entry.quantity, 0);
   const totalAmount = Object.values(cart).reduce(
-    (sum, entry) => sum + (Number(entry.item.price) || 0) * entry.quantity,
+    (sum, entry) => sum + entry.unitPrice * entry.quantity,
     0
   );
 
@@ -203,8 +254,10 @@ function MenuContent() {
     setIsSubmitting(true);
     try {
       const itemsPayload = Object.values(cart).map((entry) => ({
-        name: entry.item.name,
+        name: `${entry.item.name} (${entry.portion})`,
+        portion: entry.portion,
         quantity: entry.quantity,
+        price: entry.unitPrice,
         instructions: cookingNotes || "",
       }));
 
@@ -218,7 +271,7 @@ function MenuContent() {
 
       const res = await posApi.createOrder(payload);
       const generatedOrderId = res?.id || res?.data?.id || `ORD-${Date.now().toString().slice(-4)}`;
-      const generatedKotNumber = res?.kot?.kotNumber || `KOT-${Math.floor(1000 + Math.random() * 900)}`;
+      const generatedKotNumber = res?.kot?.kotNumber || (res as any)?.data?.kot?.kotNumber || `KOT-${Date.now().toString().slice(-4)}`;
 
       setOrderPlaced({
         orderId: generatedOrderId,
@@ -229,21 +282,9 @@ function MenuContent() {
       setCart({});
       setIsCartOpen(false);
     } catch (err: any) {
-      console.warn("Order submission network notice:", err);
-      // Ensure guest on mobile phone is never blocked if network drops
-      const fallbackItems = Object.values(cart).map((entry) => ({
-        name: entry.item.name,
-        quantity: entry.quantity,
-        instructions: cookingNotes || "",
-      }));
-      setOrderPlaced({
-        orderId: `ORD-${Date.now().toString().slice(-4)}`,
-        kotNumber: `KOT-${Math.floor(1000 + Math.random() * 900)}`,
-        items: fallbackItems,
-        total: totalAmount,
-      });
-      setCart({});
-      setIsCartOpen(false);
+      console.error("Order submission network notice:", err);
+      // Ensure guest receives an alert if network fails
+      alert(err?.message || "Order submission notice. Please notify the restaurant waiter.");
     } finally {
       setIsSubmitting(false);
     }
@@ -463,46 +504,163 @@ function MenuContent() {
                   </div>
                 </div>
 
-                {/* Add to Cart Controls */}
+                {/* Add to Cart Controls (Half / Full portion support) */}
                 <div className="flex flex-col items-end justify-center shrink-0">
-                  {currentQty === 0 ? (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        addToCart(item);
-                      }}
-                      className="px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 active:scale-95 text-white font-black text-xs transition shadow-sm cursor-pointer select-none touch-manipulation flex items-center gap-1.5"
-                    >
-                      <Plus className="w-3.5 h-3.5 stroke-[3]" />
-                      <span>ADD</span>
-                    </button>
-                  ) : (
-                    <div className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-xl p-1 shadow-sm">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeFromCart(item);
-                        }}
-                        className="w-8 h-8 rounded-lg bg-white border border-orange-200 text-orange-700 flex items-center justify-center hover:bg-orange-100 active:scale-90 transition font-black text-sm"
-                      >
-                        <Minus className="w-3.5 h-3.5" />
-                      </button>
-                      <span className="font-black text-xs text-orange-950 px-1 min-w-[16px] text-center">
-                        {currentQty}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          addToCart(item);
-                        }}
-                        className="w-8 h-8 rounded-lg bg-orange-600 text-white flex items-center justify-center hover:bg-orange-500 active:scale-90 transition font-black text-sm shadow-xs"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                      </button>
+                  {isHalfPortionAvailable(item) ? (
+                    <div className="flex flex-col gap-1.5 items-end">
+                      {/* Full Portion Row */}
+                      {(() => {
+                        const fullKey = getItemKey(item, "Full");
+                        const fullQty = cart[fullKey]?.quantity || 0;
+                        const fullPrice = getDishPrice(item, "Full");
+
+                        return (
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[11px] font-bold text-slate-500">
+                              Full <span className="font-mono text-slate-800">₹{fullPrice}</span>
+                            </span>
+                            {fullQty === 0 ? (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  addToCart(item, "Full");
+                                }}
+                                className="px-2.5 py-1 rounded-lg bg-orange-600 hover:bg-orange-700 text-white font-black text-[11px] transition shadow-2xs active:scale-95 flex items-center gap-1"
+                              >
+                                <Plus className="w-3 h-3 stroke-[3]" />
+                                <span>Add</span>
+                              </button>
+                            ) : (
+                              <div className="flex items-center gap-1 bg-orange-50 border border-orange-200 rounded-lg p-0.5">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    removeFromCart(item, "Full");
+                                  }}
+                                  className="w-6 h-6 rounded bg-white border border-orange-200 text-orange-700 flex items-center justify-center hover:bg-orange-100 font-black text-xs"
+                                >
+                                  <Minus className="w-3 h-3" />
+                                </button>
+                                <span className="font-black text-xs text-orange-950 px-1 min-w-[14px] text-center">
+                                  {fullQty}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    addToCart(item, "Full");
+                                  }}
+                                  className="w-6 h-6 rounded bg-orange-600 text-white flex items-center justify-center hover:bg-orange-500 font-black text-xs"
+                                >
+                                  <Plus className="w-3 h-3" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+
+                      {/* Half Portion Row */}
+                      {(() => {
+                        const halfKey = getItemKey(item, "Half");
+                        const halfQty = cart[halfKey]?.quantity || 0;
+                        const halfPrice = getDishPrice(item, "Half");
+
+                        return (
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[11px] font-bold text-amber-700">
+                              Half <span className="font-mono text-amber-900">₹{halfPrice}</span>
+                            </span>
+                            {halfQty === 0 ? (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  addToCart(item, "Half");
+                                }}
+                                className="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-black text-[11px] transition shadow-2xs active:scale-95 flex items-center gap-1"
+                              >
+                                <Plus className="w-3 h-3 stroke-[3]" />
+                                <span>Add</span>
+                              </button>
+                            ) : (
+                              <div className="flex items-center gap-1 bg-amber-50 border border-amber-200 rounded-lg p-0.5">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    removeFromCart(item, "Half");
+                                  }}
+                                  className="w-6 h-6 rounded bg-white border border-amber-200 text-amber-800 flex items-center justify-center hover:bg-amber-100 font-black text-xs"
+                                >
+                                  <Minus className="w-3 h-3" />
+                                </button>
+                                <span className="font-black text-xs text-amber-950 px-1 min-w-[14px] text-center">
+                                  {halfQty}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    addToCart(item, "Half");
+                                  }}
+                                  className="w-6 h-6 rounded bg-amber-600 text-white flex items-center justify-center hover:bg-amber-500 font-black text-xs"
+                                >
+                                  <Plus className="w-3 h-3" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
+                  ) : (
+                    /* Standard Single Portion */
+                    (() => {
+                      const singleKey = getItemKey(item, "Full");
+                      const singleQty = cart[singleKey]?.quantity || 0;
+                      return singleQty === 0 ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            addToCart(item, "Full");
+                          }}
+                          className="px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 active:scale-95 text-white font-black text-xs transition shadow-sm cursor-pointer select-none touch-manipulation flex items-center gap-1.5"
+                        >
+                          <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                          <span>ADD</span>
+                        </button>
+                      ) : (
+                        <div className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-xl p-1 shadow-sm">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeFromCart(item, "Full");
+                            }}
+                            className="w-8 h-8 rounded-lg bg-white border border-orange-200 text-orange-700 flex items-center justify-center hover:bg-orange-100 active:scale-90 transition font-black text-sm"
+                          >
+                            <Minus className="w-3.5 h-3.5" />
+                          </button>
+                          <span className="font-black text-xs text-orange-950 px-1 min-w-[16px] text-center">
+                            {singleQty}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              addToCart(item, "Full");
+                            }}
+                            className="w-8 h-8 rounded-lg bg-orange-600 text-white flex items-center justify-center hover:bg-orange-500 active:scale-90 transition font-black text-sm shadow-xs"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      );
+                    })()
                   )}
                 </div>
               </div>
@@ -554,29 +712,44 @@ function MenuContent() {
             </div>
 
             <div className="p-4 flex-1 overflow-y-auto space-y-3">
-              {Object.values(cart).map((entry) => (
+              {Object.entries(cart).map(([key, entry]) => (
                 <div
-                  key={entry.item._id || entry.item.name}
+                  key={key}
                   className="flex items-center justify-between py-2 border-b border-slate-100"
                 >
-                  <div>
-                    <span className="font-bold text-sm text-slate-800">{entry.item.name}</span>
-                    <span className="text-xs text-slate-400 block">
-                      ₹{entry.item.price} each
+                  <div className="flex-1 min-w-0 pr-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold text-sm text-slate-800 truncate">
+                        {entry.item.name}
+                      </span>
+                      <span
+                        className={`text-[10px] font-extrabold uppercase px-1.5 py-0.2 rounded border ${
+                          entry.portion === "Half"
+                            ? "bg-amber-100 text-amber-900 border-amber-300"
+                            : "bg-orange-100 text-orange-900 border-orange-300"
+                        }`}
+                      >
+                        {entry.portion}
+                      </span>
+                    </div>
+                    <span className="text-xs text-slate-500 block mt-0.5">
+                      ₹{entry.unitPrice} each • Total: ₹{entry.unitPrice * entry.quantity}
                     </span>
                   </div>
 
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => removeFromCart(entry.item)}
-                      className="w-6 h-6 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-xs"
+                      onClick={() => removeFromCart(entry.item, entry.portion)}
+                      className="w-6 h-6 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-xs hover:bg-slate-200"
                     >
                       -
                     </button>
-                    <span className="font-bold text-xs">{entry.quantity}</span>
+                    <span className="font-bold text-xs min-w-[14px] text-center">
+                      {entry.quantity}
+                    </span>
                     <button
-                      onClick={() => addToCart(entry.item)}
-                      className="w-6 h-6 rounded-lg bg-orange-600 text-white flex items-center justify-center font-bold text-xs"
+                      onClick={() => addToCart(entry.item, entry.portion)}
+                      className="w-6 h-6 rounded-lg bg-orange-600 text-white flex items-center justify-center font-bold text-xs hover:bg-orange-500"
                     >
                       +
                     </button>

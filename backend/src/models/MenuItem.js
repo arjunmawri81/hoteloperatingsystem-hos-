@@ -8,6 +8,8 @@ const MenuItemSchema = new mongoose.Schema(
       default: "Main Course",
     },
     price: { type: Number, required: true },
+    halfPrice: { type: Number },
+    hasHalfPortion: { type: Boolean, default: true },
     description: { type: String, default: "" },
     image: { type: String, default: "" },
     isVeg: { type: Boolean, default: true },

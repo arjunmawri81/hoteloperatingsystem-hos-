@@ -224,6 +224,8 @@ export interface MenuItem {
   name: string;
   category: "Starters" | "Main Course" | "Breads & Rice" | "Desserts" | "Beverages" | string;
   price: number;
+  halfPrice?: number;
+  hasHalfPortion?: boolean;
   description?: string;
   image?: string;
   isVeg: boolean;
@@ -233,6 +235,7 @@ export interface MenuItem {
 
 export interface KOTItem {
   name: string;
+  portion?: "Full" | "Half" | "Quarter" | string;
   quantity: number;
   instructions?: string;
 }

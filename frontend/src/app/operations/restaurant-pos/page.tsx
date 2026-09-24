@@ -127,7 +127,9 @@ export default function RestaurantPOSPage() {
   const [isUpdatingDish, setIsUpdatingDish] = useState<string | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedItems, setSelectedItems] = useState<{ [name: string]: { qty: number; price: number } }>({});
+  const [selectedItems, setSelectedItems] = useState<{
+    [name: string]: { qty: number; price: number; portion?: "Full" | "Half" | string; rawName?: string };
+  }>({});
   const [newOrder, setNewOrder] = useState<{
     tableNumber: string;
     roomNumber: string;
@@ -166,17 +168,38 @@ export default function RestaurantPOSPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleToggleDish = (dish: MenuItem) => {
+  const isDishHalfPortion = (dish: MenuItem) => {
+    if (dish.hasHalfPortion === false) return false;
+    if (dish.halfPrice) return true;
+    const cat = String(dish.category || "").toLowerCase();
+    return (
+      cat.includes("starter") ||
+      cat.includes("main") ||
+      cat.includes("biryani") ||
+      cat.includes("curry") ||
+      cat.includes("rice")
+    );
+  };
+
+  const handleToggleDish = (dish: MenuItem, portion: "Full" | "Half" = "Full") => {
     if (dish.isAvailable === false) {
       setToastMsg(`⚠️ "${dish.name}" is 86 (Out of Stock). Cannot add to order.`);
       setTimeout(() => setToastMsg(null), 3000);
       return;
     }
+
+    const hasPortions = isDishHalfPortion(dish);
+    const price =
+      portion === "Half"
+        ? dish.halfPrice || Math.round(dish.price * 0.6)
+        : dish.price;
+    const itemName = hasPortions ? `${dish.name} (${portion})` : dish.name;
+
     setSelectedItems((prev) => {
-      const cur = prev[dish.name]?.qty || 0;
+      const cur = prev[itemName]?.qty || 0;
       return {
         ...prev,
-        [dish.name]: { qty: cur + 1, price: dish.price },
+        [itemName]: { qty: cur + 1, price, portion, rawName: dish.name },
       };
     });
   };
@@ -418,12 +441,18 @@ export default function RestaurantPOSPage() {
   const handleCreateOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     const itemsPayload = Object.entries(selectedItems).map(
-      ([name, details]) => ({
-        name,
-        quantity: details.qty,
-        price: details.price,
-        instructions: "",
-      })
+      ([name, details]) => {
+        const portion =
+          details.portion ||
+          (name.includes("(Half)") ? "Half" : name.includes("(Full)") ? "Full" : "Full");
+        return {
+          name,
+          portion,
+          quantity: details.qty,
+          price: details.price,
+          instructions: "",
+        };
+      }
     );
 
     if (itemsPayload.length === 0 || isSubmitting) {
@@ -459,8 +488,9 @@ export default function RestaurantPOSPage() {
       setTimeout(() => setToastMsg(null), 4000);
 
       setSelectedItems({});
+      const nextAvailable = tables.find((t) => t.status === "available" && t.tableNumber !== newOrder.tableNumber)?.tableNumber || tables[0]?.tableNumber || "T-01";
       setNewOrder({
-        tableNumber: tables[0]?.tableNumber || "T-01",
+        tableNumber: nextAvailable,
         roomNumber: "",
         guestName: "",
         notes: "",
@@ -491,7 +521,17 @@ export default function RestaurantPOSPage() {
       if (nextStatus === "paid") {
         const tbl = tables.find((t) => t.tableNumber === currentOrder.tableNumber);
         if (tbl) {
-          await posApi.updateTableStatus(tbl._id || tbl.id || "", { status: "available" });
+          const otherUnpaid = orders.filter(
+            (o) => o.tableNumber === currentOrder.tableNumber && o.id !== orderId && o.status !== "paid"
+          );
+          if (otherUnpaid.length === 0) {
+            await posApi.updateTableStatus(tbl._id || tbl.id || "", {
+              status: "available",
+              currentOrderId: null,
+              currentGuestName: null,
+              roomNumber: null,
+            });
+          }
         }
       }
 
@@ -657,45 +697,72 @@ export default function RestaurantPOSPage() {
                       key={tb._id || tb.id || tb.tableNumber}
                       className={`p-3 rounded-lg border text-left transition-all ${
                         isOccupied
-                          ? "border-blue-400 bg-blue-50/70"
+                          ? "border-rose-300 bg-rose-50/85 text-rose-950 shadow-2xs hover:border-rose-400"
                           : isReserved
-                          ? "border-amber-400 bg-amber-50/70"
+                          ? "border-amber-300 bg-amber-50/70 text-amber-950 shadow-2xs hover:border-amber-400"
                           : isCleaning
-                          ? "border-purple-300 bg-purple-50/60"
-                          : "border-[#E5E7EB] bg-white hover:border-[#9CA3AF]"
+                          ? "border-purple-300 bg-purple-50/70 text-purple-950 shadow-2xs hover:border-purple-400"
+                          : "border-emerald-200 bg-emerald-50/70 text-emerald-950 shadow-2xs hover:border-emerald-400"
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-[14px] font-bold text-[#111827]">{tb.tableNumber}</span>
+                        <span className="text-[14px] font-black tracking-tight">{tb.tableNumber}</span>
                         <span
-                          className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${
+                          className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border ${
                             isOccupied
-                              ? "bg-blue-100 text-blue-800"
+                              ? "bg-rose-100 text-rose-800 border-rose-200"
                               : isReserved
-                              ? "bg-amber-100 text-amber-800"
+                              ? "bg-amber-100 text-amber-800 border-amber-200"
                               : isCleaning
-                              ? "bg-purple-100 text-purple-800"
-                              : "bg-emerald-100 text-emerald-800"
+                              ? "bg-purple-100 text-purple-800 border-purple-200"
+                              : "bg-emerald-100 text-emerald-800 border-emerald-200"
                           }`}
                         >
                           {tb.status}
                         </span>
                       </div>
-                      <div className="text-[11px] text-[#6B7280] truncate mt-1">
+                      <div
+                        className={`text-[11px] truncate mt-1 ${
+                          isOccupied
+                            ? "text-rose-700/85"
+                            : isReserved
+                            ? "text-amber-700/85"
+                            : isCleaning
+                            ? "text-purple-700/85"
+                            : "text-emerald-700/85"
+                        }`}
+                      >
                         {tb.section} • {tb.capacity} seats
+                        {isOccupied && tb.currentGuestName && (
+                          <span className="block font-medium truncate text-rose-900 mt-0.5">
+                            👤 {tb.currentGuestName}
+                          </span>
+                        )}
                       </div>
 
                       {/* Action buttons inside table card */}
-                      <div className="mt-2 pt-2 border-t border-gray-200/60 flex items-center justify-between gap-1">
+                      <div
+                        className={`mt-2 pt-2 border-t flex items-center justify-between gap-1 ${
+                          isOccupied
+                            ? "border-rose-200"
+                            : isReserved
+                            ? "border-amber-200"
+                            : isCleaning
+                            ? "border-purple-200"
+                            : "border-emerald-200"
+                        }`}
+                      >
                         <button
                           type="button"
                           onClick={() => {
                             setNewOrder((prev) => ({ ...prev, tableNumber: tb.tableNumber }));
                             setIsModalOpen(true);
                           }}
-                          className="text-[11px] font-semibold text-[#EC3013] hover:underline"
+                          className={`text-[11px] font-bold hover:underline ${
+                            isOccupied ? "text-rose-700 hover:text-rose-900" : "text-emerald-700 hover:text-emerald-900"
+                          }`}
                         >
-                          + Order
+                          {isOccupied ? "+ Add Items" : "+ New Order"}
                         </button>
 
                         {isOccupied && (
@@ -713,7 +780,7 @@ export default function RestaurantPOSPage() {
                               });
                             }}
                             title="Transfer / Move Table"
-                            className="p-1 text-gray-600 hover:text-blue-600 hover:bg-white rounded transition flex items-center gap-1 text-[10px] font-medium"
+                            className="p-1 text-rose-700 hover:text-rose-900 bg-white/70 hover:bg-white rounded border border-rose-200 transition flex items-center gap-1 text-[10px] font-semibold"
                           >
                             <ArrowRightLeft className="w-3 h-3" />
                             <span>Move</span>
@@ -727,13 +794,16 @@ export default function RestaurantPOSPage() {
 
               <div className="pt-2 border-t border-[#F3F4F6] flex items-center justify-between text-[11px] text-[#6B7280]">
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" /> Available
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-200" /> Available
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-blue-500" /> Occupied
+                  <span className="w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-rose-200" /> Occupied
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-purple-500" /> Cleaning
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500 ring-2 ring-amber-200" /> Reserved
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-purple-500 ring-2 ring-purple-200" /> Cleaning
                 </span>
               </div>
             </div>
@@ -748,7 +818,17 @@ export default function RestaurantPOSPage() {
                   <span className="text-[11px] text-[#6B7280]">Live kitchen status &amp; billing</span>
                 </div>
                 <button
-                  onClick={() => setIsModalOpen(true)}
+                  onClick={() => {
+                    const firstAvailable = tables.find((t) => t.status === "available")?.tableNumber || tables[0]?.tableNumber || "T-01";
+                    setNewOrder({
+                      tableNumber: firstAvailable,
+                      roomNumber: "",
+                      guestName: "",
+                      notes: "",
+                    });
+                    setSelectedItems({});
+                    setIsModalOpen(true);
+                  }}
                   className="px-2.5 py-1 bg-[#EC3013] text-white text-[11px] font-bold rounded shadow-xs hover:bg-[#D62839]"
                 >
                   + New Order
@@ -1218,10 +1298,15 @@ export default function RestaurantPOSPage() {
                     >
                       {tables.map((t) => (
                         <option key={t.tableNumber} value={t.tableNumber}>
-                          {t.tableNumber} ({t.section})
+                          {t.tableNumber} ({t.section}) — {t.status === "occupied" ? "🔴 OCCUPIED (Running Tab)" : t.status === "reserved" ? "🟡 Reserved" : t.status === "cleaning" ? "🟣 Cleaning" : "🟢 Available"}
                         </option>
                       ))}
                     </select>
+                    {tables.find((t) => t.tableNumber === newOrder.tableNumber)?.status === "occupied" && (
+                      <div className="mt-1 p-1.5 rounded bg-amber-50 border border-amber-200 text-[10px] text-amber-800">
+                        ⚠️ <strong>{newOrder.tableNumber}</strong> is currently occupied. Submitting will append items to this table&apos;s active running bill.
+                      </div>
+                    )}
                   </div>
 
                   <div>
@@ -1269,39 +1354,71 @@ export default function RestaurantPOSPage() {
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto p-2 bg-[#F9FAFB] rounded-lg border border-[#E5E7EB]">
                     {menuItems.map((dish) => {
                       const isOut = dish.isAvailable === false;
+                      const hasHalf = isDishHalfPortion(dish);
+                      const halfPrice = dish.halfPrice || Math.round(dish.price * 0.6);
+
                       return (
-                        <button
-                          type="button"
+                        <div
                           key={dish.name}
-                          disabled={isOut}
-                          onClick={() => handleToggleDish(dish)}
-                          className={`p-2 rounded-lg border text-left transition flex items-center gap-2 ${
+                          className={`p-2.5 rounded-lg border text-left transition flex flex-col justify-between ${
                             isOut
-                              ? "border-red-200 bg-red-50/50 opacity-60 cursor-not-allowed"
+                              ? "border-red-200 bg-red-50/50 opacity-60"
                               : "border-[#E5E7EB] bg-white hover:border-[#D1D5DB]"
                           }`}
                         >
-                          {dish.image && (
-                            <img
-                              src={dish.image}
-                              alt={dish.name}
-                              className="w-9 h-9 rounded object-cover shrink-0 border border-gray-100"
-                            />
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <div className={`font-semibold text-[12px] truncate ${isOut ? "text-red-700" : "text-[#111827]"}`}>
-                              {dish.name}
-                            </div>
-                            <div className="flex items-center justify-between text-[10px] text-[#6B7280] mt-0.5">
-                              <span className="font-bold">₹{dish.price}</span>
-                              {isOut ? (
-                                <span className="text-red-600 font-bold">86 (Out)</span>
-                              ) : (
-                                <span className="truncate">{dish.category}</span>
-                              )}
+                          <div className="flex items-center gap-2">
+                            {dish.image && (
+                              <img
+                                src={dish.image}
+                                alt={dish.name}
+                                className="w-9 h-9 rounded object-cover shrink-0 border border-gray-100"
+                              />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className={`font-semibold text-[12px] truncate ${isOut ? "text-red-700" : "text-[#111827]"}`}>
+                                {dish.name}
+                              </div>
+                              <div className="text-[10px] text-[#6B7280]">
+                                {isOut ? (
+                                  <span className="text-red-600 font-bold">86 (Out)</span>
+                                ) : (
+                                  <span className="truncate">{dish.category}</span>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </button>
+
+                          {!isOut && (
+                            <div className="mt-2 pt-2 border-t border-gray-100 flex items-center gap-1.5 flex-wrap">
+                              {hasHalf ? (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleDish(dish, "Full")}
+                                    className="flex-1 py-1 px-1.5 bg-orange-50 hover:bg-orange-100 border border-orange-200 text-orange-800 rounded text-[10.5px] font-bold text-center transition"
+                                  >
+                                    + Full ₹{dish.price}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleDish(dish, "Half")}
+                                    className="flex-1 py-1 px-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 rounded text-[10.5px] font-bold text-center transition"
+                                  >
+                                    + Half ₹{halfPrice}
+                                  </button>
+                                </>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleDish(dish, "Full")}
+                                  className="w-full py-1 px-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-800 rounded text-[11px] font-bold text-center transition"
+                                >
+                                  + Add ₹{dish.price}
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       );
                     })}
                   </div>
