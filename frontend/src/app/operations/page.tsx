@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { reservationsApi, housekeepingApi, hotelsApi, roomsApi } from "@/lib/api";
 import { Reservation, HousekeepingTask, Hotel } from "@/types";
-import { ArrowRight, RefreshCw, LogIn, Sparkles, BedDouble, Utensils } from "lucide-react";
+import { ArrowRight, RefreshCw, LogIn, Sparkles, BedDouble, Utensils, TrendingUp } from "lucide-react";
 import { RoleGuard } from "@/components/layout/RoleGuard";
 
 export default function OperationsDashboardPage() {
@@ -82,24 +82,36 @@ export default function OperationsDashboardPage() {
       value: `${occupancyPct}%`,
       subtext: totalRooms > 0 ? `${checkedInCount} of ${totalRooms} rooms occupied` : "0 rooms occupied",
       link: "/operations/room-map",
+      icon: TrendingUp,
+      cardBg: "bg-[#E53935] hover:bg-[#D32F2F]",
+      shadow: "shadow-red-500/20",
     },
     {
       title: "AVAILABLE ROOMS",
       value: String(availableRooms),
       subtext: "Clean & ready for check-in",
       link: "/operations/room-map",
+      icon: BedDouble,
+      cardBg: "bg-[#43A047] hover:bg-[#388E3C]",
+      shadow: "shadow-green-500/20",
     },
     {
       title: "ARRIVALS TODAY",
       value: String(confirmedCount + checkedInCount),
       subtext: `${checkedInCount} already checked in`,
       link: "/operations/front-desk",
+      icon: LogIn,
+      cardBg: "bg-[#FB8C00] hover:bg-[#F57C00]",
+      shadow: "shadow-orange-500/20",
     },
     {
       title: "DIRTY / TURNOVER",
       value: String(dirtyCount),
       subtext: "Rooms in cleaning queue",
       link: "/operations/housekeeping",
+      icon: Sparkles,
+      cardBg: "bg-[#00ACC1] hover:bg-[#0097A7]",
+      shadow: "shadow-cyan-500/20",
     },
   ];
 
@@ -126,35 +138,44 @@ export default function OperationsDashboardPage() {
 
         <button
           onClick={loadData}
-          className="flex items-center gap-1.5 p-2 bg-white border border-[#D1D5DB] hover:bg-[#F9FAFB] rounded text-[#4B5563] text-[13px] font-semibold"
+          className="flex items-center gap-1.5 p-2 bg-white border border-[#D1D5DB] hover:bg-[#F9FAFB] rounded text-[#4B5563] text-[13px] font-semibold cursor-pointer"
         >
           <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin text-[#EC3013]" : ""}`} />
           <span>Refresh Data</span>
         </button>
       </div>
 
-      {/* 4 Stat Cards */}
+      {/* 4 Stat Cards (Vibrant Reference Style - Red, Green, Orange, Cyan) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {stats.map((stat, i) => (
-          <Link
-            key={i}
-            href={stat.link}
-            className="bg-white p-5 rounded-lg border border-[#E5E7EB] hover:border-[#D1D5DB] shadow-xs transition-all hover:shadow-md block group"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-[#EC3013] uppercase tracking-wider">
-                {stat.title}
-              </span>
-              <ArrowRight className="w-3.5 h-3.5 text-[#9CA3AF] group-hover:text-[#EC3013] transition-colors" />
-            </div>
-            <div className="text-[30px] font-black text-[#111827] mt-2 tracking-tight">
-              {stat.value}
-            </div>
-            <div className="text-[12px] text-[#6B7280] mt-1">
-              {stat.subtext}
-            </div>
-          </Link>
-        ))}
+        {stats.map((stat, i) => {
+          const Icon = stat.icon;
+          return (
+            <Link
+              key={i}
+              href={stat.link}
+              className={`relative overflow-hidden ${stat.cardBg} p-6 rounded-xl text-white shadow-lg ${stat.shadow} hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group block cursor-pointer`}
+            >
+              <div className="flex items-center justify-between relative z-10">
+                <div className="space-y-1">
+                  <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                    {stat.value}
+                  </div>
+                  <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                    {stat.title}
+                  </div>
+                  <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
+                    {stat.subtext}
+                  </div>
+                </div>
+
+                {/* Circular Watermark Ghost Icon */}
+                <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+                  <Icon className="w-7 h-7 stroke-[2]" />
+                </div>
+              </div>
+            </Link>
+          );
+        })}
       </div>
 
       {/* Two Column Grid: Today's Arrivals & Quick Navigation Hub */}

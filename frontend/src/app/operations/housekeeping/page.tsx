@@ -325,6 +325,85 @@ export default function HousekeepingPage() {
           </div>
         )}
 
+        {/* 4 Housekeeping Metric Cards (Vibrant Reference Style - Red, Green, Orange, Cyan) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="relative overflow-hidden bg-[#E53935] hover:bg-[#D32F2F] p-6 rounded-xl text-white shadow-lg shadow-red-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
+            <div className="flex items-center justify-between relative z-10">
+              <div className="space-y-1">
+                <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                  {tasks.filter((t) => t.status === "dirty").length}
+                </div>
+                <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                  Dirty / Turnover
+                </div>
+                <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
+                  Pending housekeeper
+                </div>
+              </div>
+              <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+                <AlertTriangle className="w-7 h-7 stroke-[2]" />
+              </div>
+            </div>
+          </div>
+
+          <div className="relative overflow-hidden bg-[#43A047] hover:bg-[#388E3C] p-6 rounded-xl text-white shadow-lg shadow-green-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
+            <div className="flex items-center justify-between relative z-10">
+              <div className="space-y-1">
+                <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                  {tasks.filter((t) => t.status === "inspected" || t.status === "clean").length}
+                </div>
+                <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                  Inspected &amp; Ready
+                </div>
+                <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
+                  Ready for guest check-in
+                </div>
+              </div>
+              <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+                <CheckCircle2 className="w-7 h-7 stroke-[2]" />
+              </div>
+            </div>
+          </div>
+
+          <div className="relative overflow-hidden bg-[#FB8C00] hover:bg-[#F57C00] p-6 rounded-xl text-white shadow-lg shadow-orange-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
+            <div className="flex items-center justify-between relative z-10">
+              <div className="space-y-1">
+                <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                  {tasks.filter((t) => t.status === "cleaning").length}
+                </div>
+                <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                  Cleaning In Progress
+                </div>
+                <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
+                  Staff actively servicing
+                </div>
+              </div>
+              <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+                <Sparkles className="w-7 h-7 stroke-[2]" />
+              </div>
+            </div>
+          </div>
+
+          <div className="relative overflow-hidden bg-[#00ACC1] hover:bg-[#0097A7] p-6 rounded-xl text-white shadow-lg shadow-cyan-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
+            <div className="flex items-center justify-between relative z-10">
+              <div className="space-y-1">
+                <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                  {tasks.length || rooms.length}
+                </div>
+                <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                  Total Room Tasks
+                </div>
+                <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
+                  Full hotel roster
+                </div>
+              </div>
+              <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+                <BedDouble className="w-7 h-7 stroke-[2]" />
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* 4 Column Kanban Board */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {columns.map((col: any) => {

@@ -193,23 +193,82 @@ export default function BillingPage() {
         </div>
       )}
 
-      {/* Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-lg border border-[#E5E7EB] shadow-xs">
-          <div className="text-[11px] font-bold text-[#6B7280] uppercase">Total Invoiced</div>
-          <div className="text-[24px] font-bold text-[#111827] mt-1.5">₹{totalInvoiced.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+      {/* Metric Cards (Vibrant Reference Style - Red, Green, Orange, Cyan) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="relative overflow-hidden bg-[#E53935] hover:bg-[#D32F2F] p-6 rounded-xl text-white shadow-lg shadow-red-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
+          <div className="flex items-center justify-between relative z-10">
+            <div className="space-y-1">
+              <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                ₹{totalInvoiced.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+              </div>
+              <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                Total Invoiced
+              </div>
+              <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
+                Gross billings across folios
+              </div>
+            </div>
+            <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+              <Receipt className="w-7 h-7 stroke-[2]" />
+            </div>
+          </div>
         </div>
-        <div className="bg-white p-5 rounded-lg border border-[#E5E7EB] shadow-xs">
-          <div className="text-[11px] font-bold text-emerald-600 uppercase">Paid &amp; Settled</div>
-          <div className="text-[24px] font-bold text-emerald-700 mt-1.5">₹{totalPaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+
+        <div className="relative overflow-hidden bg-[#43A047] hover:bg-[#388E3C] p-6 rounded-xl text-white shadow-lg shadow-green-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
+          <div className="flex items-center justify-between relative z-10">
+            <div className="space-y-1">
+              <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                ₹{totalPaid.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+              </div>
+              <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                Paid &amp; Settled
+              </div>
+              <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
+                Cleared payments in ledger
+              </div>
+            </div>
+            <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+              <CheckCircle2 className="w-7 h-7 stroke-[2]" />
+            </div>
+          </div>
         </div>
-        <div className="bg-white p-5 rounded-lg border border-[#E5E7EB] shadow-xs">
-          <div className="text-[11px] font-bold text-amber-600 uppercase">Pending Collection</div>
-          <div className="text-[24px] font-bold text-amber-700 mt-1.5">₹{totalPending.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+
+        <div className="relative overflow-hidden bg-[#FB8C00] hover:bg-[#F57C00] p-6 rounded-xl text-white shadow-lg shadow-orange-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
+          <div className="flex items-center justify-between relative z-10">
+            <div className="space-y-1">
+              <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                ₹{totalPending.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+              </div>
+              <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                Pending Collection
+              </div>
+              <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
+                Due at check-out or billing
+              </div>
+            </div>
+            <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+              <CreditCard className="w-7 h-7 stroke-[2]" />
+            </div>
+          </div>
         </div>
-        <div className="bg-white p-5 rounded-lg border border-[#E5E7EB] shadow-xs">
-          <div className="text-[11px] font-bold text-rose-600 uppercase">Overdue</div>
-          <div className="text-[24px] font-bold text-rose-700 mt-1.5">₹{totalOverdue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+
+        <div className="relative overflow-hidden bg-[#00ACC1] hover:bg-[#0097A7] p-6 rounded-xl text-white shadow-lg shadow-cyan-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
+          <div className="flex items-center justify-between relative z-10">
+            <div className="space-y-1">
+              <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                ₹{totalOverdue.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+              </div>
+              <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                Overdue Balances
+              </div>
+              <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
+                Awaiting immediate recovery
+              </div>
+            </div>
+            <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+              <Receipt className="w-7 h-7 stroke-[2]" />
+            </div>
+          </div>
         </div>
       </div>
 

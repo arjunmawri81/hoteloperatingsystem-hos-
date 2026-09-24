@@ -366,65 +366,81 @@ export default function CashCounterPage() {
         {activeTab === "current" ? (
           isOpen && activeShift ? (
             <div className="space-y-6">
-              {/* Financial Metrics Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-white p-5 rounded-lg border border-[#E5E7EB] shadow-xs">
-                  <div className="flex items-center justify-between text-[#6B7280]">
-                    <span className="text-[12px] font-bold uppercase tracking-wider">Net Drawer Cash</span>
-                    <div className="w-8 h-8 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
-                      <Wallet className="w-4 h-4" />
+              {/* Financial Metrics Cards (Vibrant Reference Style - Red, Green, Orange, Cyan) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <div className="relative overflow-hidden bg-[#E53935] hover:bg-[#D32F2F] p-6 rounded-xl text-white shadow-lg shadow-red-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
+                  <div className="flex items-center justify-between relative z-10">
+                    <div className="space-y-1">
+                      <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                        ₹{(activeShift.totalCashOut || 0).toLocaleString("en-IN")}
+                      </div>
+                      <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                        Total Cash Out
+                      </div>
+                      <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
+                        Petty cash &amp; payouts
+                      </div>
                     </div>
-                  </div>
-                  <div className="mt-2 text-[26px] font-black text-emerald-700">
-                    ₹{activeShift.expectedCash.toLocaleString("en-IN")}
-                  </div>
-                  <div className="text-[11px] text-[#6B7280] mt-1 flex items-center gap-1">
-                    <span>Expected physical balance right now</span>
+                    <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+                      <ArrowUpRight className="w-7 h-7 stroke-[2]" />
+                    </div>
                   </div>
                 </div>
 
-                <div className="bg-white p-5 rounded-lg border border-[#E5E7EB] shadow-xs">
-                  <div className="flex items-center justify-between text-[#6B7280]">
-                    <span className="text-[12px] font-bold uppercase tracking-wider">Opening Float</span>
-                    <div className="w-8 h-8 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600">
-                      <Coins className="w-4 h-4" />
+                <div className="relative overflow-hidden bg-[#43A047] hover:bg-[#388E3C] p-6 rounded-xl text-white shadow-lg shadow-green-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
+                  <div className="flex items-center justify-between relative z-10">
+                    <div className="space-y-1">
+                      <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                        ₹{activeShift.expectedCash.toLocaleString("en-IN")}
+                      </div>
+                      <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                        Net Drawer Cash
+                      </div>
+                      <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
+                        Live drawer balance
+                      </div>
                     </div>
-                  </div>
-                  <div className="mt-2 text-[26px] font-black text-[#111827]">
-                    ₹{activeShift.openingFloat.toLocaleString("en-IN")}
-                  </div>
-                  <div className="text-[11px] text-[#6B7280] mt-1 font-medium">
-                    Shift #{activeShift.shiftId} • {activeShift.hotelName || selectedHotelName || "Property"} by {activeShift.cashierName}
+                    <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+                      <Wallet className="w-7 h-7 stroke-[2]" />
+                    </div>
                   </div>
                 </div>
 
-                <div className="bg-white p-5 rounded-lg border border-[#E5E7EB] shadow-xs">
-                  <div className="flex items-center justify-between text-[#6B7280]">
-                    <span className="text-[12px] font-bold uppercase tracking-wider">Total Cash In</span>
-                    <div className="w-8 h-8 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
-                      <ArrowDownLeft className="w-4 h-4" />
+                <div className="relative overflow-hidden bg-[#FB8C00] hover:bg-[#F57C00] p-6 rounded-xl text-white shadow-lg shadow-orange-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
+                  <div className="flex items-center justify-between relative z-10">
+                    <div className="space-y-1">
+                      <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                        ₹{activeShift.openingFloat.toLocaleString("en-IN")}
+                      </div>
+                      <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                        Opening Float
+                      </div>
+                      <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
+                        Shift #{activeShift.shiftId} by {activeShift.cashierName}
+                      </div>
                     </div>
-                  </div>
-                  <div className="mt-2 text-[26px] font-black text-emerald-600">
-                    +₹{(activeShift.totalCashIn - activeShift.openingFloat > 0 ? activeShift.totalCashIn - activeShift.openingFloat : 0).toLocaleString("en-IN")}
-                  </div>
-                  <div className="text-[11px] text-[#6B7280] mt-1">
-                    Guest payments, booking advances
+                    <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+                      <Coins className="w-7 h-7 stroke-[2]" />
+                    </div>
                   </div>
                 </div>
 
-                <div className="bg-white p-5 rounded-lg border border-[#E5E7EB] shadow-xs">
-                  <div className="flex items-center justify-between text-[#6B7280]">
-                    <span className="text-[12px] font-bold uppercase tracking-wider">Total Cash Out</span>
-                    <div className="w-8 h-8 rounded-full bg-red-50 border border-red-200 flex items-center justify-center text-red-600">
-                      <ArrowUpRight className="w-4 h-4" />
+                <div className="relative overflow-hidden bg-[#00ACC1] hover:bg-[#0097A7] p-6 rounded-xl text-white shadow-lg shadow-cyan-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
+                  <div className="flex items-center justify-between relative z-10">
+                    <div className="space-y-1">
+                      <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                        +₹{(activeShift.totalCashIn - activeShift.openingFloat > 0 ? activeShift.totalCashIn - activeShift.openingFloat : 0).toLocaleString("en-IN")}
+                      </div>
+                      <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                        Total Cash In
+                      </div>
+                      <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
+                        Guest payments &amp; folios
+                      </div>
                     </div>
-                  </div>
-                  <div className="mt-2 text-[26px] font-black text-red-600">
-                    -₹{(activeShift.totalCashOut || 0).toLocaleString("en-IN")}
-                  </div>
-                  <div className="text-[11px] text-[#6B7280] mt-1">
-                    Petty cash, emergency supplies &amp; payouts
+                    <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+                      <ArrowDownLeft className="w-7 h-7 stroke-[2]" />
+                    </div>
                   </div>
                 </div>
               </div>

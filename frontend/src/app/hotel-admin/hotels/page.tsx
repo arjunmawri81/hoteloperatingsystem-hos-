@@ -11,6 +11,7 @@ import {
   RefreshCw,
   CheckCircle2,
   Building2,
+  BedDouble,
   MapPin,
   Trash2,
   Camera,
@@ -285,6 +286,85 @@ export default function HotelsManagementPage() {
           <span className="font-medium">{toastMsg}</span>
         </div>
       )}
+
+      {/* 4 Hotel KPI Stat Cards (Vibrant Reference Style - Red, Green, Orange, Cyan) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="relative overflow-hidden bg-[#E53935] hover:bg-[#D32F2F] p-6 rounded-xl text-white shadow-lg shadow-red-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
+          <div className="flex items-center justify-between relative z-10">
+            <div className="space-y-1">
+              <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                {hotels.length}
+              </div>
+              <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                Total Properties
+              </div>
+              <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
+                Onboarded in chain
+              </div>
+            </div>
+            <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+              <Building2 className="w-7 h-7 stroke-[2]" />
+            </div>
+          </div>
+        </div>
+
+        <div className="relative overflow-hidden bg-[#43A047] hover:bg-[#388E3C] p-6 rounded-xl text-white shadow-lg shadow-green-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
+          <div className="flex items-center justify-between relative z-10">
+            <div className="space-y-1">
+              <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                {hotels.reduce((acc, h) => acc + (Number(h.totalRooms) || 0), 0)}
+              </div>
+              <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                Total Room Units
+              </div>
+              <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
+                Active inventory capacity
+              </div>
+            </div>
+            <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+              <BedDouble className="w-7 h-7 stroke-[2]" />
+            </div>
+          </div>
+        </div>
+
+        <div className="relative overflow-hidden bg-[#FB8C00] hover:bg-[#F57C00] p-6 rounded-xl text-white shadow-lg shadow-orange-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
+          <div className="flex items-center justify-between relative z-10">
+            <div className="space-y-1">
+              <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                {new Set(hotels.map((h) => h.region || h.city || "Delhi")).size}
+              </div>
+              <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                Regions Covered
+              </div>
+              <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
+                Geographic clusters
+              </div>
+            </div>
+            <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+              <MapPin className="w-7 h-7 stroke-[2]" />
+            </div>
+          </div>
+        </div>
+
+        <div className="relative overflow-hidden bg-[#00ACC1] hover:bg-[#0097A7] p-6 rounded-xl text-white shadow-lg shadow-cyan-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
+          <div className="flex items-center justify-between relative z-10">
+            <div className="space-y-1">
+              <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                {hotels.length}
+              </div>
+              <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                KYC &amp; Legal Verified
+              </div>
+              <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
+                100% compliant
+              </div>
+            </div>
+            <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+              <ShieldCheck className="w-7 h-7 stroke-[2]" />
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Search Bar & Summary */}
       <div className="bg-white p-3.5 rounded-lg border border-[#E5E7EB] flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">

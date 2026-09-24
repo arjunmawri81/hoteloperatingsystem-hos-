@@ -148,7 +148,7 @@ export const reservationsApi = {
     return (res as any)?.data || res;
   },
 
-  checkIn: async (id: string, payload: { idType?: string; idNumber?: string; idDocUrl?: string; advanceDeposit?: number; paymentMethod?: string }): Promise<any> => {
+  checkIn: async (id: string, payload: { roomNumber?: string; idType?: string; idNumber?: string; idDocUrl?: string; advanceDeposit?: number; paymentMethod?: string }): Promise<any> => {
     const res = await api.post(`/reservations/${id}/check-in`, payload);
     return (res as any)?.data || res;
   },

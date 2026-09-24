@@ -97,15 +97,44 @@ class ReservationsController {
         });
       }
 
-      // Check room assignment
-      if (!resv.roomNumber || resv.roomNumber === "TBD") {
-        return res.status(400).json({ success: false, message: "Please assign a room before check-in." });
+      // Check and handle room assignment
+      let targetRoomNumber = req.body.roomNumber || resv.roomNumber;
+
+      if (!targetRoomNumber || targetRoomNumber === "TBD") {
+        // Auto-assign first available room of same type or any available in hotel
+        const cleanRoom = await Room.findOne({
+          status: "available",
+          ...(resv.hotelId ? { hotelId: resv.hotelId } : {}),
+          ...(resv.roomType && resv.roomType !== "Standard Room" ? { type: new RegExp(resv.roomType, "i") } : {}),
+        });
+
+        if (cleanRoom) {
+          targetRoomNumber = cleanRoom.number;
+          resv.roomNumber = cleanRoom.number;
+        } else {
+          // Check any available room in hotel
+          const anyClean = await Room.findOne({
+            status: "available",
+            ...(resv.hotelId ? { hotelId: resv.hotelId } : {}),
+          });
+          if (anyClean) {
+            targetRoomNumber = anyClean.number;
+            resv.roomNumber = anyClean.number;
+          } else {
+            return res.status(400).json({
+              success: false,
+              message: "No vacant clean rooms available in this hotel. Please mark a room available or clean first.",
+            });
+          }
+        }
+      } else {
+        resv.roomNumber = targetRoomNumber;
       }
 
       // Update room status to occupied
-      const cleanRoomNum = String(resv.roomNumber || "").replace(/room\s*/i, "").trim();
+      const cleanRoomNum = String(targetRoomNumber || "").replace(/room\s*/i, "").trim();
       const roomMatch = {
-        number: { $in: [cleanRoomNum, `Room ${cleanRoomNum}`, resv.roomNumber] },
+        number: { $in: [cleanRoomNum, `Room ${cleanRoomNum}`, targetRoomNumber] },
         ...(resv.hotelId ? { hotelId: resv.hotelId } : resv.orgId ? { orgId: resv.orgId } : {}),
       };
       await Room.updateMany(roomMatch, { status: "occupied", guest: resv.guestName });

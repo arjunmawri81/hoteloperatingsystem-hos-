@@ -483,57 +483,82 @@ export default function HotelAdminRoomsPage() {
         </div>
       )}
 
-      {/* KPI Stats Row (Matching Sidebar Deep Navy Theme) */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
-        {/* Total Units */}
-        <div className="relative overflow-hidden bg-[#0B132B] hover:bg-[#0F1A3A] p-4 rounded-xl border border-slate-800/90 shadow-lg hover:border-cyan-500/40 hover:shadow-cyan-950/30 hover:-translate-y-0.5 transition-all duration-200">
-          <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-cyan-500/50 to-transparent" />
-          <div className="text-[10px] font-black text-cyan-400 uppercase tracking-wider">Total Units</div>
-          <div className="text-[24px] font-black text-white mt-1 tracking-tight drop-shadow-xs">{counts.total}</div>
-        </div>
-
-        {/* Available */}
-        <div className="relative overflow-hidden bg-[#0B132B] hover:bg-[#0F1A3A] p-4 rounded-xl border border-slate-800/90 shadow-lg hover:border-emerald-500/40 hover:shadow-emerald-950/30 hover:-translate-y-0.5 transition-all duration-200">
-          <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-emerald-500/60 to-transparent" />
-          <div className="text-[10px] font-black text-emerald-400 uppercase tracking-wider flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Available</span>
+      {/* 4 Key Room Stat Cards (Vibrant Reference Style - Red, Green, Orange, Cyan) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="relative overflow-hidden bg-[#E53935] hover:bg-[#D32F2F] p-6 rounded-xl text-white shadow-lg shadow-red-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
+          <div className="flex items-center justify-between relative z-10">
+            <div className="space-y-1">
+              <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                {counts.occupied}
+              </div>
+              <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                Occupied Units
+              </div>
+              <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
+                In-house staying guests
+              </div>
+            </div>
+            <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+              <User className="w-7 h-7 stroke-[2]" />
+            </div>
           </div>
-          <div className="text-[24px] font-black text-emerald-300 mt-1 tracking-tight drop-shadow-xs">{counts.available}</div>
         </div>
 
-        {/* Occupied */}
-        <div className="relative overflow-hidden bg-[#0B132B] hover:bg-[#0F1A3A] p-4 rounded-xl border border-slate-800/90 shadow-lg hover:border-rose-500/40 hover:shadow-rose-950/30 hover:-translate-y-0.5 transition-all duration-200">
-          <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-rose-500/60 to-transparent" />
-          <div className="text-[10px] font-black text-rose-400 uppercase tracking-wider flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
-            <span>Occupied</span>
+        <div className="relative overflow-hidden bg-[#43A047] hover:bg-[#388E3C] p-6 rounded-xl text-white shadow-lg shadow-green-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
+          <div className="flex items-center justify-between relative z-10">
+            <div className="space-y-1">
+              <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                {counts.available}
+              </div>
+              <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                Available Clean
+              </div>
+              <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
+                Ready for check-in
+              </div>
+            </div>
+            <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+              <BedDouble className="w-7 h-7 stroke-[2]" />
+            </div>
           </div>
-          <div className="text-[24px] font-black text-rose-300 mt-1 tracking-tight drop-shadow-xs">{counts.occupied}</div>
         </div>
 
-        {/* Housekeeping */}
-        <div className="relative overflow-hidden bg-[#0B132B] hover:bg-[#0F1A3A] p-4 rounded-xl border border-slate-800/90 shadow-lg hover:border-amber-500/40 hover:shadow-amber-950/30 hover:-translate-y-0.5 transition-all duration-200">
-          <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-amber-500/60 to-transparent" />
-          <div className="text-[10px] font-black text-amber-400 uppercase tracking-wider flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-            <span>Housekeeping</span>
+        <div className="relative overflow-hidden bg-[#FB8C00] hover:bg-[#F57C00] p-6 rounded-xl text-white shadow-lg shadow-orange-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
+          <div className="flex items-center justify-between relative z-10">
+            <div className="space-y-1">
+              <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                {counts.dirty}
+              </div>
+              <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                Dirty / Turnover
+              </div>
+              <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
+                In cleaning queue
+              </div>
+            </div>
+            <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+              <Sparkles className="w-7 h-7 stroke-[2]" />
+            </div>
           </div>
-          <div className="text-[24px] font-black text-amber-300 mt-1 tracking-tight drop-shadow-xs">{counts.dirty}</div>
         </div>
 
-        {/* Out of Order */}
-        <div className="relative overflow-hidden bg-[#0B132B] hover:bg-[#0F1A3A] p-4 rounded-xl border border-slate-800/90 shadow-lg hover:border-slate-500/40 hover:shadow-slate-950/30 hover:-translate-y-0.5 transition-all duration-200">
-          <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-slate-500/50 to-transparent" />
-          <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Out of Order</div>
-          <div className="text-[24px] font-black text-slate-300 mt-1 tracking-tight drop-shadow-xs">{counts.out_of_order}</div>
-        </div>
-
-        {/* Avg Nightly Rate */}
-        <div className="relative overflow-hidden bg-[#0B132B] hover:bg-[#0F1A3A] p-4 rounded-xl border border-slate-800/90 shadow-lg hover:border-cyan-500/40 hover:shadow-cyan-950/30 hover:-translate-y-0.5 transition-all duration-200">
-          <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-blue-500/60 via-cyan-500/40 to-transparent" />
-          <div className="text-[10px] font-black text-cyan-400 uppercase tracking-wider">Avg Nightly Rate</div>
-          <div className="text-[24px] font-black text-cyan-300 mt-1 tracking-tight drop-shadow-xs">₹{counts.avgRate}</div>
+        <div className="relative overflow-hidden bg-[#00ACC1] hover:bg-[#0097A7] p-6 rounded-xl text-white shadow-lg shadow-cyan-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
+          <div className="flex items-center justify-between relative z-10">
+            <div className="space-y-1">
+              <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                {counts.total}
+              </div>
+              <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                Total Inventory
+              </div>
+              <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
+                Avg rate ₹{counts.avgRate.toLocaleString()}
+              </div>
+            </div>
+            <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+              <Zap className="w-7 h-7 stroke-[2]" />
+            </div>
+          </div>
         </div>
       </div>
 

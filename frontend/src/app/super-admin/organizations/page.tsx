@@ -241,106 +241,105 @@ export default function OrganizationsPage() {
         </div>
       </div>
 
-      {/* 4 Key Stat Cards (Matching Sidebar Deep Navy Theme) */}
+      {/* 4 Key Stat Cards (Vibrant Reference Style - Red, Green, Orange, Cyan) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {/* Total Organizations */}
+        {/* Total Organizations (Red) */}
         <div
           onClick={() => setStatusFilter("all")}
-          className="relative overflow-hidden bg-[#0B132B] hover:bg-[#0F1A3A] p-5 rounded-xl border border-slate-800/90 shadow-xl hover:border-cyan-500/50 hover:shadow-cyan-950/40 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
+          className={`relative overflow-hidden bg-[#E53935] hover:bg-[#D32F2F] p-5 rounded-xl text-white shadow-lg shadow-red-500/20 hover:-translate-y-1 transition-all duration-200 cursor-pointer ${
+            statusFilter === "all" ? "ring-2 ring-white" : ""
+          }`}
         >
-          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-cyan-500/50 via-cyan-500/20 to-transparent" />
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg border bg-cyan-500/10 border-cyan-500/30 text-cyan-400 shadow-inner">
-                <Building className="w-4 h-4" />
+            <div>
+              <div className="text-[34px] font-black leading-none tracking-tight">
+                {organizations.length}
               </div>
-              <span className="text-[11px] font-black uppercase tracking-wider text-cyan-400">
+              <div className="text-[15px] font-bold text-white/95 mt-2">
                 Total Organizations
-              </span>
-            </div>
-          </div>
-          <div className="text-[28px] font-black text-white mt-3 tracking-tight drop-shadow-xs">
-            {organizations.length}
-          </div>
-          <div className="text-[12px] text-slate-400 mt-1 font-medium">
-            Registered on platform
-          </div>
-        </div>
-
-        {/* Pending KYC */}
-        <div
-          onClick={() => setStatusFilter("pending_approval")}
-          className="relative overflow-hidden bg-[#0B132B] hover:bg-[#0F1A3A] p-5 rounded-xl border border-slate-800/90 shadow-xl hover:border-amber-500/50 hover:shadow-amber-950/40 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
-        >
-          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-amber-500/60 via-amber-500/20 to-transparent" />
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg border bg-amber-500/10 border-amber-500/30 text-amber-400 shadow-inner">
-                <Clock className="w-4 h-4" />
               </div>
-              <span className="text-[11px] font-black uppercase tracking-wider text-amber-400">
-                Pending KYC
-              </span>
+              <div className="text-[12px] text-white/80 font-medium mt-0.5">
+                Registered on platform
+              </div>
             </div>
-            {pendingCount > 0 && (
-              <span className="px-2 py-0.5 bg-amber-500 text-black text-[10px] font-black rounded-full animate-pulse">
-                Action Required
-              </span>
-            )}
-          </div>
-          <div className="text-[28px] font-black text-amber-300 mt-3 tracking-tight drop-shadow-xs">
-            {pendingCount}
-          </div>
-          <div className="text-[12px] text-amber-400/80 mt-1 font-semibold">
-            Awaiting Super Admin approval
+            <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0">
+              <Building className="w-7 h-7 stroke-[2]" />
+            </div>
           </div>
         </div>
 
-        {/* Active Chains */}
+        {/* Active Chains (Green) */}
         <div
           onClick={() => setStatusFilter("active")}
-          className="relative overflow-hidden bg-[#0B132B] hover:bg-[#0F1A3A] p-5 rounded-xl border border-slate-800/90 shadow-xl hover:border-emerald-500/50 hover:shadow-emerald-950/40 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
+          className={`relative overflow-hidden bg-[#43A047] hover:bg-[#388E3C] p-5 rounded-xl text-white shadow-lg shadow-green-500/20 hover:-translate-y-1 transition-all duration-200 cursor-pointer ${
+            statusFilter === "active" ? "ring-2 ring-white" : ""
+          }`}
         >
-          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-emerald-500/60 via-emerald-500/20 to-transparent" />
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg border bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-inner">
-                <CheckCircle2 className="w-4 h-4" />
+            <div>
+              <div className="text-[34px] font-black leading-none tracking-tight">
+                {activeCount}
               </div>
-              <span className="text-[11px] font-black uppercase tracking-wider text-emerald-400">
+              <div className="text-[15px] font-bold text-white/95 mt-2">
                 Active Chains
-              </span>
+              </div>
+              <div className="text-[12px] text-white/80 font-medium mt-0.5">
+                Verified &amp; live workspaces
+              </div>
             </div>
-          </div>
-          <div className="text-[28px] font-black text-emerald-300 mt-3 tracking-tight drop-shadow-xs">
-            {activeCount}
-          </div>
-          <div className="text-[12px] text-emerald-400/80 mt-1 font-semibold">
-            Verified &amp; live workspaces
+            <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0">
+              <CheckCircle2 className="w-7 h-7 stroke-[2]" />
+            </div>
           </div>
         </div>
 
-        {/* Rejected / Other */}
+        {/* Pending KYC (Orange) */}
         <div
-          onClick={() => setStatusFilter("rejected")}
-          className="relative overflow-hidden bg-[#0B132B] hover:bg-[#0F1A3A] p-5 rounded-xl border border-slate-800/90 shadow-xl hover:border-rose-500/50 hover:shadow-rose-950/40 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
+          onClick={() => setStatusFilter("pending_approval")}
+          className={`relative overflow-hidden bg-[#FB8C00] hover:bg-[#F57C00] p-5 rounded-xl text-white shadow-lg shadow-orange-500/20 hover:-translate-y-1 transition-all duration-200 cursor-pointer ${
+            statusFilter === "pending_approval" ? "ring-2 ring-white" : ""
+          }`}
         >
-          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-rose-500/60 via-rose-500/20 to-transparent" />
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg border bg-rose-500/10 border-rose-500/30 text-rose-400 shadow-inner">
-                <Ban className="w-4 h-4" />
+            <div>
+              <div className="text-[34px] font-black leading-none tracking-tight">
+                {pendingCount}
               </div>
-              <span className="text-[11px] font-black uppercase tracking-wider text-rose-400">
-                Rejected / Blocked
-              </span>
+              <div className="text-[15px] font-bold text-white/95 mt-2">
+                Pending KYC
+              </div>
+              <div className="text-[12px] text-white/80 font-medium mt-0.5">
+                Awaiting approval
+              </div>
+            </div>
+            <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0">
+              <Clock className="w-7 h-7 stroke-[2]" />
             </div>
           </div>
-          <div className="text-[28px] font-black text-rose-300 mt-3 tracking-tight drop-shadow-xs">
-            {rejectedCount}
-          </div>
-          <div className="text-[12px] text-rose-400/80 mt-1 font-semibold">
-            Failed KYC verification
+        </div>
+
+        {/* Rejected / Other (Cyan/Teal) */}
+        <div
+          onClick={() => setStatusFilter("rejected")}
+          className={`relative overflow-hidden bg-[#00ACC1] hover:bg-[#0097A7] p-5 rounded-xl text-white shadow-lg shadow-cyan-500/20 hover:-translate-y-1 transition-all duration-200 cursor-pointer ${
+            statusFilter === "rejected" ? "ring-2 ring-white" : ""
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-[34px] font-black leading-none tracking-tight">
+                {rejectedCount}
+              </div>
+              <div className="text-[15px] font-bold text-white/95 mt-2">
+                Rejected / Blocked
+              </div>
+              <div className="text-[12px] text-white/80 font-medium mt-0.5">
+                Suspended workspaces
+              </div>
+            </div>
+            <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0">
+              <Ban className="w-7 h-7 stroke-[2]" />
+            </div>
           </div>
         </div>
       </div>

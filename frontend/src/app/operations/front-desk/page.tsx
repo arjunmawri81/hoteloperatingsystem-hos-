@@ -25,6 +25,7 @@ import {
   Eye,
   User,
   Phone,
+  BedDouble,
 } from "lucide-react";
 import { RoleGuard } from "@/components/layout/RoleGuard";
 import { useAuth } from "@/context/AuthContext";
@@ -83,6 +84,7 @@ export default function FrontDeskPage() {
   const [extensionNightCharge, setExtensionNightCharge] = useState<number>(2500);
 
   const [finalSettlementMethod, setFinalSettlementMethod] = useState("Credit Card");
+  const [checkInRoomNumber, setCheckInRoomNumber] = useState("");
 
   const fetchAllData = async () => {
     setIsLoading(true);
@@ -164,6 +166,11 @@ export default function FrontDeskPage() {
     setIdType((resv as any).idType || "Aadhaar");
     setIdNumber((resv as any).idNumber || "");
     setAdvanceDeposit(0);
+    if (resv.roomNumber && resv.roomNumber !== "TBD") {
+      setCheckInRoomNumber(resv.roomNumber);
+    } else {
+      setCheckInRoomNumber(availableRooms[0]?.number || "");
+    }
     setCheckInModalOpen(true);
   };
 
@@ -172,13 +179,15 @@ export default function FrontDeskPage() {
     if (!selectedResv) return;
 
     try {
+      const assignedRoom = checkInRoomNumber || selectedResv.roomNumber;
       await reservationsApi.checkIn(selectedResv.id, {
         idType,
         idNumber,
+        roomNumber: assignedRoom,
         advanceDeposit: Number(advanceDeposit),
         paymentMethod: depositPaymentMethod,
       });
-      notify(`✅ Guest ${selectedResv.guestName} checked in to Room ${selectedResv.roomNumber}`);
+      notify(`✅ Guest ${selectedResv.guestName} checked in to Room ${assignedRoom}`);
       setCheckInModalOpen(false);
       fetchAllData();
     } catch (err: any) {
@@ -386,6 +395,85 @@ export default function FrontDeskPage() {
             <span>{actionNotice.message}</span>
           </div>
         )}
+
+        {/* 4 Front Desk Metric Cards (Vibrant Reference Style - Red, Green, Orange, Cyan) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="relative overflow-hidden bg-[#E53935] hover:bg-[#D32F2F] p-6 rounded-xl text-white shadow-lg shadow-red-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
+            <div className="flex items-center justify-between relative z-10">
+              <div className="space-y-1">
+                <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                  {arrivals.length}
+                </div>
+                <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                  Expected Arrivals
+                </div>
+                <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
+                  {arrivals.filter((a) => a.status === "confirmed").length} awaiting check-in
+                </div>
+              </div>
+              <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+                <LogIn className="w-7 h-7 stroke-[2]" />
+              </div>
+            </div>
+          </div>
+
+          <div className="relative overflow-hidden bg-[#43A047] hover:bg-[#388E3C] p-6 rounded-xl text-white shadow-lg shadow-green-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
+            <div className="flex items-center justify-between relative z-10">
+              <div className="space-y-1">
+                <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                  {departures.filter((d) => d.status === "checked_in").length}
+                </div>
+                <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                  In-House Guests
+                </div>
+                <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
+                  Active occupied rooms
+                </div>
+              </div>
+              <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+                <UserCheck className="w-7 h-7 stroke-[2]" />
+              </div>
+            </div>
+          </div>
+
+          <div className="relative overflow-hidden bg-[#FB8C00] hover:bg-[#F57C00] p-6 rounded-xl text-white shadow-lg shadow-orange-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
+            <div className="flex items-center justify-between relative z-10">
+              <div className="space-y-1">
+                <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                  {departures.filter((d) => d.status === "checked_out").length}
+                </div>
+                <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                  Departures Settled
+                </div>
+                <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
+                  Checked-out today
+                </div>
+              </div>
+              <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+                <LogOut className="w-7 h-7 stroke-[2]" />
+              </div>
+            </div>
+          </div>
+
+          <div className="relative overflow-hidden bg-[#00ACC1] hover:bg-[#0097A7] p-6 rounded-xl text-white shadow-lg shadow-cyan-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
+            <div className="flex items-center justify-between relative z-10">
+              <div className="space-y-1">
+                <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                  {availableRooms.length}
+                </div>
+                <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                  Available Rooms
+                </div>
+                <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
+                  Clean &amp; ready to assign
+                </div>
+              </div>
+              <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+                <BedDouble className="w-7 h-7 stroke-[2]" />
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Two Column Grid: Arrivals & Departures */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -693,6 +781,31 @@ export default function FrontDeskPage() {
               </div>
 
               <form onSubmit={submitCheckIn} className="mt-4 space-y-4">
+                <div>
+                  <label className="block text-[12px] font-bold text-gray-700 mb-1">
+                    Room Allocation {(!selectedResv.roomNumber || selectedResv.roomNumber === "TBD") && (
+                      <span className="text-amber-600 font-normal">(OTA Unallocated - Please Assign)</span>
+                    )}
+                  </label>
+                  <select
+                    value={checkInRoomNumber}
+                    onChange={(e) => setCheckInRoomNumber(e.target.value)}
+                    required
+                    className="w-full p-2 border border-gray-300 rounded text-[13px] bg-white font-semibold text-gray-800"
+                  >
+                    {selectedResv.roomNumber && selectedResv.roomNumber !== "TBD" && (
+                      <option value={selectedResv.roomNumber}>
+                        Room {selectedResv.roomNumber} ({selectedResv.roomType || "Assigned"})
+                      </option>
+                    )}
+                    {availableRooms.map((r) => (
+                      <option key={r.id || r.number} value={r.number}>
+                        Room {r.number} ({r.type || "Available Room"}) - ₹{r.rate || 0}/night
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 <div>
                   <label className="block text-[12px] font-bold text-gray-700 mb-1">Government ID Type</label>
                   <select

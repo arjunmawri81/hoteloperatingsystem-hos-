@@ -152,6 +152,85 @@ export default function GuestCRMPage() {
         </div>
       )}
 
+      {/* 4 Guest CRM Metric Cards (Vibrant Reference Style - Red, Green, Orange, Cyan) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="relative overflow-hidden bg-[#E53935] hover:bg-[#D32F2F] p-6 rounded-xl text-white shadow-lg shadow-red-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
+          <div className="flex items-center justify-between relative z-10">
+            <div className="space-y-1">
+              <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                {guests.filter((g) => g.segment === "VIP").length}
+              </div>
+              <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                VIP Guests
+              </div>
+              <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
+                High-touch priority guests
+              </div>
+            </div>
+            <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+              <Star className="w-7 h-7 stroke-[2] fill-white/20" />
+            </div>
+          </div>
+        </div>
+
+        <div className="relative overflow-hidden bg-[#43A047] hover:bg-[#388E3C] p-6 rounded-xl text-white shadow-lg shadow-green-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
+          <div className="flex items-center justify-between relative z-10">
+            <div className="space-y-1">
+              <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                {guests.filter((g) => g.segment === "Repeat").length}
+              </div>
+              <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                Repeat Stays
+              </div>
+              <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
+                Loyal returning patrons
+              </div>
+            </div>
+            <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+              <Heart className="w-7 h-7 stroke-[2]" />
+            </div>
+          </div>
+        </div>
+
+        <div className="relative overflow-hidden bg-[#FB8C00] hover:bg-[#F57C00] p-6 rounded-xl text-white shadow-lg shadow-orange-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
+          <div className="flex items-center justify-between relative z-10">
+            <div className="space-y-1">
+              <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                {guests.filter((g) => g.segment === "Corporate").length}
+              </div>
+              <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                Corporate Profiles
+              </div>
+              <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
+                Business billing accounts
+              </div>
+            </div>
+            <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+              <Award className="w-7 h-7 stroke-[2]" />
+            </div>
+          </div>
+        </div>
+
+        <div className="relative overflow-hidden bg-[#00ACC1] hover:bg-[#0097A7] p-6 rounded-xl text-white shadow-lg shadow-cyan-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
+          <div className="flex items-center justify-between relative z-10">
+            <div className="space-y-1">
+              <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                {guests.length}
+              </div>
+              <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                Total Guest CRM
+              </div>
+              <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
+                Profiles with stay history
+              </div>
+            </div>
+            <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+              <User className="w-7 h-7 stroke-[2]" />
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Filters Bar */}
       <div className="bg-white p-3.5 rounded-lg border border-[#E5E7EB] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-1.5">

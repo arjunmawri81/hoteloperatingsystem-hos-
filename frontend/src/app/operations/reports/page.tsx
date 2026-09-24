@@ -83,53 +83,83 @@ export default function ReportsAndKPIsPage() {
         </button>
       </div>
 
-      {/* Primary KPI Grid */}
+      {/* Primary KPI Grid (Vibrant Reference Style - Red, Green, Orange, Cyan) */}
       {data && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Occupancy Rate</span>
-              <span className="p-2 bg-blue-50 text-blue-600 rounded-xl">
-                <BedDouble className="w-4 h-4" />
-              </span>
+          <div className="relative overflow-hidden bg-[#E53935] hover:bg-[#D32F2F] p-6 rounded-xl text-white shadow-lg shadow-red-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
+            <div className="flex items-center justify-between relative z-10">
+              <div className="space-y-1">
+                <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                  {data.kpis.occupancyRate}
+                </div>
+                <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                  Occupancy Rate
+                </div>
+                <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
+                  {data.kpis.occupiedRooms} Occupied / {data.kpis.totalRooms} Total
+                </div>
+              </div>
+              <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+                <BedDouble className="w-7 h-7 stroke-[2]" />
+              </div>
             </div>
-            <p className="text-3xl font-black text-slate-900 mt-3">{data.kpis.occupancyRate}</p>
-            <p className="text-xs text-slate-500 mt-1">
-              {data.kpis.occupiedRooms} Occupied / {data.kpis.totalRooms} Total Rooms
-            </p>
           </div>
 
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">ADR (Avg Daily Rate)</span>
-              <span className="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
-                <DollarSign className="w-4 h-4" />
-              </span>
+          <div className="relative overflow-hidden bg-[#43A047] hover:bg-[#388E3C] p-6 rounded-xl text-white shadow-lg shadow-green-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
+            <div className="flex items-center justify-between relative z-10">
+              <div className="space-y-1">
+                <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                  {data.kpis.adr}
+                </div>
+                <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                  Average Daily Rate (ADR)
+                </div>
+                <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
+                  Avg revenue per sold room
+                </div>
+              </div>
+              <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+                <DollarSign className="w-7 h-7 stroke-[2]" />
+              </div>
             </div>
-            <p className="text-3xl font-black text-slate-900 mt-3">{data.kpis.adr}</p>
-            <p className="text-xs text-slate-500 mt-1">Average revenue per sold room</p>
           </div>
 
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">RevPAR</span>
-              <span className="p-2 bg-amber-50 text-amber-600 rounded-xl">
-                <TrendingUp className="w-4 h-4" />
-              </span>
+          <div className="relative overflow-hidden bg-[#FB8C00] hover:bg-[#F57C00] p-6 rounded-xl text-white shadow-lg shadow-orange-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
+            <div className="flex items-center justify-between relative z-10">
+              <div className="space-y-1">
+                <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                  {data.kpis.revPar}
+                </div>
+                <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                  RevPAR Performance
+                </div>
+                <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
+                  Revenue per available room
+                </div>
+              </div>
+              <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+                <TrendingUp className="w-7 h-7 stroke-[2]" />
+              </div>
             </div>
-            <p className="text-3xl font-black text-slate-900 mt-3">{data.kpis.revPar}</p>
-            <p className="text-xs text-slate-500 mt-1">Revenue per available room</p>
           </div>
 
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Gross Platform Rev</span>
-              <span className="p-2 bg-purple-50 text-purple-600 rounded-xl">
-                <PieChart className="w-4 h-4" />
-              </span>
+          <div className="relative overflow-hidden bg-[#00ACC1] hover:bg-[#0097A7] p-6 rounded-xl text-white shadow-lg shadow-cyan-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
+            <div className="flex items-center justify-between relative z-10">
+              <div className="space-y-1">
+                <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                  {data.kpis.totalRevenue}
+                </div>
+                <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                  Gross Hotel Revenue
+                </div>
+                <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
+                  Conversion: {data.kpis.leadConversionRate}
+                </div>
+              </div>
+              <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+                <PieChart className="w-7 h-7 stroke-[2]" />
+              </div>
             </div>
-            <p className="text-3xl font-black text-slate-900 mt-3">{data.kpis.totalRevenue}</p>
-            <p className="text-xs text-slate-500 mt-1">Lead Conversion: {data.kpis.leadConversionRate}</p>
           </div>
         </div>
       )}

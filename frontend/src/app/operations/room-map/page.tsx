@@ -439,27 +439,82 @@ export default function RoomMapPage() {
         </div>
       )}
 
-      {/* KPI Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <div className="bg-white p-4 rounded-lg border border-[#E5E7EB] shadow-xs">
-          <div className="text-[11px] font-bold text-[#6B7280] uppercase">Total Rooms</div>
-          <div className="text-[20px] font-bold text-[#111827] mt-1">{counts.total}</div>
+      {/* 4 Room Map Metric Cards (Vibrant Reference Style - Red, Green, Orange, Cyan) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="relative overflow-hidden bg-[#E53935] hover:bg-[#D32F2F] p-6 rounded-xl text-white shadow-lg shadow-red-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
+          <div className="flex items-center justify-between relative z-10">
+            <div className="space-y-1">
+              <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                {counts.occupied}
+              </div>
+              <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                Occupied Rooms
+              </div>
+              <div className="text-[11px] text-white/75 font-medium">
+                Live in-house guests
+              </div>
+            </div>
+            <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+              <User className="w-7 h-7 stroke-[2]" />
+            </div>
+          </div>
         </div>
-        <div className="bg-white p-4 rounded-lg border border-[#E5E7EB] shadow-xs">
-          <div className="text-[11px] font-bold text-emerald-600 uppercase">Available</div>
-          <div className="text-[20px] font-bold text-emerald-700 mt-1">{counts.available}</div>
+
+        <div className="relative overflow-hidden bg-[#43A047] hover:bg-[#388E3C] p-6 rounded-xl text-white shadow-lg shadow-green-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
+          <div className="flex items-center justify-between relative z-10">
+            <div className="space-y-1">
+              <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                {counts.available}
+              </div>
+              <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                Available Clean
+              </div>
+              <div className="text-[11px] text-white/75 font-medium">
+                Ready for check-in
+              </div>
+            </div>
+            <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+              <BedDouble className="w-7 h-7 stroke-[2]" />
+            </div>
+          </div>
         </div>
-        <div className="bg-white p-4 rounded-lg border border-[#E5E7EB] shadow-xs">
-          <div className="text-[11px] font-bold text-rose-600 uppercase">Occupied</div>
-          <div className="text-[20px] font-bold text-rose-700 mt-1">{counts.occupied}</div>
+
+        <div className="relative overflow-hidden bg-[#FB8C00] hover:bg-[#F57C00] p-6 rounded-xl text-white shadow-lg shadow-orange-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
+          <div className="flex items-center justify-between relative z-10">
+            <div className="space-y-1">
+              <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                {counts.dirty}
+              </div>
+              <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                Dirty / Turnover
+              </div>
+              <div className="text-[11px] text-white/75 font-medium">
+                In housekeeping queue
+              </div>
+            </div>
+            <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+              <Sparkles className="w-7 h-7 stroke-[2]" />
+            </div>
+          </div>
         </div>
-        <div className="bg-white p-4 rounded-lg border border-[#E5E7EB] shadow-xs">
-          <div className="text-[11px] font-bold text-amber-600 uppercase">Dirty / Turnover</div>
-          <div className="text-[20px] font-bold text-amber-700 mt-1">{counts.dirty}</div>
-        </div>
-        <div className="bg-white p-4 rounded-lg border border-[#E5E7EB] shadow-xs">
-          <div className="text-[11px] font-bold text-gray-500 uppercase">Maintenance</div>
-          <div className="text-[20px] font-bold text-gray-700 mt-1">{counts.out_of_order}</div>
+
+        <div className="relative overflow-hidden bg-[#00ACC1] hover:bg-[#0097A7] p-6 rounded-xl text-white shadow-lg shadow-cyan-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
+          <div className="flex items-center justify-between relative z-10">
+            <div className="space-y-1">
+              <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
+                {counts.total}
+              </div>
+              <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
+                Total Inventory
+              </div>
+              <div className="text-[11px] text-white/75 font-medium">
+                {counts.out_of_order > 0 ? `${counts.out_of_order} maintenance` : "All rooms operational"}
+              </div>
+            </div>
+            <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
+              <Zap className="w-7 h-7 stroke-[2]" />
+            </div>
+          </div>
         </div>
       </div>
 

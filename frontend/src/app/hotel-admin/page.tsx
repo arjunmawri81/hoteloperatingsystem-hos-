@@ -172,44 +172,40 @@ export default function HotelAdminDashboardPage() {
 
   const stats = [
     {
-      title: "ASSIGNED HOTELS",
+      title: "Assigned Hotels",
       value: String(hotels.length),
-      subtext: `${distinctAreas} area${distinctAreas !== 1 ? "s" : ""}`,
+      subtext: `${distinctAreas} active area${distinctAreas !== 1 ? "s" : ""}`,
       href: "/hotel-admin/hotels",
       icon: Building2,
-      accentColor: "text-cyan-400",
-      iconBg: "bg-cyan-500/10 border-cyan-500/30 text-cyan-400",
-      topGlow: "from-cyan-500/40 via-cyan-500/10 to-transparent",
+      cardBg: "bg-[#E53935] hover:bg-[#D32F2F]",
+      shadow: "shadow-red-500/20",
     },
     {
-      title: "TOTAL ROOMS",
+      title: "Total Rooms",
       value: String(totalRooms),
       subtext: "across all properties",
       href: "/hotel-admin/rooms",
       icon: BedDouble,
-      accentColor: "text-blue-400",
-      iconBg: "bg-blue-500/10 border-blue-500/30 text-blue-400",
-      topGlow: "from-blue-500/40 via-blue-500/10 to-transparent",
+      cardBg: "bg-[#43A047] hover:bg-[#388E3C]",
+      shadow: "shadow-green-500/20",
     },
     {
-      title: "OCCUPANCY",
+      title: "Avg Occupancy",
       value: `${avgOccupancy}%`,
       subtext: "org-wide performance",
-      href: "/operations/room-map",
+      href: "/hotel-admin/rooms",
       icon: TrendingUp,
-      accentColor: "text-emerald-400",
-      iconBg: "bg-emerald-500/10 border-emerald-500/30 text-emerald-400",
-      topGlow: "from-emerald-500/40 via-emerald-500/10 to-transparent",
+      cardBg: "bg-[#FB8C00] hover:bg-[#F57C00]",
+      shadow: "shadow-orange-500/20",
     },
     {
-      title: "REVENUE",
+      title: "Total Revenue",
       value: `₹${totalRevenue.toLocaleString("en-IN")}`,
-      subtext: invoices.length > 0 ? `${invoices.length} bill${invoices.length !== 1 ? "s" : ""} / folios` : "MTD",
+      subtext: invoices.length > 0 ? `${invoices.length} bills / folios` : "MTD collection",
       href: "/hotel-admin/billing",
       icon: Receipt,
-      accentColor: "text-amber-400",
-      iconBg: "bg-amber-500/10 border-amber-500/30 text-amber-400",
-      topGlow: "from-amber-500/40 via-amber-500/10 to-transparent",
+      cardBg: "bg-[#00ACC1] hover:bg-[#0097A7]",
+      shadow: "shadow-cyan-500/20",
     },
   ];
 
@@ -248,7 +244,7 @@ export default function HotelAdminDashboardPage() {
         </div>
       </div>
 
-      {/* 4 Interactive Stat Cards (Matching Sidebar Deep Navy Theme) */}
+      {/* 4 Key Stat Cards (Vibrant Reference Style - Red, Green, Orange, Cyan) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {stats.map((stat, i) => {
           const Icon = stat.icon;
@@ -256,32 +252,25 @@ export default function HotelAdminDashboardPage() {
             <Link
               key={i}
               href={stat.href}
-              className="relative overflow-hidden bg-[#0B132B] hover:bg-[#0F1A3A] p-5 rounded-xl border border-slate-800/90 shadow-xl hover:border-cyan-500/50 hover:shadow-cyan-950/40 hover:-translate-y-0.5 transition-all duration-300 group block cursor-pointer"
+              className={`relative overflow-hidden ${stat.cardBg} p-5 rounded-xl text-white shadow-lg ${stat.shadow} hover:-translate-y-1 transition-all duration-200 group block cursor-pointer`}
             >
-              {/* Top Accent Gradient Glow Line */}
-              <div className={`absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r ${stat.topGlow}`} />
-
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className={`p-2 rounded-lg border ${stat.iconBg} shadow-inner`}>
-                    <Icon className="w-4 h-4" />
+                <div>
+                  <div className="text-[34px] font-black leading-none tracking-tight">
+                    {stat.value}
                   </div>
-                  <span className={`text-[11px] font-black uppercase tracking-wider ${stat.accentColor}`}>
+                  <div className="text-[15px] font-bold text-white/95 mt-2">
                     {stat.title}
-                  </span>
+                  </div>
+                  <div className="text-[12px] text-white/80 font-medium mt-0.5">
+                    {stat.subtext}
+                  </div>
                 </div>
-                <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-cyan-400 group-hover:translate-x-1 transition-all" />
-              </div>
 
-              <div className="text-[30px] font-black text-white mt-3.5 tracking-tight drop-shadow-xs">
-                {stat.value}
-              </div>
-
-              <div className="text-[12px] text-slate-400 mt-1.5 font-medium flex items-center justify-between">
-                <span>{stat.subtext}</span>
-                <span className="text-[10px] text-slate-500 group-hover:text-cyan-300 transition-colors uppercase font-bold tracking-wider">
-                  View &rarr;
-                </span>
+                {/* Circular Ghost Watermark Icon */}
+                <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 group-hover:scale-110 group-hover:bg-white/20 transition-all duration-300 shrink-0">
+                  <Icon className="w-7 h-7 stroke-[2]" />
+                </div>
               </div>
             </Link>
           );

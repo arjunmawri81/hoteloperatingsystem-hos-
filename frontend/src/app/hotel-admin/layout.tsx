@@ -53,39 +53,36 @@ export default function HotelAdminLayout({
   return (
     <RoleGuard allowedRoles={["super_admin", "hotel_admin"]} moduleName="Hotel Admin Panel">
       <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] flex font-sans antialiased">
-        {/* Modern Sleek Dark Sidebar (Fixed to Viewport - Never scrolls with page) */}
-        <aside className="fixed left-0 top-0 bottom-0 w-64 h-screen bg-[#0B132B] text-slate-300 flex flex-col justify-between shrink-0 border-r border-slate-800/80 shadow-2xl z-30 select-none overflow-hidden">
+        {/* Modern Sleek Dark Sidebar (Matching Reference Theme - Deep Charcoal with Solid Cyan Active Item) */}
+        <aside className="fixed left-0 top-0 bottom-0 w-64 h-screen bg-[#1A1F2C] text-slate-300 flex flex-col justify-between shrink-0 border-r border-slate-800/80 shadow-2xl z-30 select-none overflow-hidden">
           <div className="flex flex-col flex-1 min-h-0">
-            {/* Sidebar Brand Header */}
-            <div className="px-5 py-5 border-b border-slate-800/60 flex items-center gap-3.5 bg-[#080E1E]/50 shrink-0">
-              <Link
-                href="/"
-                title="LuckNexa Home"
-                className="w-10 h-10 rounded-xl overflow-hidden shrink-0 shadow-md border border-cyan-500/20 bg-gradient-to-br from-[#0e1e38] to-[#0a1020] flex items-center justify-center p-1 hover:scale-105 transition-all group"
+            {/* Sidebar Brand Header (Static Display - Not a Link) */}
+            <div className="px-5 py-5 border-b border-slate-800/80 flex items-center gap-3 bg-[#141824] shrink-0">
+              <div
+                className="w-10 h-10 rounded-xl overflow-hidden shrink-0 shadow-md bg-gradient-to-tr from-[#EA580C] to-[#F97316] flex items-center justify-center p-1.5 border border-white/10"
               >
                 <img
                   src="/lucknexa-icon.png"
                   alt="LuckNexa"
-                  className="w-full h-full object-contain filter drop-shadow-[0_0_8px_rgba(56,189,248,0.4)]"
+                  className="w-full h-full object-contain"
                 />
-              </Link>
+              </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
-                  <h2 className="text-[15px] font-black text-white tracking-tight uppercase">
+                  <h2 className="text-[16px] font-black text-white tracking-tight">
                     LuckNexa
                   </h2>
-                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
                 </div>
                 <p className="text-[11px] text-slate-400 font-medium truncate">
-                  Hotel Admin &amp; Chain
+                  Hotel Admin Console
                 </p>
               </div>
             </div>
 
             {/* Navigation Menu with Isolated Internal Scroll */}
             <nav className="p-3.5 space-y-1.5 overflow-y-auto flex-1 custom-scrollbar overscroll-contain">
-              <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                Menu
+              <div className="px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                Main Menu
               </div>
               {navItems.map((item) => {
                 const isActive =
@@ -99,26 +96,22 @@ export default function HotelAdminLayout({
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`group flex items-center justify-between px-3.5 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 ${
+                    className={`group flex items-center justify-between px-3.5 py-2.5 text-[13px] rounded-lg transition-all duration-150 ${
                       isActive
-                        ? "bg-[#16233B] text-white font-semibold shadow-inner border border-cyan-500/20 relative"
-                        : "text-slate-400 hover:text-slate-100 hover:bg-[#111C33]/70"
+                        ? "bg-[#00A8FF] text-white font-bold shadow-md shadow-cyan-500/30"
+                        : "text-slate-300 hover:text-white hover:bg-white/5 font-medium"
                     }`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <Icon
-                        className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                        className={`w-[18px] h-[18px] shrink-0 ${
                           isActive
-                            ? "text-cyan-400 drop-shadow-[0_0_6px_rgba(56,189,248,0.5)]"
-                            : "text-slate-400 group-hover:text-slate-200"
+                            ? "text-white"
+                            : "text-slate-400 group-hover:text-white"
                         }`}
                       />
                       <span className="truncate">{item.name}</span>
                     </div>
-
-                    {isActive && (
-                      <span className="w-1.5 h-4 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(56,189,248,0.8)]" />
-                    )}
                   </Link>
                 );
               })}
@@ -126,7 +119,7 @@ export default function HotelAdminLayout({
           </div>
 
           {/* Sidebar Footer AI Briefing Trigger Card */}
-          <div className="p-3.5 border-t border-slate-800/80 bg-[#080E1E]/60 shrink-0 space-y-2">
+          <div className="p-3.5 border-t border-slate-800/80 bg-[#141824] shrink-0 space-y-2">
             <button
               onClick={() => setIsAssistantOpen(true)}
               className="w-full flex items-center justify-between p-2.5 rounded-xl bg-gradient-to-r from-cyan-950/60 to-blue-950/60 hover:from-cyan-900/80 hover:to-blue-900/80 border border-cyan-500/30 text-slate-200 hover:text-white transition-all shadow-md group"
@@ -140,23 +133,8 @@ export default function HotelAdminLayout({
                   <div className="text-[9px] text-slate-400">10-15 Min Voice Report</div>
                 </div>
               </div>
-              <span className="text-[10px] font-black text-cyan-400 px-1.5 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20">LIVE</span>
+              <Mic className="w-4 h-4 text-cyan-400 animate-pulse" />
             </button>
-
-            <div className="bg-[#111C33]/80 border border-slate-800 rounded-xl p-2.5 flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shrink-0">
-                <Building2 className="w-3.5 h-3.5" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-[11px] font-bold text-white truncate">
-                  {user?.orgName || "LuckNexa Hotel Group"}
-                </div>
-                <div className="flex items-center gap-1 mt-0.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
-                  <span className="text-[9px] text-slate-400 font-medium">Headquarters</span>
-                </div>
-              </div>
-            </div>
           </div>
         </aside>
 
