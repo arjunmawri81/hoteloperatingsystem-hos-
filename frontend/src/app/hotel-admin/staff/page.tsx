@@ -4,7 +4,29 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { staffApi, hotelsApi } from "@/lib/api";
 import { Hotel, UserRole } from "@/types";
-import { Plus, X, Search, Users, CheckCircle2, RefreshCw, Lock, Eye, EyeOff, Shield, Building2, Sparkles, TrendingUp, ShieldCheck } from "lucide-react";
+import {
+  Plus,
+  X,
+  Search,
+  Users,
+  CheckCircle2,
+  RefreshCw,
+  Eye,
+  EyeOff,
+  Shield,
+  Building2,
+  Sparkles,
+  TrendingUp,
+  ShieldCheck,
+  ChevronDown,
+  ChevronUp,
+  MapPin,
+  UserCheck,
+  Mail,
+  Phone,
+  BedDouble,
+  Briefcase,
+} from "lucide-react";
 
 interface StaffMember {
   _id?: string;
@@ -28,6 +50,7 @@ interface StaffMember {
   role: string;
   systemRole?: string;
   status: "active" | "inactive";
+  assignedHotelNames?: string[];
 }
 
 const DEPARTMENT_CONFIG: Record<
@@ -114,7 +137,10 @@ export default function StaffManagementPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [deptFilter, setDeptFilter] = useState("all");
+  const [viewMode, setViewMode] = useState<"hotel_wise" | "all_table">("hotel_wise");
+  const [expandedHotelIds, setExpandedHotelIds] = useState<Record<string, boolean>>({});
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [targetHotelName, setTargetHotelName] = useState<string>("");
   const [showPassword, setShowPassword] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
@@ -175,6 +201,14 @@ export default function StaffManagementPage() {
       ]);
       setStaffList(staffData);
       setOrgHotels(hotelsData);
+
+      // Auto expand all hotels by default for easy viewing
+      const initialExpanded: Record<string, boolean> = {};
+      hotelsData.forEach((h) => {
+        initialExpanded[h.id] = true;
+      });
+      initialExpanded["central_ops"] = true;
+      setExpandedHotelIds(initialExpanded);
     } catch (e) {
       console.error("Failed to load staff:", e);
       setStaffList([]);
@@ -189,6 +223,29 @@ export default function StaffManagementPage() {
       loadStaff();
     }
   }, [user?.orgId, isAuthLoading]);
+
+  const toggleHotelExpand = (hotelId: string) => {
+    setExpandedHotelIds((prev) => ({
+      ...prev,
+      [hotelId]: !prev[hotelId],
+    }));
+  };
+
+  const openAddStaffForHotel = (hotelName: string) => {
+    setTargetHotelName(hotelName);
+    setNewStaff({
+      name: "",
+      email: "",
+      phone: "",
+      hotel: hotelName,
+      assignedHotels: hotelName ? [hotelName] : [],
+      department: "Reception",
+      role: DEPARTMENT_CONFIG.Reception.defaultDesignation,
+      systemRole: DEPARTMENT_CONFIG.Reception.systemRole,
+      password: "",
+    });
+    setIsModalOpen(true);
+  };
 
   const handleAddStaff = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -214,7 +271,10 @@ export default function StaffManagementPage() {
         name: newStaff.name.trim(),
         email: newStaff.email.toLowerCase().trim(),
         phone: newStaff.phone.trim() || "+91 98000 00000",
-        hotel: newStaff.assignedHotels.length > 0 ? newStaff.assignedHotels.join(", ") : newStaff.hotel || (orgHotels[0]?.name || "Main Property"),
+        hotel:
+          newStaff.assignedHotels.length > 0
+            ? newStaff.assignedHotels.join(", ")
+            : newStaff.hotel || (orgHotels[0]?.name || "Main Property"),
         assignedHotelNames: newStaff.assignedHotels,
         department: (newStaff.department || "Reception") as any,
         role: newStaff.role.trim() || newStaff.systemRole,
@@ -225,35 +285,51 @@ export default function StaffManagementPage() {
 
       setStaffList((prev) => [created, ...prev.filter((s) => s.id !== created.id)]);
       setIsModalOpen(false);
-      setToastMsg(`✅ Staff member "${newStaff.name}" saved to database! Login: ${newStaff.email} (${newStaff.systemRole})`);
+      setToastMsg(
+        `✅ Staff member "${newStaff.name}" added to ${newStaff.hotel || "Hotel"} successfully!`
+      );
       setTimeout(() => setToastMsg(null), 6000);
-
-      setNewStaff({
-        name: "",
-        email: "",
-        phone: "",
-        hotel: "",
-        assignedHotels: [],
-        department: "",
-        role: "",
-        systemRole: "",
-        password: "",
-      });
     } catch (err: any) {
       console.error("Failed to create staff:", err);
       setToastMsg(`❌ Failed to save staff member: ${err?.message || "Server error"}`);
     }
   };
 
-  const filteredStaff = staffList.filter((s) => {
+  // Helper to get staff members belonging to a specific hotel
+  const getStaffForHotel = (hotelName: string) => {
+    return staffList.filter((s) => {
+      const matchesHotel =
+        (s.hotel && s.hotel.toLowerCase().includes(hotelName.toLowerCase())) ||
+        (Array.isArray(s.assignedHotelNames) &&
+          s.assignedHotelNames.some((n) => n.toLowerCase().includes(hotelName.toLowerCase())));
+
+      const matchesSearch =
+        !searchQuery ||
+        s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.role.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const matchesDept =
+        deptFilter === "all" || s.department.toLowerCase() === deptFilter.toLowerCase();
+
+      return matchesHotel && matchesSearch && matchesDept;
+    });
+  };
+
+  // Central / Area staff not tied to just one hotel
+  const centralStaff = staffList.filter((s) => {
+    const isArea =
+      s.department === "Area Operations" ||
+      s.systemRole === "area_manager" ||
+      (s.hotel && s.hotel.includes(","));
     const matchesSearch =
+      !searchQuery ||
       s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       s.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.hotel.toLowerCase().includes(searchQuery.toLowerCase()) ||
       s.role.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesDept = deptFilter === "all" || s.department.toLowerCase() === deptFilter.toLowerCase();
-    return matchesSearch && matchesDept;
+    const matchesDept =
+      deptFilter === "all" || s.department.toLowerCase() === deptFilter.toLowerCase();
+    return isArea && matchesSearch && matchesDept;
   });
 
   const departments = [
@@ -272,134 +348,137 @@ export default function StaffManagementPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-sans">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-[26px] font-bold text-[#0F172A] tracking-[-0.02em]">
-            Staff &amp; Role Management
+          <h1 className="text-[26px] font-bold text-[#0F172A] tracking-tight flex items-center gap-2.5">
+            <Users className="w-7 h-7 text-[#EC3013]" /> Staff &amp; Roles by Hotel
           </h1>
           <p className="text-[13px] text-[#64748B] mt-1 font-normal">
-            Personnel directory, property assignments, and RBAC roles (Database Persisted)
+            Hotel-wise team management: View staff members and add new staff directly to each hotel.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <button
             onClick={loadStaff}
             title="Refresh database records"
-            className="p-2 border border-[#D1D5DB] rounded text-[#4B5563] hover:text-[#111827] hover:bg-[#F3F4F6] transition-colors"
+            className="p-2 border border-[#D1D5DB] rounded-lg text-[#4B5563] hover:text-[#111827] hover:bg-[#F3F4F6] transition-colors cursor-pointer"
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin text-[#EC3013]" : ""}`} />
           </button>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-1.5 px-4 py-2 bg-[#EC3013] hover:bg-[#D62839] text-white text-[13px] font-bold rounded shadow-xs transition-colors cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add Staff Member</span>
-          </button>
+
+          {/* View Toggle */}
+          <div className="bg-slate-100 p-1 rounded-lg border border-slate-200 flex text-xs font-semibold">
+            <button
+              onClick={() => setViewMode("hotel_wise")}
+              className={`px-3 py-1.5 rounded-md transition-all cursor-pointer flex items-center gap-1.5 ${
+                viewMode === "hotel_wise"
+                  ? "bg-white text-slate-900 shadow-xs font-bold"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <Building2 className="w-3.5 h-3.5 text-[#EC3013]" />
+              <span>By Hotel Properties</span>
+            </button>
+            <button
+              onClick={() => setViewMode("all_table")}
+              className={`px-3 py-1.5 rounded-md transition-all cursor-pointer flex items-center gap-1.5 ${
+                viewMode === "all_table"
+                  ? "bg-white text-slate-900 shadow-xs font-bold"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <Users className="w-3.5 h-3.5 text-blue-600" />
+              <span>All Staff Table</span>
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Toast Notice */}
       {toastMsg && (
-        <div className="bg-emerald-50 border border-emerald-300 text-emerald-800 text-[13px] px-4 py-2.5 rounded flex items-center gap-2 animate-in fade-in duration-200">
+        <div className="bg-emerald-50 border border-emerald-300 text-emerald-800 text-[13px] px-4 py-2.5 rounded-lg flex items-center gap-2 animate-in fade-in duration-200">
           <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>{toastMsg}</span>
         </div>
       )}
 
-      {/* 4 Staff Metric Cards (Vibrant Reference Style - Red, Green, Orange, Cyan) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="relative overflow-hidden bg-[#E53935] hover:bg-[#D32F2F] p-6 rounded-xl text-white shadow-lg shadow-red-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
-          <div className="flex items-center justify-between relative z-10">
-            <div className="space-y-1">
-              <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
-                {staffList.length}
-              </div>
-              <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
-                Total Staff
-              </div>
-              <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
-                Registered team members
-              </div>
+      {/* 4 Staff Metric Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-[#E53935] p-5 rounded-xl text-white shadow-sm flex items-center justify-between">
+          <div>
+            <div className="text-[30px] font-extrabold tracking-tight leading-none text-white">
+              {staffList.length}
             </div>
-            <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
-              <Users className="w-7 h-7 stroke-[2]" />
+            <div className="text-[11px] font-bold text-white/90 uppercase tracking-wider mt-1">
+              Total Staff Members
             </div>
+            <div className="text-[10px] text-white/75 mt-0.5">Across {orgHotels.length} properties</div>
+          </div>
+          <div className="w-12 h-12 rounded-full border border-white/30 flex items-center justify-center bg-white/10">
+            <Users className="w-6 h-6" />
           </div>
         </div>
 
-        <div className="relative overflow-hidden bg-[#43A047] hover:bg-[#388E3C] p-6 rounded-xl text-white shadow-lg shadow-green-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
-          <div className="flex items-center justify-between relative z-10">
-            <div className="space-y-1">
-              <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
-                {staffList.filter((s) => ["Reception", "Cash Counter", "Housekeeping", "Restaurant", "Kitchen"].includes(s.department)).length}
-              </div>
-              <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
-                Operations PMS Desk
-              </div>
-              <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
-                Frontline hotel staff
-              </div>
+        <div className="bg-[#43A047] p-5 rounded-xl text-white shadow-sm flex items-center justify-between">
+          <div>
+            <div className="text-[30px] font-extrabold tracking-tight leading-none text-white">
+              {staffList.filter((s) => ["Reception", "Cash Counter", "Housekeeping", "Restaurant", "Kitchen"].includes(s.department)).length}
             </div>
-            <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
-              <Sparkles className="w-7 h-7 stroke-[2]" />
+            <div className="text-[11px] font-bold text-white/90 uppercase tracking-wider mt-1">
+              Frontline PMS Staff
             </div>
+            <div className="text-[10px] text-white/75 mt-0.5">Front desk, Housekeeping, KDS</div>
+          </div>
+          <div className="w-12 h-12 rounded-full border border-white/30 flex items-center justify-center bg-white/10">
+            <Sparkles className="w-6 h-6" />
           </div>
         </div>
 
-        <div className="relative overflow-hidden bg-[#FB8C00] hover:bg-[#F57C00] p-6 rounded-xl text-white shadow-lg shadow-orange-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
-          <div className="flex items-center justify-between relative z-10">
-            <div className="space-y-1">
-              <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
-                {staffList.filter((s) => ["Channel Manager", "Finance", "Banquet & Events", "Inventory"].includes(s.department)).length}
-              </div>
-              <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
-                Revenue &amp; Inventory
-              </div>
-              <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
-                OTAs, Banquets &amp; Accounts
-              </div>
+        <div className="bg-[#FB8C00] p-5 rounded-xl text-white shadow-sm flex items-center justify-between">
+          <div>
+            <div className="text-[30px] font-extrabold tracking-tight leading-none text-white">
+              {staffList.filter((s) => ["Channel Manager", "Finance", "Banquet & Events", "Inventory"].includes(s.department)).length}
             </div>
-            <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
-              <TrendingUp className="w-7 h-7 stroke-[2]" />
+            <div className="text-[11px] font-bold text-white/90 uppercase tracking-wider mt-1">
+              Revenue &amp; Inventory
             </div>
+            <div className="text-[10px] text-white/75 mt-0.5">OTAs, Banquets &amp; Stores</div>
+          </div>
+          <div className="w-12 h-12 rounded-full border border-white/30 flex items-center justify-center bg-white/10">
+            <TrendingUp className="w-6 h-6" />
           </div>
         </div>
 
-        <div className="relative overflow-hidden bg-[#00ACC1] hover:bg-[#0097A7] p-6 rounded-xl text-white shadow-lg shadow-cyan-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
-          <div className="flex items-center justify-between relative z-10">
-            <div className="space-y-1">
-              <div className="text-[34px] font-extrabold tracking-tight leading-none text-white drop-shadow-xs">
-                {staffList.filter((s) => ["Management", "Area Operations"].includes(s.department) || s.systemRole === "hotel_manager" || s.systemRole === "area_manager" || s.systemRole === "hotel_admin").length}
-              </div>
-              <div className="text-[12px] font-semibold text-white/90 uppercase tracking-wide">
-                Managers &amp; Admins
-              </div>
-              <div className="text-[11px] text-white/75 font-medium truncate max-w-[150px]">
-                RBAC supervisory roles
-              </div>
+        <div className="bg-[#00ACC1] p-5 rounded-xl text-white shadow-sm flex items-center justify-between">
+          <div>
+            <div className="text-[30px] font-extrabold tracking-tight leading-none text-white">
+              {staffList.filter((s) => ["Management", "Area Operations"].includes(s.department) || s.systemRole === "hotel_manager" || s.systemRole === "area_manager").length}
             </div>
-            <div className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 text-white/90 shrink-0 group-hover:scale-105 group-hover:bg-white/20 transition-all">
-              <ShieldCheck className="w-7 h-7 stroke-[2]" />
+            <div className="text-[11px] font-bold text-white/90 uppercase tracking-wider mt-1">
+              Supervisors &amp; GMs
             </div>
+            <div className="text-[10px] text-white/75 mt-0.5">General &amp; Area Managers</div>
+          </div>
+          <div className="w-12 h-12 rounded-full border border-white/30 flex items-center justify-center bg-white/10">
+            <ShieldCheck className="w-6 h-6" />
           </div>
         </div>
       </div>
 
       {/* Filters Bar */}
-      <div className="bg-white p-3.5 rounded-lg border border-[#E5E7EB] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-1.5 overflow-x-auto">
+      <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
           {departments.map((dept) => (
             <button
               key={dept}
               onClick={() => setDeptFilter(dept)}
-              className={`px-3 py-1.5 rounded text-[12px] font-semibold capitalize transition-colors ${
+              className={`px-3 py-1.5 rounded-lg text-[12px] font-semibold capitalize transition-colors cursor-pointer shrink-0 ${
                 deptFilter === dept
-                  ? "bg-[#111827] text-white"
-                  : "text-[#4B5563] hover:bg-[#F3F4F6]"
+                  ? "bg-slate-900 text-white shadow-xs font-bold"
+                  : "text-slate-600 hover:bg-slate-100"
               }`}
             >
               {dept}
@@ -408,89 +487,350 @@ export default function StaffManagementPage() {
         </div>
 
         <div className="relative">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#9CA3AF]" />
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Search staff, role, hotel..."
+            placeholder="Search staff, role, email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 pr-3 py-1.5 bg-[#F9FAFB] border border-[#D1D5DB] rounded text-[13px] text-[#111827] focus:outline-none focus:border-[#EC3013] w-full sm:w-64"
+            className="pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-[13px] text-slate-800 focus:outline-none focus:border-[#EC3013] w-full sm:w-64"
           />
         </div>
       </div>
 
-      {/* Staff Table */}
-      <div className="bg-white border border-[#E5E7EB] rounded-lg shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-[13px]">
-            <thead>
-              <tr className="border-b border-[#E5E7EB] text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider bg-[#F9FAFB]">
-                <th className="py-3 px-4 font-bold">STAFF MEMBER</th>
-                <th className="py-3 px-4 font-bold">ASSIGNED PROPERTY</th>
-                <th className="py-3 px-4 font-bold">DEPARTMENT</th>
-                <th className="py-3 px-4 font-bold">ROLE &amp; CAPABILITY</th>
-                <th className="py-3 px-4 text-right font-bold">STATUS</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#F3F4F6]">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={5} className="py-12 text-center text-[#9CA3AF]">
-                    <div className="flex items-center justify-center gap-2">
-                      <RefreshCw className="w-4 h-4 animate-spin text-[#EC3013]" />
-                      <span>Loading personnel records from database...</span>
+      {/* MAIN VIEW: 1. Hotel-Wise Grouping (Requested by User) */}
+      {viewMode === "hotel_wise" && (
+        <div className="space-y-5">
+          {orgHotels.length === 0 && !isLoading && (
+            <div className="bg-white p-12 text-center border border-slate-200 rounded-xl text-slate-500">
+              No hotels found. Create hotel properties in the Hotels module first.
+            </div>
+          )}
+
+          {orgHotels.map((hotel) => {
+            const hotelStaff = getStaffForHotel(hotel.name);
+            const isExpanded = expandedHotelIds[hotel.id] !== false;
+
+            // Department count badges
+            const receptionCount = hotelStaff.filter((s) => s.department === "Reception").length;
+            const hkCount = hotelStaff.filter((s) => s.department === "Housekeeping").length;
+            const kitchenCount = hotelStaff.filter((s) => s.department === "Kitchen").length;
+            const restCount = hotelStaff.filter((s) => s.department === "Restaurant").length;
+            const managerCount = hotelStaff.filter((s) => s.department === "Management").length;
+
+            return (
+              <div
+                key={hotel.id}
+                className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden transition-all"
+              >
+                {/* Hotel Header Card */}
+                <div className="p-4 sm:p-5 bg-gradient-to-r from-slate-50 via-white to-slate-50 border-b border-slate-200 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                  <div className="flex items-start gap-3.5">
+                    <div className="w-11 h-11 rounded-xl bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-700 shrink-0 shadow-xs">
+                      <Building2 className="w-6 h-6" />
                     </div>
-                  </td>
+
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h2 className="text-lg font-bold text-slate-900 tracking-tight">
+                          {hotel.name}
+                        </h2>
+                        <span className="bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded text-[11px] font-semibold flex items-center gap-1">
+                          <MapPin className="w-3 h-3 text-red-500" />
+                          <span>{hotel.city}</span>
+                        </span>
+                        <span className="bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded text-[11px] font-bold">
+                          5★ Luxury
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2 mt-1.5 text-xs text-slate-500 flex-wrap">
+                        <span className="font-semibold text-slate-800">
+                          {hotelStaff.length} Total Staff
+                        </span>
+                        <span>•</span>
+                        {receptionCount > 0 && (
+                          <span className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-[10px] font-bold">
+                            {receptionCount} Front Desk
+                          </span>
+                        )}
+                        {hkCount > 0 && (
+                          <span className="bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded text-[10px] font-bold">
+                            {hkCount} Housekeeping
+                          </span>
+                        )}
+                        {kitchenCount > 0 && (
+                          <span className="bg-orange-50 text-orange-700 px-1.5 py-0.5 rounded text-[10px] font-bold">
+                            {kitchenCount} Kitchen
+                          </span>
+                        )}
+                        {restCount > 0 && (
+                          <span className="bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded text-[10px] font-bold">
+                            {restCount} Restaurant
+                          </span>
+                        )}
+                        {managerCount > 0 && (
+                          <span className="bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded text-[10px] font-bold">
+                            {managerCount} Manager
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions for this Hotel */}
+                  <div className="flex items-center gap-2.5 shrink-0">
+                    <button
+                      onClick={() => openAddStaffForHotel(hotel.name)}
+                      className="px-3.5 py-2 bg-[#EC3013] hover:bg-[#D62839] text-white text-xs font-bold rounded-lg shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Add Staff for this Hotel</span>
+                    </button>
+
+                    <button
+                      onClick={() => toggleHotelExpand(hotel.id)}
+                      className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg border border-slate-300 transition-colors flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <span>{isExpanded ? "Hide Staff" : `View Staff (${hotelStaff.length})`}</span>
+                      {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Expanded Staff Table for this Hotel */}
+                {isExpanded && (
+                  <div className="overflow-x-auto">
+                    {hotelStaff.length === 0 ? (
+                      <div className="p-8 text-center text-slate-400 text-xs">
+                        <Users className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+                        <p className="font-medium">No staff members registered for {hotel.name} yet.</p>
+                        <button
+                          onClick={() => openAddStaffForHotel(hotel.name)}
+                          className="mt-2 text-xs font-bold text-[#EC3013] hover:underline"
+                        >
+                          + Add the first staff member now
+                        </button>
+                      </div>
+                    ) : (
+                      <table className="w-full text-left text-[13px]">
+                        <thead>
+                          <tr className="border-b border-slate-200 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/70">
+                            <th className="py-2.5 px-4 font-bold">STAFF MEMBER</th>
+                            <th className="py-2.5 px-4 font-bold">DEPARTMENT</th>
+                            <th className="py-2.5 px-4 font-bold">ROLE &amp; MODULE ACCESS</th>
+                            <th className="py-2.5 px-4 font-bold">CONTACT &amp; LOGIN</th>
+                            <th className="py-2.5 px-4 text-right font-bold">STATUS</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {hotelStaff.map((staff) => (
+                            <tr key={staff.id || staff._id} className="hover:bg-slate-50/80 transition-colors">
+                              <td className="py-3 px-4">
+                                <div className="font-bold text-slate-900 flex items-center gap-2">
+                                  <div className="w-7 h-7 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-xs font-bold shrink-0">
+                                    {staff.name.slice(0, 1).toUpperCase()}
+                                  </div>
+                                  <span>{staff.name}</span>
+                                </div>
+                              </td>
+
+                              <td className="py-3 px-4">
+                                <span className="bg-slate-100 text-slate-800 border border-slate-200 px-2 py-0.5 rounded text-[11px] font-bold">
+                                  {staff.department}
+                                </span>
+                              </td>
+
+                              <td className="py-3 px-4">
+                                <div className="font-semibold text-slate-800">{staff.role}</div>
+                                <div className="text-[11px] text-slate-400 font-mono">
+                                  {staff.systemRole || "Staff"}
+                                </div>
+                              </td>
+
+                              <td className="py-3 px-4">
+                                <div className="text-xs text-slate-700 flex items-center gap-1.5">
+                                  <Mail className="w-3 h-3 text-slate-400" />
+                                  <span>{staff.email}</span>
+                                </div>
+                                <div className="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5">
+                                  <Phone className="w-3 h-3 text-slate-400" />
+                                  <span>{staff.phone}</span>
+                                </div>
+                              </td>
+
+                              <td className="py-3 px-4 text-right">
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded capitalize bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                  {staff.status}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {/* Central / Area Operations Cluster */}
+          {centralStaff.length > 0 && (
+            <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+              <div className="p-4 sm:p-5 bg-gradient-to-r from-blue-50/50 via-white to-blue-50/50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-slate-900">
+                      Central &amp; Area Operations Cluster
+                    </h2>
+                    <p className="text-xs text-slate-500">
+                      Regional managers and corporate executives managing multi-property portfolios.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => openAddStaffForHotel("Central Operations")}
+                  className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Central Manager</span>
+                </button>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-[13px]">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50">
+                      <th className="py-2.5 px-4 font-bold">EXECUTIVE</th>
+                      <th className="py-2.5 px-4 font-bold">ROLE &amp; TITLE</th>
+                      <th className="py-2.5 px-4 font-bold">ASSIGNED HOTELS</th>
+                      <th className="py-2.5 px-4 font-bold">CONTACT</th>
+                      <th className="py-2.5 px-4 text-right font-bold">STATUS</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {centralStaff.map((staff) => (
+                      <tr key={staff.id || staff._id} className="hover:bg-slate-50 transition-colors">
+                        <td className="py-3 px-4 font-bold text-slate-900">{staff.name}</td>
+                        <td className="py-3 px-4 font-semibold text-slate-800">{staff.role}</td>
+                        <td className="py-3 px-4 text-xs text-blue-700 font-medium">{staff.hotel}</td>
+                        <td className="py-3 px-4 text-xs text-slate-600">{staff.email}</td>
+                        <td className="py-3 px-4 text-right">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded capitalize bg-emerald-50 text-emerald-800 border border-emerald-200">
+                            {staff.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* VIEW 2: Master Staff Directory (All Staff Table) */}
+      {viewMode === "all_table" && (
+        <div className="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-[13px]">
+              <thead>
+                <tr className="border-b border-slate-200 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50">
+                  <th className="py-3 px-4 font-bold">STAFF MEMBER</th>
+                  <th className="py-3 px-4 font-bold">ASSIGNED PROPERTY</th>
+                  <th className="py-3 px-4 font-bold">DEPARTMENT</th>
+                  <th className="py-3 px-4 font-bold">ROLE &amp; CAPABILITY</th>
+                  <th className="py-3 px-4 text-right font-bold">STATUS</th>
                 </tr>
-              ) : filteredStaff.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="py-10 text-center text-[#9CA3AF]">
-                    No personnel records in database yet. Click &quot;Add Staff Member&quot; to register team members.
-                  </td>
-                </tr>
-              ) : (
-                filteredStaff.map((staff) => (
-                  <tr key={staff.id || staff._id} className="hover:bg-[#F9FAFB] transition-colors">
-                    <td className="py-3.5 px-4">
-                      <div className="font-bold text-[#111827]">{staff.name}</div>
-                      <div className="text-[11px] text-[#9CA3AF]">{staff.email} · {staff.phone}</div>
-                    </td>
-                    <td className="py-3.5 px-4 font-semibold text-[#374151]">
-                      {staff.hotel}
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <span className="bg-[#F3F4F6] text-[#374151] px-2 py-0.5 rounded text-[11px] font-bold">
-                        {staff.department}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-[#111827] font-medium">
-                      {staff.role}
-                    </td>
-                    <td className="py-3.5 px-4 text-right">
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded capitalize bg-emerald-50 text-emerald-800 border border-emerald-200">
-                        {staff.status}
-                      </span>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={5} className="py-12 text-center text-slate-400">
+                      <div className="flex items-center justify-center gap-2">
+                        <RefreshCw className="w-4 h-4 animate-spin text-[#EC3013]" />
+                        <span>Loading personnel records from database...</span>
+                      </div>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : staffList.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-10 text-center text-slate-400">
+                      No personnel records found.
+                    </td>
+                  </tr>
+                ) : (
+                  staffList
+                    .filter((s) => {
+                      const matchesSearch =
+                        !searchQuery ||
+                        s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        s.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        s.hotel.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        s.role.toLowerCase().includes(searchQuery.toLowerCase());
+                      const matchesDept =
+                        deptFilter === "all" || s.department.toLowerCase() === deptFilter.toLowerCase();
+                      return matchesSearch && matchesDept;
+                    })
+                    .map((staff) => (
+                      <tr key={staff.id || staff._id} className="hover:bg-slate-50 transition-colors">
+                        <td className="py-3.5 px-4">
+                          <div className="font-bold text-slate-900">{staff.name}</div>
+                          <div className="text-[11px] text-slate-400">{staff.email} · {staff.phone}</div>
+                        </td>
+                        <td className="py-3.5 px-4 font-semibold text-slate-800">
+                          {staff.hotel}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span className="bg-slate-100 text-slate-800 px-2 py-0.5 rounded text-[11px] font-bold">
+                            {staff.department}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 text-slate-900 font-medium">
+                          {staff.role}
+                        </td>
+                        <td className="py-3.5 px-4 text-right">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded capitalize bg-emerald-50 text-emerald-800 border border-emerald-200">
+                            {staff.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Add Staff Modal */}
+      {/* Add Staff Modal (Pre-bound to Selected Hotel) */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-white rounded-lg border border-[#E5E7EB] shadow-2xl max-w-md w-full p-6 space-y-4 font-sans">
-            <div className="flex items-center justify-between pb-3 border-b border-[#E5E7EB]">
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 space-y-4 font-sans">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <div className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-[#EC3013]" />
-                <h3 className="text-[16px] font-bold text-[#111827]">Add Staff Member</h3>
+                <div className="w-8 h-8 rounded-lg bg-red-50 text-[#EC3013] flex items-center justify-center font-bold">
+                  <Users className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Add Staff Member</h3>
+                  {targetHotelName && (
+                    <p className="text-xs text-purple-700 font-semibold flex items-center gap-1">
+                      <Building2 className="w-3 h-3" />
+                      <span>Assigning to: {targetHotelName}</span>
+                    </p>
+                  )}
+                </div>
               </div>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="text-[#9CA3AF] hover:text-[#111827] p-1"
+                className="text-slate-400 hover:text-slate-700 p-1 rounded-lg"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -498,22 +838,22 @@ export default function StaffManagementPage() {
 
             <form onSubmit={handleAddStaff} className="space-y-4 text-[13px]" autoComplete="off">
               <div>
-                <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
+                <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">
                   Full Name *
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. David Mercer"
+                  placeholder="e.g. Ramesh Kumar"
                   value={newStaff.name}
                   onChange={(e) => setNewStaff({ ...newStaff, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-[#D1D5DB] rounded focus:outline-none focus:border-[#EC3013]"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-[#EC3013]"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
+                  <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">
                     Email *
                   </label>
                   <input
@@ -524,11 +864,11 @@ export default function StaffManagementPage() {
                     placeholder="e.g. staff@hotel.com"
                     value={newStaff.email}
                     onChange={(e) => setNewStaff({ ...newStaff, email: e.target.value })}
-                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg"
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
+                  <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">
                     Phone
                   </label>
                   <input
@@ -536,110 +876,59 @@ export default function StaffManagementPage() {
                     placeholder="e.g. +91 98000 00000"
                     value={newStaff.phone}
                     onChange={(e) => setNewStaff({ ...newStaff, phone: e.target.value })}
-                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg"
                   />
                 </div>
               </div>
 
-              <div className={newStaff.systemRole === "area_manager" ? "space-y-1" : "grid grid-cols-2 gap-3"}>
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
+                  <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">
                     Department *
                   </label>
                   <select
                     required
                     value={newStaff.department}
                     onChange={(e) => handleDepartmentChange(e.target.value as any)}
-                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded bg-white font-medium text-[#111827] focus:outline-none focus:border-[#EC3013]"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white font-medium text-slate-900 focus:outline-none focus:border-[#EC3013]"
                   >
                     <option value="">Select Department...</option>
-                    <option value="Reception">Reception (Front Desk, 3-Step Walk-In &amp; Web Check-In)</option>
-                    <option value="Cash Counter">Cash Counter (Front Office Cashier &amp; Shift Reconciliation)</option>
-                    <option value="Housekeeping">Housekeeping (Room Cleaning &amp; Room Map Status)</option>
-                    <option value="Restaurant">Restaurant (Dining POS, Table Transfer &amp; Room Folio)</option>
-                    <option value="Kitchen">Kitchen (Cook / Chef - Kitchen KDS Screen)</option>
-                    <option value="Inventory">Inventory &amp; Store (Storekeeper - GRN &amp; Stock Issues)</option>
-                    <option value="Banquet & Events">Banquet &amp; Events (Ballroom &amp; Event Sales Manager)</option>
-                    <option value="Channel Manager">Channel Manager (Revenue Manager - MakeMyTrip &amp; OTAs)</option>
-                    <option value="Finance">Finance (Accounts, Billing &amp; Invoices)</option>
-                    <option value="Management">Management (Hotel General Manager - Full Operations PMS)</option>
-                    <option value="Area Operations">Area Operations (Multi-Hotel Regional Manager)</option>
+                    <option value="Reception">Reception (Front Desk PMS &amp; Check-In)</option>
+                    <option value="Housekeeping">Housekeeping (Room Cleaning &amp; Map)</option>
+                    <option value="Kitchen">Kitchen (Cook / Chef - KDS Screen)</option>
+                    <option value="Restaurant">Restaurant (Dining POS &amp; Table Orders)</option>
+                    <option value="Cash Counter">Cash Counter (Front Office Cashier)</option>
+                    <option value="Inventory">Inventory &amp; Stores (Storekeeper)</option>
+                    <option value="Banquet & Events">Banquet &amp; Events (Sales Manager)</option>
+                    <option value="Channel Manager">Channel Manager (MakeMyTrip &amp; OTAs)</option>
+                    <option value="Finance">Finance &amp; Accounts (Billing)</option>
+                    <option value="Management">Management (General Manager)</option>
+                    <option value="Area Operations">Area Operations (Regional Cluster)</option>
                   </select>
                 </div>
 
-                {newStaff.systemRole !== "area_manager" && (
-                  <div>
-                    <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
-                      Assigned Property
-                    </label>
-                    <select
-                      value={newStaff.hotel}
-                      onChange={(e) => setNewStaff({ ...newStaff, hotel: e.target.value })}
-                      className="w-full px-3 py-2 border border-[#D1D5DB] rounded bg-white"
-                    >
-                      <option value="">Select Property...</option>
-                      {orgHotels.map((h) => (
-                        <option key={h.id} value={h.name}>
-                          {h.name}
-                        </option>
-                      ))}
-                      {orgHotels.length === 0 && (
-                        <option value="Head Office / Central Operations">
-                          Head Office / Central Operations
-                        </option>
-                      )}
-                    </select>
-                  </div>
-                )}
-              </div>
-
-              {newStaff.systemRole === "area_manager" && (
-                <div className="p-3 bg-[#F9FAFB] rounded border border-[#E5E7EB] space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-[11px] font-bold text-[#111827] uppercase">
-                      Assign Hotels to this Area Manager ({newStaff.assignedHotels.length} selected) *
-                    </label>
-                    <span className="text-[10px] text-[#6B7280]">Multi-property cluster</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 max-h-36 overflow-y-auto pt-1">
-                    {orgHotels.map((h) => {
-                      const isChecked = newStaff.assignedHotels.includes(h.name);
-                      return (
-                        <label
-                          key={h.id}
-                          className={`flex items-center gap-2 p-2 rounded border text-[12px] font-medium cursor-pointer transition-colors ${
-                            isChecked
-                              ? "bg-red-50 border-[#EC3013] text-[#EC3013]"
-                              : "bg-white border-[#E5E7EB] text-[#374151] hover:bg-[#F3F4F6]"
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={(e) => {
-                              const current = newStaff.assignedHotels || [];
-                              const updated = e.target.checked
-                                ? [...current, h.name]
-                                : current.filter((x) => x !== h.name);
-                              setNewStaff({
-                                ...newStaff,
-                                assignedHotels: updated,
-                                hotel: updated.join(", "),
-                              });
-                            }}
-                            className="rounded text-[#EC3013] focus:ring-[#EC3013]"
-                          />
-                          <span className="truncate">{h.name} {h.region ? `(${h.region})` : ""}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">
+                    Assigned Property
+                  </label>
+                  <select
+                    value={newStaff.hotel}
+                    onChange={(e) => setNewStaff({ ...newStaff, hotel: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white font-semibold text-slate-800"
+                  >
+                    {orgHotels.map((h) => (
+                      <option key={h.id} value={h.name}>
+                        {h.name}
+                      </option>
+                    ))}
+                    <option value="Central Operations">Central Operations</option>
+                  </select>
                 </div>
-              )}
+              </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
+                  <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">
                     Designation / Title *
                   </label>
                   <input
@@ -648,15 +937,15 @@ export default function StaffManagementPage() {
                     placeholder="e.g. Front Desk Receptionist"
                     value={newStaff.role}
                     onChange={(e) => setNewStaff({ ...newStaff, role: e.target.value })}
-                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded focus:outline-none focus:border-[#EC3013]"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-[#EC3013]"
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
-                    System Login Role (1:1 Strict)
+                  <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">
+                    System RBAC Login Role
                   </label>
                   {newStaff.department && DEPARTMENT_CONFIG[newStaff.department as StaffMember["department"]] ? (
-                    <div className="px-3 py-2 bg-[#F3F4F6] border border-[#E5E7EB] rounded text-[12px] font-semibold text-[#111827] flex items-center justify-between">
+                    <div className="px-3 py-2 bg-slate-100 border border-slate-200 rounded-lg text-[12px] font-semibold text-slate-900 flex items-center justify-between">
                       <span className="truncate">
                         {DEPARTMENT_CONFIG[newStaff.department as StaffMember["department"]].systemRoleLabel}
                       </span>
@@ -665,7 +954,7 @@ export default function StaffManagementPage() {
                       </span>
                     </div>
                   ) : (
-                    <div className="px-3 py-2 bg-[#F9FAFB] border border-[#E5E7EB] rounded text-[12px] text-[#9CA3AF]">
+                    <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-[12px] text-slate-400">
                       Auto-assigned by Department
                     </div>
                   )}
@@ -673,7 +962,7 @@ export default function StaffManagementPage() {
               </div>
 
               {newStaff.department && DEPARTMENT_CONFIG[newStaff.department as StaffMember["department"]] && (
-                <div className="p-2.5 bg-gray-50 border border-gray-200 rounded text-[11px] text-[#4B5563] flex items-center gap-2">
+                <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-[11px] text-slate-600 flex items-center gap-2">
                   <Shield className="w-4 h-4 text-[#EC3013] shrink-0" />
                   <span>
                     <strong>Module Access:</strong> {DEPARTMENT_CONFIG[newStaff.department as StaffMember["department"]].description}
@@ -682,7 +971,7 @@ export default function StaffManagementPage() {
               )}
 
               <div>
-                <label className="block text-[11px] font-bold text-[#6B7280] uppercase mb-1">
+                <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">
                   Staff Login Password *
                 </label>
                 <div className="relative">
@@ -695,32 +984,32 @@ export default function StaffManagementPage() {
                     placeholder="e.g. Pass@123 (min 6 chars)..."
                     value={newStaff.password}
                     onChange={(e) => setNewStaff({ ...newStaff, password: e.target.value })}
-                    className="w-full pl-3 pr-10 py-2 border border-[#D1D5DB] rounded focus:outline-none focus:border-[#EC3013] text-[13px]"
+                    className="w-full pl-3 pr-10 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-[#EC3013] text-[13px]"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#9CA3AF] hover:text-[#4B5563]"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
-                <p className="text-[11px] text-[#9CA3AF] mt-1">
-                  The staff member will use this email and password to log in at <code>/login</code>.
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Staff will log in at <code>/login</code> using this email and password.
                 </p>
               </div>
 
-              <div className="flex justify-end gap-3 pt-3 border-t border-[#E5E7EB]">
+              <div className="flex justify-end gap-3 pt-3 border-t border-slate-200">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 border border-[#D1D5DB] rounded text-[#374151] font-semibold hover:bg-[#F3F4F6]"
+                  className="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 font-semibold hover:bg-slate-100"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#EC3013] hover:bg-[#D62839] text-white font-bold rounded shadow-xs cursor-pointer"
+                  className="px-5 py-2 bg-[#EC3013] hover:bg-[#D62839] text-white font-bold rounded-lg shadow-xs cursor-pointer"
                 >
                   Create Staff Account
                 </button>
