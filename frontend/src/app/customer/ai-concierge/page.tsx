@@ -2,20 +2,18 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { hotelsApi } from "@/lib/api";
+import { Hotel } from "@/types";
 import {
   Bot,
   Sparkles,
   Send,
-  MessageSquare,
-  ShieldCheck,
   User,
-  RefreshCw,
   BedDouble,
-  Clock,
-  Wifi,
-  Utensils,
   ArrowRight,
-  HelpCircle,
+  Building2,
+  Globe,
+  MapPin,
 } from "lucide-react";
 
 interface Message {
@@ -28,30 +26,49 @@ interface Message {
 }
 
 const QUICK_PROMPTS = [
-  { label: "🏨 Available Rooms & Rates", text: "What room categories and rates are available today?" },
-  { label: "⏰ Check-in & Check-out Timings", text: "What are your check-in and check-out timings?" },
-  { label: "📶 Wi-Fi & Breakfast Timings", text: "What is the Wi-Fi password and breakfast hours?" },
-  { label: "🍽️ In-Room Dining Menu", text: "How can I order room service food to my room?" },
-  { label: "🛡️ Digital Pre-Check-In Process", text: "How does the express digital check-in work?" },
+  { label: "🏨 Explore Rooms & Rates", text: "What rooms and rates are available today?" },
+  { label: "📍 Properties in Delhi & Mumbai", text: "Which luxury hotels are available in Delhi and Mumbai?" },
+  { label: "🔍 Track Booking #RES-101", text: "Can you lookup my reservation RES-101?" },
+  { label: "⏰ Check-in & Policies", text: "What are the standard check-in and check-out policies?" },
+  { label: "🍽️ Dining & Amenities", text: "What dining and amenities are available for guests?" },
 ];
 
 export default function GuestAIConciergePage() {
+  const [hotels, setHotels] = useState<Hotel[]>([]);
+  const [selectedHotelId, setSelectedHotelId] = useState<string>("");
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome-1",
       sender: "ai",
-      text: "Namaste & Welcome to LuckNexa Hotels! 🙏\n\nI am your 24/7 AI Concierge. I can help you check room availability, provide hotel amenity details, guide you through express web check-in, or assist with in-stay dining and services.",
+      text: "Namaste & Welcome to LuckNexa Hotels & Resorts! 🙏\n\nI am your 24/7 AI Concierge. I can help you discover luxury properties across India, check live room availability, book stays, or lookup an existing reservation (e.g. RES-101). How can I assist you today?",
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     },
   ]);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  // Load platform hotels
+  useEffect(() => {
+    async function fetchHotels() {
+      try {
+        const data = await hotelsApi.getAll();
+        if (data && Array.isArray(data)) {
+          setHotels(data);
+        }
+      } catch (err) {
+        console.error("Failed to load hotels:", err);
+      }
+    }
+    fetchHotels();
+  }, []);
+
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
+
+  const selectedHotel = hotels.find((h) => h.id === selectedHotelId);
 
   const handleSend = async (textToSend?: string) => {
     const text = (textToSend || input).trim();
@@ -69,10 +86,19 @@ export default function GuestAIConciergePage() {
     setIsTyping(true);
 
     try {
+      const historyPayload = messages.slice(-5).map((m) => ({
+        sender: m.sender,
+        text: m.text,
+      }));
+
       const res = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, hotelId: "hotel-taj-delhi" }),
+        body: JSON.stringify({
+          message: text,
+          hotelId: selectedHotelId || undefined,
+          history: historyPayload,
+        }),
       });
 
       let reply = "I have noted your request. Let me know if you need anything else!";
@@ -82,22 +108,31 @@ export default function GuestAIConciergePage() {
       if (res.ok) {
         const data = await res.json();
         reply = data.reply || reply;
+
+        // Auto-switch chat context pill if AI identifies or recommends a specific hotel
+        if (data.hotelId && !selectedHotelId) {
+          setSelectedHotelId(data.hotelId);
+        }
+
+        if (data.toolUsed === "checkAvailability") {
+          actionHref = "/customer/booking";
+          actionText = `Book Room Now →`;
+        } else if (data.toolUsed === "lookupBooking") {
+          actionHref = "/customer/my-bookings";
+          actionText = "View Reservation Folio & Pre-Check-in →";
+        }
       } else {
         const lower = text.toLowerCase();
         if (lower.includes("time") || lower.includes("check-in") || lower.includes("check in") || lower.includes("check out")) {
-          reply = "Standard Check-in begins at 12:00 PM and Check-out is until 11:00 AM. Early check-in can be requested at front desk express counter.";
+          reply = "Standard Check-in begins at 02:00 PM and Check-out is until 11:00 AM across LuckNexa properties. Early check-in can be requested via digital pre-check-in.";
           actionHref = "/customer/pre-checkin";
           actionText = "Go to Digital Pre-Check-In →";
         } else if (lower.includes("wifi") || lower.includes("wi-fi") || lower.includes("breakfast")) {
-          reply = "High-speed Wi-Fi is complimentary throughout the property (Network: Taj_Guest_WiFi, Password not required). Complimentary buffet breakfast is served from 7:00 AM to 10:30 AM at the All-Day Dining restaurant.";
+          reply = "High-speed Wi-Fi and complimentary breakfast buffets (07:00 AM - 10:30 AM) are available across all partner properties for registered guests.";
         } else if (lower.includes("rate") || lower.includes("room") || lower.includes("availab") || lower.includes("book")) {
-          reply = "We currently have Standard Rooms starting at ₹2,500/night, Deluxe Rooms at ₹4,500/night, and Executive Suites at ₹7,500/night with complimentary breakfast.";
+          reply = "We have luxury rooms starting from ₹2,500/night to ₹8,500/night across Delhi, Mumbai, Udaipur, and Kolkata.";
           actionHref = "/customer/booking";
-          actionText = "Book a Room Now →";
-        } else if (lower.includes("dining") || lower.includes("food") || lower.includes("room service") || lower.includes("order")) {
-          reply = "You can order Club Sandwiches, Paneer Butter Masala, Burgers and Beverages directly from the In-Stay Room Services tab. Charges are added directly to your room folio!";
-          actionHref = "/customer/stay-services";
-          actionText = "Order In-Room Dining →";
+          actionText = "Browse & Book Rooms →";
         } else if (lower.includes("res-") || lower.includes("track") || lower.includes("booking")) {
           reply = "Your reservation is confirmed in our hotel management system. You can view booking details and initiate 1-click digital check-in directly from My Bookings.";
           actionHref = "/customer/my-bookings";
@@ -119,7 +154,7 @@ export default function GuestAIConciergePage() {
       const fallbackReply: Message = {
         id: `ai-${Date.now()}`,
         sender: "ai",
-        text: "I am ready to assist with your hotel stay. You can also reach our 24/7 Front Desk team directly at +91 90000 00000.",
+        text: "I am ready to assist with your stay across all LuckNexa hotels. You can also reach our 24/7 central desk directly at +91 90000 00000.",
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
       setMessages((prev) => [...prev, fallbackReply]);
@@ -129,24 +164,26 @@ export default function GuestAIConciergePage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 font-sans">
+    <div className="max-w-4xl mx-auto space-y-5 font-sans">
       {/* Header */}
-      <div className="bg-gradient-to-r from-slate-900 via-purple-950 to-slate-900 p-6 sm:p-8 rounded-2xl text-white shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-slate-900 via-purple-950 to-slate-900 p-6 sm:p-7 rounded-2xl text-white shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
             <span className="bg-purple-500/30 border border-purple-400/40 text-purple-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-              24/7 Guest Assistant
+              {selectedHotel ? `${selectedHotel.name} Concierge` : "LuckNexa Platform AI"}
             </span>
             <span className="inline-flex items-center gap-1.5 text-xs text-emerald-400 font-medium">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              Online &amp; Ready
+              Live Assistant
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight mt-2 flex items-center gap-2">
             <Sparkles className="w-6 h-6 text-amber-300" /> 24/7 AI Concierge Desk
           </h1>
           <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl">
-            Ask anything about room availability, hotel policies, Wi-Fi, dining menus, or track your reservation in real time.
+            {selectedHotel
+              ? `Chatting directly with ${selectedHotel.name} (${selectedHotel.city}) front desk concierge.`
+              : "Discover hotels across India, check live rates, or lookup your stay."}
           </p>
         </div>
 
@@ -161,8 +198,42 @@ export default function GuestAIConciergePage() {
         </div>
       </div>
 
+      {/* Property Selector Bar */}
+      <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-xs flex items-center gap-2 overflow-x-auto no-scrollbar text-xs">
+        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0 pl-1">
+          Chat Context:
+        </span>
+        <button
+          onClick={() => setSelectedHotelId("")}
+          className={`shrink-0 px-3 py-1.5 rounded-lg font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
+            selectedHotelId === ""
+              ? "bg-purple-600 text-white shadow-xs font-bold"
+              : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+          }`}
+        >
+          <Globe className="w-3.5 h-3.5" />
+          <span>🌐 All Properties (LuckNexa)</span>
+        </button>
+
+        {hotels.map((h) => (
+          <button
+            key={h.id}
+            onClick={() => setSelectedHotelId(h.id)}
+            className={`shrink-0 px-3 py-1.5 rounded-lg font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
+              selectedHotelId === h.id
+                ? "bg-purple-600 text-white shadow-xs font-bold"
+                : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+            }`}
+          >
+            <Building2 className="w-3.5 h-3.5" />
+            <span>{h.name}</span>
+            <span className="text-[10px] opacity-70">({h.city})</span>
+          </button>
+        ))}
+      </div>
+
       {/* Main Chat Container */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs flex flex-col h-[580px] overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs flex flex-col h-[540px] overflow-hidden">
         {/* Messages List */}
         <div className="flex-1 p-6 overflow-y-auto space-y-4 bg-slate-50/50">
           {messages.map((m) => {
@@ -239,10 +310,20 @@ export default function GuestAIConciergePage() {
         </div>
 
         {/* Chat Input Bar */}
-        <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="p-4 bg-white border-t border-slate-200 flex gap-3">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSend();
+          }}
+          className="p-4 bg-white border-t border-slate-200 flex gap-3"
+        >
           <input
             type="text"
-            placeholder="Type your question (e.g. 'What are check-in timings?' or 'Available rooms')..."
+            placeholder={
+              selectedHotel
+                ? `Ask about ${selectedHotel.name} (e.g. 'Available rooms', 'Wi-Fi', 'Dining')...`
+                : "Ask about hotels, cities (Delhi, Mumbai), rates, or enter Booking ID (e.g. RES-101)..."
+            }
             value={input}
             onChange={(e) => setInput(e.target.value)}
             className="flex-1 px-4 py-2.5 text-xs sm:text-sm border border-slate-300 rounded-xl focus:outline-none focus:border-purple-600 shadow-xs"

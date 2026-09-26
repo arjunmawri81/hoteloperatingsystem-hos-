@@ -70,18 +70,76 @@ class AIToolsService {
   /**
    * Tool 3: Search Hotel Knowledge Base
    */
-  static async searchKnowledgeBase(query, hotelId = "hotel-101") {
-    const items = await AIKnowledge.find({ hotelId, isActive: true });
+  static async searchKnowledgeBase(query, hotelId) {
+    const filter = { isActive: true };
+    if (hotelId) {
+      filter.$or = [{ hotelId }, { hotelId: "hotel-101" }, { hotelId: "global" }, { hotelId: { $exists: false } }];
+    }
+
+    const items = await AIKnowledge.find(filter);
     if (!items || items.length === 0) return null;
 
-    const lower = query.toLowerCase();
-    const match = items.find(
-      (item) =>
-        lower.includes(item.question.toLowerCase()) ||
-        item.keywords.some((k) => lower.includes(k.toLowerCase()))
-    );
+    const STOP_WORDS = new Set([
+      "what", "is", "the", "are", "and", "for", "you", "your", "our", "with",
+      "this", "that", "how", "can", "have", "any", "from", "does", "hai", "kya", "me", "ko", "timing", "hours"
+    ]);
 
-    return match ? match.answer : null;
+    const lower = (query || "").toLowerCase();
+    const queryWords = lower
+      .replace(/[^\w\s-]/g, "")
+      .split(/\s+/)
+      .filter((w) => w.length > 2 && !STOP_WORDS.has(w));
+
+    let bestMatch = null;
+    let highestScore = 0;
+
+    for (const item of items) {
+      let score = 0;
+      const qLower = item.question.toLowerCase();
+
+      // Strong match on question substring
+      if (lower.includes(qLower) || qLower.includes(lower)) {
+        score += 10;
+      }
+
+      // Check keywords
+      if (Array.isArray(item.keywords)) {
+        for (const kw of item.keywords) {
+          const kLower = kw.toLowerCase();
+          if (STOP_WORDS.has(kLower)) continue;
+
+          // Strong boost for specific subject keywords
+          if (lower.includes(kLower)) {
+            if (["wifi", "breakfast", "pool", "cancel", "cancellation", "check-in", "checkout", "check-out", "gym"].includes(kLower)) {
+              score += 5;
+            } else {
+              score += 2;
+            }
+          }
+        }
+      }
+
+      // Meaningful content word overlap
+      const qWords = qLower
+        .replace(/[^\w\s-]/g, "")
+        .split(/\s+/)
+        .filter((w) => w.length > 2 && !STOP_WORDS.has(w));
+
+      const overlap = queryWords.filter((w) => qWords.includes(w));
+      score += overlap.length * 2;
+
+      if (score > highestScore) {
+        highestScore = score;
+        bestMatch = item;
+      }
+    }
+
+    // Require a meaningful score threshold
+    if (highestScore >= 4 && bestMatch) {
+      return bestMatch.answer;
+    }
+
+    return null;
   }
 }
 

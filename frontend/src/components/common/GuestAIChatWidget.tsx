@@ -57,7 +57,7 @@ export function GuestAIChatWidget() {
       const res = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, hotelId: "hotel-taj-delhi" }),
+        body: JSON.stringify({ message: text }),
       });
 
       let reply = "I'm here to help with your stay. Let me know if you need anything else!";

@@ -52,16 +52,59 @@ router.post("/conversations/:id/messages", async (req, res) => {
 
 /**
  * POST /api/ai/chat
- * Intelligent AI Receptionist with Live Database Tool Calling
+ * Intelligent AI Receptionist with Multi-Property Platform & Hotel-Specific Context
  */
 router.post("/chat", async (req, res) => {
   try {
-    const { message, bookingId, guestPhone, hotelId = "hotel-101" } = req.body;
+    const { message, bookingId, guestPhone, hotelId, history = [] } = req.body;
     const lower = (message || "").toLowerCase();
+
+    // 0. Fetch all active platform hotels
+    const allHotels = await Hotel.find({}).lean();
+    let currentHotel = null;
+
+    if (hotelId) {
+      currentHotel = allHotels.find((h) => h.id === hotelId) || null;
+    }
+
+    // Build context text from message and recent chat history
+    const historyText = Array.isArray(history)
+      ? history.slice(-4).map((h) => (typeof h === "string" ? h : h.text || "")).join(" ").toLowerCase()
+      : "";
+    const combinedContext = `${historyText} ${lower}`;
+
+    // If no hotel specified yet, check if current message or recent history mentions any city or hotel name
+    if (!currentHotel && allHotels.length > 0) {
+      // Direct check on current message first
+      currentHotel = allHotels.find((h) => {
+        const hotelName = h.name.toLowerCase();
+        const cityName = h.city.toLowerCase();
+        const orgName = (h.orgName || "").toLowerCase();
+
+        if (lower.includes(hotelName) || (orgName && lower.includes(orgName))) return true;
+
+        const nameWords = hotelName.split(/\s+/).filter((w) => w.length > 3);
+        if (nameWords.some((w) => lower.includes(w))) return true;
+
+        const cityWords = cityName.split(/\s+/).filter((w) => w.length > 2);
+        if (cityWords.some((w) => lower.includes(w))) return true;
+
+        return false;
+      }) || null;
+
+      // Fallback: Check recent conversational history for city/hotel context
+      if (!currentHotel && historyText) {
+        currentHotel = allHotels.find((h) => {
+          const cityName = h.city.toLowerCase();
+          const cityWords = cityName.split(/\s+/).filter((w) => w.length > 2);
+          return cityWords.some((w) => historyText.includes(w));
+        }) || null;
+      }
+    }
 
     // 1. Check if user is asking to lookup a booking
     if (bookingId || guestPhone || lower.includes("booking") || lower.includes("reservation") || lower.includes("res-")) {
-      const match = message.match(/res-\d+/i);
+      const match = message.match(/res-[\w\d-]+/i);
       const queryId = bookingId || (match ? match[0].toUpperCase() : null);
       if (queryId || guestPhone) {
         const lookup = await AIToolsService.lookupBooking({ bookingId: queryId, guestPhone });
@@ -69,9 +112,16 @@ router.post("/chat", async (req, res) => {
           const b = lookup.booking;
           return res.json({
             success: true,
-            reply: `Here are the details for Reservation **${b.id}**:\n- **Guest**: ${b.guestName}\n- **Room**: ${b.roomNumber} (${b.roomType})\n- **Dates**: ${b.checkIn} to ${b.checkOut}\n- **Status**: ${b.status.toUpperCase()}\n- **Total Bill**: ₹${b.totalAmount} (Paid: ₹${b.paidAmount})`,
+            hotelId: b.hotelId,
+            reply: `Namaste **${b.guestName}**! Here are the details for your reservation at **${b.hotelName || "LuckNexa"}**:\n\n• **Booking ID**: ${b.id}\n• **Room**: ${b.roomNumber || "Assigned at Check-in"} (${b.roomType})\n• **Dates**: ${b.checkIn} to ${b.checkOut}\n• **Status**: ${b.status.toUpperCase()}\n• **Total Bill**: ₹${b.totalAmount} (Paid: ₹${b.paidAmount})\n\nYou can proceed with 1-click Express Digital Pre-Check-In to skip the front desk counter upon arrival!`,
             toolUsed: "lookupBooking",
             data: b,
+          });
+        } else {
+          return res.json({
+            success: true,
+            reply: `We could not find an active reservation for **${queryId || guestPhone}**. Please verify your booking ID (e.g. RES-101) or registered phone number, or let me know if you would like to make a new booking!`,
+            toolUsed: "lookupBooking",
           });
         }
       }
@@ -79,18 +129,25 @@ router.post("/chat", async (req, res) => {
 
     // 2. Check if message contains an inquiry with contact info or group/event inquiry (Auto-Capture Lead)
     const phoneMatch = message.match(/(?:\+?91[\s-]?)?[6-9]\d{9}/);
-    const hasInquiryKeywords = lower.includes("wedding") || lower.includes("banquet") || lower.includes("event") || lower.includes("conference") || lower.includes("group") || lower.includes("call me") || lower.includes("quote") || lower.includes("enquiry") || lower.includes("inquiry") || lower.includes("rooms for");
+    const hasInquiryKeywords =
+      lower.includes("wedding") ||
+      lower.includes("banquet") ||
+      lower.includes("event") ||
+      lower.includes("conference") ||
+      lower.includes("group") ||
+      lower.includes("call me") ||
+      lower.includes("quote") ||
+      lower.includes("enquiry") ||
+      lower.includes("inquiry") ||
+      lower.includes("rooms for");
 
     if (phoneMatch || (hasInquiryKeywords && (guestPhone || phoneMatch))) {
-      const extractedPhone = phoneMatch ? phoneMatch[0].replace(/[\s-]/g, "") : (guestPhone || "+91 98000 00000");
+      const extractedPhone = phoneMatch ? phoneMatch[0].replace(/[\s-]/g, "") : guestPhone || "+91 98000 00000";
       const testLeadId = `lead-chat-${Date.now().toString().slice(-4)}`;
-      
-      const targetHotelId = hotelId || "hotel-taj-delhi";
-      let targetOrgId = "";
-      try {
-        const matchedHotel = await Hotel.findOne({ id: targetHotelId });
-        if (matchedHotel) targetOrgId = matchedHotel.orgId;
-      } catch (err) {}
+
+      const targetHotel = currentHotel || allHotels[0];
+      const targetHotelId = targetHotel ? targetHotel.id : "hotel-taj-delhi";
+      const targetOrgId = targetHotel ? targetHotel.orgId : "";
 
       const newLead = await Lead.create({
         id: testLeadId,
@@ -99,7 +156,7 @@ router.post("/chat", async (req, res) => {
         email: "guest.chat@inquiry.com",
         source: "Website",
         requirement: message,
-        budget: lower.includes("wedding") || lower.includes("banquet") ? 250000 : (lower.includes("group") ? 100000 : 35000),
+        budget: lower.includes("wedding") || lower.includes("banquet") ? 250000 : lower.includes("group") ? 100000 : 35000,
         stage: "New",
         aiSummary: `[AI Web Chat Captured]: ${message}`,
         nextFollowUp: "Today, within 2 hours",
@@ -110,93 +167,224 @@ router.post("/chat", async (req, res) => {
 
       return res.json({
         success: true,
-        reply: `🙏 Thank you! Your inquiry has been successfully captured and registered with our sales desk.\n\n📋 **Inquiry ID**: ${newLead.id}\n📞 **Contact**: ${extractedPhone}\n💼 **Status**: Assigned to Reservations Team.\n\nA reservations manager will contact you shortly with the best custom quote!`,
+        hotelId: targetHotel ? targetHotel.id : undefined,
+        reply: `🙏 Thank you! Your inquiry has been registered with our team${targetHotel ? ` for **${targetHotel.name}**` : ""}.\n\n📋 **Inquiry ID**: ${newLead.id}\n📞 **Contact**: ${extractedPhone}\n💼 **Status**: Assigned to Reservations Desk.\n\nOur hospitality executive will contact you shortly with a personalized quote!`,
         toolUsed: "captureLead",
         data: newLead,
       });
     }
 
-    // 3. Check if user is asking about Room Availability / Rates
-    if (lower.includes("available") || lower.includes("room") || lower.includes("rate") || lower.includes("price") || lower.includes("book")) {
-      const avail = await AIToolsService.checkAvailability({ hotelId });
-      const summary = avail.roomTypes.map((t) => `• **${t.type}**: ₹${t.rate}/night (${t.count} available)`).join("\n");
-      return res.json({
-        success: true,
-        reply: `We currently have **${avail.totalAvailable} rooms** available:\n${summary}\n\nWould you like me to reserve a room or send a quote? (Share your phone number for instant booking assistance!)`,
-        toolUsed: "checkAvailability",
-        data: avail,
-      });
+    // 3. Check if user is asking about Room Availability / Rates / Hotel Discovery
+    const isHotelDiscoveryOrRates =
+      lower.includes("hotel") ||
+      lower.includes("properties") ||
+      lower.includes("property") ||
+      lower.includes("available") ||
+      lower.includes("room") ||
+      lower.includes("rate") ||
+      lower.includes("price") ||
+      lower.includes("cost") ||
+      lower.includes("stay") ||
+      lower.includes("book") ||
+      lower.includes("udaipur") ||
+      lower.includes("delhi") ||
+      lower.includes("mumbai") ||
+      lower.includes("kolkata");
+
+    if (isHotelDiscoveryOrRates) {
+      if (currentHotel) {
+        const avail = await AIToolsService.checkAvailability({ hotelId: currentHotel.id });
+        const summary =
+          avail.roomTypes.length > 0
+            ? avail.roomTypes.map((t) => `• **${t.type}**: ₹${t.rate}/night (${t.count} available)`).join("\n")
+            : "• **Deluxe Rooms & Suites**: Available on request";
+
+        return res.json({
+          success: true,
+          hotelId: currentHotel.id,
+          hotelName: currentHotel.name,
+          reply: `In **${currentHotel.city}**, we proudly feature **${currentHotel.name}** 🌟 (5★ Luxury Hospitality):\n\n📍 **Location**: ${currentHotel.address || currentHotel.city}\n📞 **Concierge**: ${currentHotel.phone || "+91 11 2611 0202"}\n\n🏨 **Available Rooms & Rates Today**:\n${summary}\n\nWould you like me to assist you with booking a room here, or do you have any specific requirements?`,
+          toolUsed: "checkAvailability",
+          data: { hotel: currentHotel, availability: avail },
+        });
+      } else {
+        // Multi-hotel overview across all destinations
+        const propertyList = allHotels
+          .map((h) => `• **${h.name}** (${h.city}) — 5★ Luxury stay | Contact: ${h.phone || "+91 11 2611 0202"}`)
+          .join("\n");
+        return res.json({
+          success: true,
+          reply: `Welcome to **LuckNexa Hotels & Resorts**! We feature luxury properties across top destinations in India:\n\n${propertyList}\n\nWhich destination (Delhi, Mumbai, Kolkata, Udaipur) would you like to check room availability or book for?`,
+          toolUsed: "listProperties",
+          data: allHotels,
+        });
+      }
     }
 
-    // 4. Search Knowledge Base
-    const kbAnswer = await AIToolsService.searchKnowledgeBase(message, hotelId);
+    // 4. Search Knowledge Base (Hotel-specific or global platform policies)
+    const kbAnswer = await AIToolsService.searchKnowledgeBase(message, currentHotel ? currentHotel.id : undefined);
     if (kbAnswer) {
       return res.json({
         success: true,
+        hotelId: currentHotel ? currentHotel.id : undefined,
         reply: kbAnswer,
         toolUsed: "searchKnowledgeBase",
       });
     }
 
-    // 5. Call Live Google Gemini AI Model
-    const geminiReply = await askGemini(message);
+    // 5. Call Live Google Gemini AI Model (with multi-model fallback)
+    const geminiReply = await askGemini(message, currentHotel, allHotels, history);
     if (geminiReply) {
       return res.json({
         success: true,
+        hotelId: currentHotel ? currentHotel.id : undefined,
         reply: geminiReply,
         toolUsed: "Google Gemini AI",
       });
     }
 
-    // 6. Fallback contextual reply
+    // 6. Intelligent Fallback (handles policy/timings/facilities if LLM was unavailable)
+    const hName = currentHotel ? currentHotel.name : "LuckNexa Hotels";
+    if (
+      lower.includes("check-in") ||
+      lower.includes("check in") ||
+      lower.includes("check out") ||
+      lower.includes("timing") ||
+      lower.includes("time") ||
+      lower.includes("policy") ||
+      lower.includes("policies")
+    ) {
+      return res.json({
+        success: true,
+        hotelId: currentHotel ? currentHotel.id : undefined,
+        reply: `At **${hName}**, standard Check-in begins at **02:00 PM** and Check-out is until **11:00 AM**. Early check-in and express checkout are available via our 1-click Digital Pre-Check-In counter.`,
+        toolUsed: "policyKnowledge",
+      });
+    }
+
+    if (lower.includes("wifi") || lower.includes("wi-fi") || lower.includes("internet") || lower.includes("breakfast")) {
+      return res.json({
+        success: true,
+        hotelId: currentHotel ? currentHotel.id : undefined,
+        reply: `High-speed Wi-Fi is complimentary for all staying guests across **${hName}**. Complimentary buffet breakfast is served daily from **07:00 AM to 10:30 AM** at the All-Day Dining restaurant.`,
+        toolUsed: "amenityKnowledge",
+      });
+    }
+
+    if (lower.includes("cancel") || lower.includes("refund")) {
+      return res.json({
+        success: true,
+        hotelId: currentHotel ? currentHotel.id : undefined,
+        reply: `Direct bookings at **${hName}** can be cancelled free of charge up to **24 hours** prior to your scheduled check-in date.`,
+        toolUsed: "cancellationPolicy",
+      });
+    }
+
+    if (lower.includes("pool") || lower.includes("gym") || lower.includes("fitness") || lower.includes("spa")) {
+      return res.json({
+        success: true,
+        hotelId: currentHotel ? currentHotel.id : undefined,
+        reply: `The swimming pool and fitness wellness center at **${hName}** are open daily from **06:00 AM to 09:00 PM** complimentary for all resident guests.`,
+        toolUsed: "facilityKnowledge",
+      });
+    }
+
+    if (currentHotel) {
+      return res.json({
+        success: true,
+        hotelId: currentHotel.id,
+        reply: `I am your 24/7 AI Concierge for **${currentHotel.name}** (${currentHotel.city}). I can check live room availability, lookup your stay, or connect you with our front desk staff. How may I assist you?`,
+      });
+    }
+
     return res.json({
       success: true,
-      reply: `I am your 24/7 AI Concierge for Meridian Hotels. I can check live room availability, lookup your reservation, capture your booking requirement, or connect you with front desk staff. How may I assist you?`,
+      reply: `Namaste & Welcome to **LuckNexa Hotels & Resorts**! I am your 24/7 Hospitality Assistant. I can help you discover luxury hotels across India (Delhi, Mumbai, Kolkata, Udaipur), check live room availability, or look up your reservation. How may I assist you today?`,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
-async function askGemini(prompt, hotelContext = "") {
+async function askGemini(prompt, currentHotel = null, allHotels = [], history = []) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
 
   try {
-    const systemPrompt = `You are "Aura", the intelligent 24/7 AI Concierge and Front Desk Assistant for Meridian Hotels & Resorts. 
+    let systemPrompt = "";
+
+    if (currentHotel) {
+      systemPrompt = `You are "Aura", the intelligent 24/7 AI Concierge for "${currentHotel.name}" in ${currentHotel.city} on the LuckNexa Hospitality Platform.
 You are warm, polite, professional, and hospitable. You can communicate fluently in both English and Hindi/Hinglish based on the guest's language.
 Hotel Details:
+- Name: ${currentHotel.name}
+- City: ${currentHotel.city}
+- Address: ${currentHotel.address || currentHotel.city}
+- Phone: ${currentHotel.phone || "+91 11 2611 0202"}
 - Check-in: 02:00 PM, Check-out: 11:00 AM
-- Breakfast Buffet: 07:00 AM - 10:30 AM at Grand Spice Restaurant
-- Swimming Pool & Fitness Gym: 06:00 AM - 09:00 PM
-- Wi-Fi: "Meridian_Guest_HighSpeed" (Room No + Last Name)
-- 24/7 Room Dining: Dial 9
-- Banquet & Weddings: Grand Ballroom up to 500 guests.
-${hotelContext ? "Additional info: " + hotelContext : ""}`;
+- Amenities: 24/7 Room Service, High-speed Wi-Fi, Breakfast Buffet, Swimming Pool & Spa
+- Banquets & Events: Available for weddings, conferences, and parties.`;
+    } else {
+      const hotelDescriptions = allHotels
+        .map((h, i) => `${i + 1}. ${h.name} in ${h.city} (${h.address || h.city}, Phone: ${h.phone || ""})`)
+        .join("\n");
 
-    const modelName = process.env.GEMINI_MODEL || "gemini-3.6-flash";
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+      systemPrompt = `You are "Aura", the intelligent 24/7 AI Concierge for LuckNexa Hotels & Resorts Platform.
+LuckNexa is a premier multi-hotel portal featuring luxury partner hotels across India:
+${hotelDescriptions}
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: `${systemPrompt}\n\nGuest Query: ${prompt}` }],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 350,
-        },
-      }),
-    });
+CRITICAL INSTRUCTIONS:
+- When a guest inquires about any city (e.g. Udaipur, Delhi, Mumbai, Kolkata) or asks for recommendations, warmly introduce the specific LuckNexa property in that city (e.g. The Oberoi Udaivilas in Udaipur, Taj Palace in Delhi) with its key highlights, location, and luxury experience.
+- If the guest greets (e.g. "hlo", "hi", "namaste"), welcome them to LuckNexa and ask which destination (Delhi, Mumbai, Kolkata, Udaipur) they wish to visit, or if they have an existing booking ID (e.g. RES-...).
+- Be warm, hospitable, and descriptive. You speak fluent English and Hindi/Hinglish.`;
+    }
 
-    const data = await response.json();
-    if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
-      return data.candidates[0].content.parts[0].text;
+    const conversationTurns = [];
+    if (Array.isArray(history) && history.length > 0) {
+      history.slice(-4).forEach((h) => {
+        if (h.sender && h.text) {
+          conversationTurns.push(`${h.sender === "user" ? "Guest" : "Aura"}: ${h.text}`);
+        }
+      });
+    }
+
+    const fullPrompt = conversationTurns.length > 0
+      ? `${systemPrompt}\n\nRecent Conversation:\n${conversationTurns.join("\n")}\n\nGuest Query: ${prompt}`
+      : `${systemPrompt}\n\nGuest Query: ${prompt}`;
+
+    const candidateModels = [
+      process.env.GEMINI_MODEL || "gemini-3.5-flash-lite",
+      "gemini-3.5-flash",
+      "gemini-3.7-flash",
+    ];
+
+    for (const modelName of candidateModels) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [
+              {
+                role: "user",
+                parts: [{ text: fullPrompt }],
+              },
+            ],
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 350,
+            },
+          }),
+        });
+
+        const data = await response.json();
+        if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
+          return data.candidates[0].content.parts[0].text;
+        }
+      } catch (err) {
+        console.warn(`Model ${modelName} failed, trying next...`);
+      }
     }
   } catch (err) {
     console.error("Gemini API call failed:", err.message);
